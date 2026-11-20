@@ -20,5 +20,6 @@ Amont : [contexte](contexte.md). Les besoins sont traduits en exigences dans [ex
 
 ## S'entraîner partout
 - Sur **ordinateur, téléphone et tablette**, avec les mêmes données.
+- Sur ordinateur, comme une **application de bureau** : installée, dans sa propre fenêtre (besoin ajouté le 2026-11-20, pendant le benchmark).
 - **Hors connexion**, avec une synchronisation au retour du réseau.
 - Une interface en **français ou en anglais**.
