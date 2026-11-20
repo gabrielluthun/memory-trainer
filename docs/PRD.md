@@ -40,6 +40,8 @@ Trois contextes d'usage :
 - **0.5** : systèmes d'images ;
 - **1.0** : points IAM.
 
+Après la v1.0 : **1.1**, application de bureau (lot 7, US22).
+
 **Hors périmètre** : autres épreuves IAM, multi-utilisateurs, match contre soi-même, palais mentaux.
 
 → [Périmètre et lots](02-projet/perimetre.md)
@@ -49,6 +51,7 @@ Trois contextes d'usage :
 - **Disciplines Memory League** : EF01 à EF06, formats et scores identiques à Memory League (RG01 à RG14), mode personnalisé EF07.
 - **Déroulé d'un essai** : chronomètre, navigation et saisie du rappel (EF08, EF09), correction (EF10), abandon (EF11).
 - **Suivi** : historique immuable (EF13, RG18), progression (EF14), points IAM (EF15), analyse des erreurs (EF16), lien erreurs → images (EF19).
+- **Transverses** : interface FR/EN (EF20), synchronisation (EF21), application de bureau (EF22).
 - **Non fonctionnelles** : chronomètre à la ms (ENF01), **hors ligne** (ENF02), multi-appareils (ENF03), FR/EN (ENF05), **gratuit** (ENF06), aucune perte de données (ENF07), moins de 100 ms de latence (ENF08).
 
 → [Exigences](01-besoin/exigences.md), [règles de gestion](01-besoin/regles-de-gestion.md), [user stories](01-besoin/user-stories.md)
@@ -57,7 +60,7 @@ Trois contextes d'usage :
 
 - **Must** : les 4 disciplines sans visages, navigation, saisie, mode personnalisé, détail, historique, hors ligne, multi-appareils.
 - **Should** : Names, International Names, abandon, progression, analyse des erreurs, systèmes.
-- **Could** : points IAM, révision des systèmes, interface FR/EN.
+- **Could** : points IAM, révision des systèmes, interface FR/EN, application de bureau.
 
 En cas de manque de temps, on reporte d'abord les Could.
 
@@ -71,7 +74,7 @@ En cas de manque de temps, on reporte d'abord les Could.
 - Français et anglais.
 - Contenus libres de droits (visages IA, images, mots, prénoms).
 - Règles Memory League non publiques, fournies en captures.
-- Pile technique choisie au benchmark (partie 4).
+- Pile technique choisie au benchmark : Svelte, Neon, Hanko, Dexie.js, Cloudflare Pages.
 
 → [Contraintes](01-besoin/contraintes.md), [outils et environnement](02-projet/outils-environnement.md), [conventions](02-projet/conventions.md)
 
@@ -88,7 +91,6 @@ Principaux :
 
 ## 9. Questions ouvertes
 
-- **Base de prénoms** (Names et International Names) : provenance, taille et licence (parties 3 et 4).
-- **Licences** des visages IA, des images et des listes de mots (partie 3, A1).
+- **Sources de contenus** (prénoms, visages IA, images, mots) : critères de licence fixés en [A1](03-analyse-securite/rgpd.md#5-licences-des-contenus) ; choix des sources juste avant les lots 2 et 3.
 - **Tailles de groupe** par épreuve et **équivalents tactiles** des raccourcis clavier (partie 4, maquettes).
-- **Pile technique** : front, back, base de données, hébergement, solution hors ligne (partie 4, benchmark).
+- ~~**Pile technique**~~ : tranchée au [benchmark](04-specifications/benchmark.md#7-choix-du-développeur) (ADR 0001 à 0006).

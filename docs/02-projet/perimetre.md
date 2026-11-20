@@ -18,6 +18,9 @@ Elle est construite en **6 lots de développement**. Chaque lot terminé est **m
 | 4 — Statistiques et erreurs | 0.4 | Courbes de progression, analyse des erreurs | US13, US15 |
 | 5 — Systèmes d'images | 0.5 | Saisie et révision des systèmes, lien erreurs → images | US16, US17, US18 |
 | 6 — Points IAM | 1.0 | Équivalents en points IAM dans les statistiques | US14 |
+| 7 — Application de bureau | 1.1 | Installation sur ordinateur comme application de bureau ([ADR 0006](../04-specifications/adr/0006-bureau-pwa-installee.md)) | US22 |
+
+Le **lot 7** a été ajouté le 2026-11-20, pendant le benchmark. Il vient **après la v1.0** : la v1.0 reste définie par les user stories US01 à US21.
 
 Les user stories transverses du lot 1 (US07 navigation, US08 saisie du rappel, US09 mode personnalisé, US10 abandon) sont livrées pour Numbers au lot 1, puis **étendues à chaque nouvelle discipline** dans les lots 2 et 3.
 
