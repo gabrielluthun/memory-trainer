@@ -98,12 +98,12 @@ Le contrôle différé tourne une fois par ligne insérée, soit 161 fois pour u
 
 ## 5. Fonctions appelées par l'application
 
-Les deux fonctions s'exécutent **avec les droits de l'appelant**, donc sous les règles RLS (S11). L'identité vient du jeton, par `auth.user_id()`, fournie par Neon.
+L'identité vient du jeton, par `auth.user_id()`, fournie par Neon. Les droits d'exécution sont dans l'[accès aux données](../acces.md) (S11).
 
-| Fonction | Reçoit | Renvoie | Ce qu'elle fait | Décisions |
-|---|---|---|---|---|
-| **submit_trial** | L'essai clos et ses éléments, en JSON | `inserted` ou `duplicate` ; une erreur si une valeur est refusée | Prend le verrou du numéro d'ordre, ignore un essai déjà reçu, pose le propriétaire depuis le jeton, insère l'essai, ses éléments et leurs chiffres | ADR 0010, 0011 |
-| **save_settings** | Les paramètres, leur heure de modification et les réglages par discipline, en JSON | `saved` ou `ignored` | Ne remplace les paramètres que si l'heure reçue est plus récente, puis met à jour chaque discipline | ADR 0012 |
+| Fonction | S'exécute avec | Reçoit | Renvoie | Ce qu'elle fait | Décisions |
+|---|---|---|---|---|---|
+| **submit_trial** | Les droits de l'appelant, sous RLS | L'essai clos et ses éléments, en JSON | `inserted` ou `duplicate` ; une erreur si une valeur est refusée | Prend le verrou du numéro d'ordre, ignore un essai déjà reçu, pose le propriétaire depuis le jeton, insère l'essai, ses éléments et leurs chiffres | ADR 0010, 0011 |
+| **save_settings** | Les droits du propriétaire des tables (seul chemin d'écriture des paramètres) | Les paramètres, leur heure de modification et les réglages par discipline, en JSON | `saved` ou `ignored` | Ne remplace les paramètres que si l'heure reçue est plus récente, puis met à jour chaque discipline. Ne touche que la ligne de l'identité du jeton | ADR 0012, 0018 |
 
 ## 6. Données initiales
 
@@ -111,7 +111,7 @@ Les deux fonctions s'exécutent **avec les droits de l'appelant**, donc sous les
 |---|---|
 | Ligne `numbers` de `disciplines` | Dans le script |
 | Ligne du compte dans `accounts` | Migration à part, exécutée par la CI avec l'identifiant Hanko tiré d'un **secret GitHub** (ES09, ES10). Une clé étrangère bloque ensuite tout autre compte (ES01). |
-| Règles RLS | Activées sur les 6 tables dans le script, sans rien autoriser : tout est refusé tant que S11 n'a rien ouvert (ES04) |
+| Règles RLS | Activées sur les 6 tables : tout est refusé, sauf ce que l'[accès aux données](../acces.md) autorise (ES04) |
 
 ## 7. Où est appliquée chaque contrainte du MCD
 
@@ -154,6 +154,4 @@ Le script `bdd/schema.sql` a été exécuté le 2026-11-20 sur **PostgreSQL 16.4
 | Point | Pourquoi | Quand |
 |---|---|---|
 | **`auth.user_id()` chez Neon** | Fonction de Neon qui lit le jeton. Son nom et son comportement avec les jetons Hanko sont à vérifier. | Sprint 0 |
-| **Rôles, droits et règles RLS** | Les règles sont activées sans rien autoriser. Les règles, les droits sur les tables et les droits d'exécution des fonctions sont définis en S11. | S11 |
-| **Modification directe des réglages** | Un appel direct à la Data API sur `discipline_settings` contournerait la règle « la plus récente gagne ». À fermer par les droits. | S11 |
 | **Volume sur Neon** | Mesurer la taille réelle d'un essai, index compris. | Sprint 0 |
