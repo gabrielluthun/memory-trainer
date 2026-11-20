@@ -31,7 +31,7 @@ Trois contextes d'usage :
 
 ## 4. Périmètre et hors périmètre
 
-**v1.0** = toutes les user stories (US01 à US21), livrée en **6 lots** mis en production un par un :
+**v1.0** = toutes les user stories (US01 à US21 et US23), livrée en **6 lots** mis en production un par un :
 
 - **0.1** : socle et Numbers (dont hors ligne et synchronisation) ;
 - **0.2** : Cards, Images, Words ;
@@ -49,7 +49,7 @@ Après la v1.0 : **1.1**, application de bureau (lot 7, US22).
 ## 5. Exigences clés
 
 - **Disciplines Memory League** : EF01 à EF06, formats et scores identiques à Memory League (RG01 à RG14), mode personnalisé EF07.
-- **Déroulé d'un essai** : chronomètre, navigation et saisie du rappel (EF08, EF09), correction (EF10), abandon (EF11).
+- **Déroulé d'un essai** : temps de préparation avant la mémorisation et avant le rappel (EF23, RG25), chronomètre, navigation et saisie du rappel (EF08, EF09), correction (EF10), abandon (EF11).
 - **Suivi** : historique immuable (EF13, RG18), progression (EF14), points IAM (EF15), analyse des erreurs (EF16), lien erreurs → images (EF19).
 - **Transverses** : interface FR/EN (EF20), synchronisation (EF21), application de bureau (EF22).
 - **Non fonctionnelles** : chronomètre à la ms (ENF01), **hors ligne** (ENF02), multi-appareils (ENF03), FR/EN (ENF05), **gratuit** (ENF06), aucune perte de données (ENF07), moins de 100 ms de latence (ENF08).
@@ -58,7 +58,7 @@ Après la v1.0 : **1.1**, application de bureau (lot 7, US22).
 
 ## 6. Priorisation
 
-- **Must** : les 4 disciplines sans visages, navigation, saisie, mode personnalisé, détail, historique, hors ligne, multi-appareils.
+- **Must** : les 4 disciplines sans visages, temps de préparation, navigation, saisie, mode personnalisé, détail, historique, hors ligne, multi-appareils.
 - **Should** : Names, International Names, abandon, progression, analyse des erreurs, systèmes.
 - **Could** : points IAM, révision des systèmes, interface FR/EN, application de bureau.
 
