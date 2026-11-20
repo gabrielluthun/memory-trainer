@@ -34,3 +34,7 @@ La fonction :
 | Un essai arrive entier ou pas du tout. | La fonction est du code à part entière : tests automatiques obligatoires (ES05 à ES07). |
 | Le MCD peut garder les éléments dans leur propre table (S8). | La fonction fait partie du contrat entre l'application et la base : elle doit rester compatible avec les anciennes versions de l'application encore hors ligne (point ouvert, Q3). |
 | Un seul point de contrôle pour l'envoi. | La Data API doit permettre l'appel de fonctions : à vérifier au sprint 0. |
+
+## Complément (2026-11-20, S10)
+
+Avec les droits de l'appelant, ce dernier peut aussi écrire directement dans les tables par la Data API, sans passer par la fonction. Les contrôles qui portent sur un essai entier (nombre d'éléments, sous-table, score) ne sont donc **pas** dans la fonction, mais dans des **déclencheurs différés**, qui s'appliquent quel que soit le chemin d'écriture. La décision ci-dessus reste valable. Voir l'[ADR 0017](0017-integrite-base-donnees.md).
