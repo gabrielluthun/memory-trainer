@@ -24,5 +24,6 @@ Amont : [périmètre et lots](perimetre.md), [priorisation](priorisation.md), [c
 | J9 | Lot 5 — Systèmes d'images | Spécification du lot validée, recette, release **0.5** |
 | J10 | Lot 6 — Points IAM | Spécification du lot validée, recette, release **1.0** |
 | J11 | Finalisation en production : documentation (Q4) et maintenance (Q5) | Q4 et Q5 validés |
+| J12 | Lot 7 — Application de bureau (ajouté le 2026-11-20) | Spécification du lot validée, recette, release **1.1** |
 
-Pour chaque lot de J6 à J10, l'enchaînement est le même : **spécification détaillée du lot** (mises à jour des parties 4 et 5) → validation → user stories → code → tests → recette (Q2) → release.
+Pour chaque lot de J6 à J10, puis J12, l'enchaînement est le même : **spécification détaillée du lot** (mises à jour des parties 4 et 5) → validation → user stories → code → tests → recette (Q2) → release.
