@@ -9,6 +9,7 @@ Amont : [persona](../../01-besoin/persona.md), [exigences](../../01-besoin/exige
 - Le diagramme est découpé en trois vues : **entraînement**, **suivi**, **systèmes et transverses**.
 - **12 fiches détaillées** pour les cas du lot 1 (acteurs, préconditions, scénarios, postconditions). Les autres seront rédigées avant leur lot.
 - **4 décisions** prises lors de la rédaction des fiches (CU01, CU05, CU06, CU15) : rappel de 4 minutes en mode personnalisé, abandon sans annulation, statut « Erreur externe » conservé, paramètres synchronisés.
+- **Temps de préparation** avant la mémorisation et avant le rappel (RG25, US23) : intégré à CU01, CU02, CU03 et CU05, avec 2 décisions dans CU01.
 
 ## Acteurs
 
@@ -109,8 +110,8 @@ CU17 est déclenché **automatiquement** par l'application (à l'ouverture, au r
 
 | Cas d'utilisation | Description | User stories | Exigences | Lot |
 |---|---|---|---|---|
-| **CU01** : Lancer un essai | Choisir la discipline, le mode (standard ou personnalisé) et la langue, puis démarrer. | US01 à US06, US09 | EF01 à EF07 | 1, puis 2 et 3 |
-| **CU02** : Mémoriser les éléments | Parcourir les éléments par groupes, arrêter le chronomètre plus tôt. | US07 | EF08 | 1 |
+| **CU01** : Lancer un essai | Choisir la discipline, le mode (standard ou personnalisé), la langue et les temps de préparation, puis démarrer. | US01 à US06, US09, US23 | EF01 à EF07, EF23 | 1, puis 2 et 3 |
+| **CU02** : Mémoriser les éléments | Parcourir les éléments par groupes, arrêter le chronomètre plus tôt, puis pause avant le rappel. | US07, US23 | EF08, EF23 | 1 |
 | **CU03** : Restituer les éléments | Saisir le rappel, avec insertion et suppression. | US08 | EF09 | 1 |
 | **CU04** : Consulter le résultat d'un essai | Score, temps, éléments attendus face aux réponses. | US11 | EF10, EF12 | 1 |
 | **CU05** : Abandonner un essai | Choisir entre « Garder hors statistiques », « Compter tel quel » et « Ne pas garder ». | US10 | EF11 | 1 |
@@ -145,44 +146,57 @@ Une fiche par cas du lot 1. Les fiches des autres lots seront rédigées juste a
 |---|---|
 | **Acteur** | Pratiquant |
 | **Préconditions** | L'application est ouverte. La connexion n'est pas nécessaire. Aucun essai interrompu n'attend de décision (sinon : CU06 d'abord). |
-| **Postconditions** | Un essai « en cours » est enregistré sur l'appareil, ce qui permet de détecter une interruption (RG24). |
+| **Postconditions** | La pause avant la mémorisation est passée. Rien n'est encore enregistré : l'essai « en cours » l'est au démarrage du chronomètre (CU02). |
 
 **Scénario nominal**
 1. Le pratiquant choisit la discipline Numbers.
 2. Il choisit le mode **standard** (80 chiffres, 1 minute de mémorisation, 4 minutes de rappel : RG01, RG02).
-3. L'application tire une nouvelle suite aléatoire (RG21) et prépare l'affichage avant de démarrer le chronomètre (ENF08).
-4. L'essai démarre : CU02.
+3. Il choisit la durée des deux pauses : 0, 5, 10 ou 20 s. Les dernières utilisées pour Numbers sont proposées (RG25).
+4. L'application tire une nouvelle suite aléatoire (RG21) et prépare l'affichage avant de démarrer le chronomètre (ENF08).
+5. La pause avant la mémorisation commence : seul un compte à rebours s'affiche, les chiffres sont cachés (RG25).
+6. À la fin du compte à rebours, l'essai démarre : CU02.
 
 **Scénarios alternatifs**
 - **2a. Mode personnalisé** : le pratiquant règle la durée de mémorisation et le nombre de chiffres (RG15), puis reprend à l'étape 3.
+- **5a. Pause de 0 s** : pas de compte à rebours, l'essai démarre directement : CU02.
+- **5b. Pause écourtée** : le pratiquant écourte la pause, l'essai démarre aussitôt : CU02.
+- **5c. Abandon pendant la pause** : retour à l'accueil. Rien n'est enregistré, aucune question n'est posée (RG25).
+- **5d. Interruption pendant la pause** (onglet fermé, batterie vide) : rien n'ayant été enregistré, aucun essai n'est à décider à la réouverture.
 
 Décision (2026-11-20) : en mode personnalisé, la durée de rappel reste de **4 minutes**, conformément à RG15.
+
+Décision (2026-11-20) : l'essai « en cours » est enregistré au **démarrage de la mémorisation**, et non au lancement. Une interruption pendant la pause avant la mémorisation ne laisse donc rien à décider (5d), comme l'abandon sans question (5c).
+
+Décision (2026-11-20) : les dernières durées de pause utilisées pour chaque épreuve sont gardées **avec les paramètres**, et donc synchronisées entre les appareils comme eux ([ADR 0012](../adr/0012-conflits-parametres-heure-appareil.md)).
 
 ### CU02 — Mémoriser les éléments
 
 | | |
 |---|---|
 | **Acteur** | Pratiquant |
-| **Préconditions** | Un essai vient d'être lancé (CU01). |
-| **Postconditions** | Le temps de mémorisation réellement utilisé est enregistré, à la milliseconde (RG08, ENF01). |
+| **Préconditions** | Un essai vient d'être lancé, et la pause avant la mémorisation est passée (CU01). |
+| **Postconditions** | Le temps de mémorisation réellement utilisé est enregistré, à la milliseconde (RG08, ENF01). La pause avant le rappel est passée. |
 
 **Scénario nominal**
-1. Le chronomètre de mémorisation démarre.
+1. Le chronomètre de mémorisation démarre. L'essai « en cours » est enregistré sur l'appareil, ce qui permet de détecter une interruption (RG24).
 2. L'application affiche le premier groupe de chiffres, dont la taille est réglée dans les paramètres (RG11, CU15).
 3. Le pratiquant navigue : → avance d'un groupe, ← recule, barre d'espace ou ↑ revient au début (RG09). Sur écran tactile, des équivalents sont proposés (maquettes, S12).
 4. Le pratiquant termine : → deux fois rapidement à la fin des éléments, bouton **Finished** ou touche Entrée (RG09).
-5. Le chronomètre s'arrête et le rappel commence : CU03.
+5. Le chronomètre s'arrête. La pause avant le rappel commence : seul un compte à rebours s'affiche, les chiffres sont cachés (RG25).
+6. À la fin du compte à rebours, le rappel commence : CU03.
 
 **Scénarios alternatifs**
-- **4a. Temps écoulé** : à la fin de la durée de mémorisation, le chronomètre s'arrête seul et le rappel commence (RG01).
+- **4a. Temps écoulé** : à la fin de la durée de mémorisation, le chronomètre s'arrête seul et la pause avant le rappel commence (RG01).
 - **4b. Abandon** : CU05.
+- **5a. Pause de 0 s ou écourtée** : le rappel commence directement : CU03.
+- **5b. Abandon pendant la pause** : CU05.
 
 ### CU03 — Restituer les éléments
 
 | | |
 |---|---|
 | **Acteur** | Pratiquant |
-| **Préconditions** | La mémorisation est terminée (CU02). |
+| **Préconditions** | La mémorisation et la pause avant le rappel sont terminées (CU02). |
 | **Postconditions** | L'essai est **terminé**, corrigé, enregistré sur l'appareil et **ajouté à la file d'envoi**. Il ne peut plus être modifié (RG18). |
 
 **Scénario nominal**
@@ -213,7 +227,7 @@ Décision (2026-11-20) : en mode personnalisé, la durée de rappel reste de **4
 | | |
 |---|---|
 | **Acteur** | Pratiquant |
-| **Préconditions** | Un essai est en mémorisation (CU02) ou en rappel (CU03). |
+| **Préconditions** | Un essai est en mémorisation (CU02), en pause avant le rappel (CU02) ou en rappel (CU03). Un abandon pendant la pause avant la mémorisation ne passe pas par ce cas : voir CU01, 5c (RG25). |
 | **Postconditions** | Selon le choix : essai enregistré comme abandonné, essai compté normalement, ou rien d'enregistré (RG23). |
 
 **Scénario nominal**

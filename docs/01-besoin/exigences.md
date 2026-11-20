@@ -25,6 +25,7 @@ Amont : [besoins](besoins.md), [contraintes](contraintes.md). Les règles détai
 | EF10 | **Corriger** le rappel et calculer le **score** de l'essai. | RG12, RG13, RG14 |
 | EF11 | **Abandonner un essai** en choisissant son sort, et enregistrer les essais **interrompus** par un incident extérieur. | RG23, RG24 |
 | EF12 | Afficher le **détail d'un essai** : éléments montrés, réponses, erreurs, score, temps. | RG19 |
+| EF23 | Proposer un **temps de préparation** avant la mémorisation et un autre avant le rappel, choisis au lancement de l'essai et **écourtables**. | RG25 |
 
 ### Suivi
 

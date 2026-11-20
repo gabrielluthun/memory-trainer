@@ -52,7 +52,7 @@ flowchart LR
 
 | Composant | Rôle | Technologie | Exigences |
 |---|---|---|---|
-| **Application** | Interface, déroulé des essais, correction, statistiques | SvelteKit en mode SPA, TypeScript ([ADR 0007](adr/0007-sveltekit-mode-spa.md)) | EF01 à EF22, ENF08 |
+| **Application** | Interface, déroulé des essais, correction, statistiques | SvelteKit en mode SPA, TypeScript ([ADR 0007](adr/0007-sveltekit-mode-spa.md)) | EF01 à EF23, ENF08 |
 | **Service worker** | Met l'application en cache pour qu'elle démarre sans réseau | vite-plugin-pwa et Workbox ([ADR 0008](adr/0008-service-worker-vite-plugin-pwa.md)) | ENF02 |
 | **Base locale** | Toutes les données de l'utilisateur, consultables hors ligne | Dexie.js sur IndexedDB ([ADR 0004](adr/0004-hors-ligne-sur-mesure-dexie.md)) | ENF02, ENF07 |
 | **File d'envoi** | Garde les essais à envoyer et les transmet au retour du réseau | Code maison, sur Dexie.js | RG22, ES06 |
@@ -82,7 +82,7 @@ flowchart TB
 |---|---|---|---|
 | **Présentation** | Écrans, saisie au clavier et au toucher, affichage du chronomètre | Application | Bout en bout |
 | **Application** | Enchaînement d'un essai, abandon, file d'envoi, synchronisation | Domaine, Infrastructure | Intégration |
-| **Domaine** | Règles de gestion RG01 à RG24 : formats, tirage, correction, score, points IAM | Rien | **Unitaires**, en priorité (O3) |
+| **Domaine** | Règles de gestion RG01 à RG25 : formats, pauses de préparation, tirage, correction, score, points IAM | Rien | **Unitaires**, en priorité (O3) |
 | **Infrastructure** | Accès à Dexie.js, à la Data API et à Hanko ; horloge monotone | Domaine (types seulement) | Intégration |
 
 Deux conséquences :
