@@ -155,3 +155,9 @@ Je veux retrouver mes essais et mes systèmes sur mon ordinateur, mon téléphon
 Couvre : EF21 · RG18, RG22 · ENF03
 - CA1 : un essai fait sur un appareil apparaît sur les autres après synchronisation.
 - CA2 : chaque écran d'essai s'utilise au clavier comme au toucher.
+
+### US22 — Utiliser l'application comme une application de bureau
+Je veux installer l'application sur mon ordinateur, afin de la lancer comme une application de bureau, sans passer par un onglet du navigateur.
+Couvre : EF22 · ENF02, ENF03
+- CA1 : depuis mon navigateur, j'installe l'application ; elle s'ouvre dans sa propre fenêtre, avec son icône.
+- CA2 : l'application installée garde les mêmes données, la même connexion et le même fonctionnement hors connexion que la version web.
