@@ -13,7 +13,7 @@ Amont : [contraintes](../01-besoin/contraintes.md), [planning](planning.md).
 
 ## Environnements
 
-| Environnement                                                             | Rôle                                            | Données                        |
-| ------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------ |
-| **Dev en local**                                                          | Poste local : développement et tests            | Données de test uniquement     |
-| **Prod ** **Vercel pour le front** **Supabase + PostgreSQL pour le back** | Application en ligne, utilisée pour s'entraîner | Données réelles du développeur |
+| Environnement    | Rôle                                            | Données                        |
+| ---------------- | ----------------------------------------------- | ------------------------------ |
+| **Dev en local** | Poste local : développement et tests            | Données de test uniquement     |
+| **Prod**         | Application en ligne, utilisée pour s'entraîner | Données réelles du développeur |
