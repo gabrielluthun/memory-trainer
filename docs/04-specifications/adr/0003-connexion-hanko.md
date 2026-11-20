@@ -22,5 +22,6 @@ Hanko Cloud (33/40), WorkOS AuthKit (32), Better Auth auto-hébergé (32), Desco
 | Conçu d'abord pour les passkeys (ES02). | Petite entreprise : l'offre gratuite peut changer. |
 | Open source et auto-hébergeable : en cas de changement d'offre, on peut l'héberger soi-même sans changer de solution. | Absent de la liste de Neon : configuration JWKS générique, à valider au sprint 0. |
 | Composants web utilisables avec Svelte. | Un service tiers de plus dans la chaîne de connexion. |
+| — | Projet gratuit mis en pause après une période d'inactivité, réveillé automatiquement à la première requête : la première connexion après une longue pause est plus lente ([S3](../contraintes-techniques.md)). |
 
 À vérifier au sprint 0 : que l'inscription publique peut être fermée (ES01) et que les sessions peuvent être révoquées (ES03).
