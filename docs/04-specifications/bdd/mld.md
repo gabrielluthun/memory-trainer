@@ -76,7 +76,7 @@ erDiagram
     }
 ```
 
-Les types sont **logiques** : le MPD (S10) fixera les types exacts de PostgreSQL et les contraintes.
+Les types sont **logiques**. Les types exacts de PostgreSQL et les contraintes de chaque colonne sont dans le [dictionnaire de données](dictionnaire.md).
 
 ## 3. Passage du MCD au MLD
 
