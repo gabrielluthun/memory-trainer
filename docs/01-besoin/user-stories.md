@@ -89,6 +89,16 @@ Je veux voir, après un essai, chaque élément attendu face à ma réponse, afi
 Couvre : EF12 · RG19
 - CA1 : l'écran de résultat affiche le score, le temps de mémorisation, le temps de rappel et la liste des éléments, où les erreurs sont mises en évidence avec la réponse donnée.
 
+### US23 — Me préparer avant la mémorisation et avant le rappel
+Je veux une courte pause avant la mémorisation et avant le rappel, afin de me préparer mentalement ou de faire ma pré-mémorisation.
+Couvre : EF23 · RG25
+- CA1 : au lancement d'un essai, je choisis la durée de chaque pause : 0, 5, 10 ou 20 s. Les dernières durées utilisées pour cette épreuve sont proposées.
+- CA2 : pendant une pause, seul un compte à rebours s'affiche ; aucun élément n'est visible.
+- CA3 : je peux écourter une pause : la phase suivante démarre aussitôt.
+- CA4 : avec 0 s, la phase suivante démarre directement, sans compte à rebours.
+- CA5 : les pauses ne comptent ni dans le temps de mémorisation ni dans le temps de rappel.
+- CA6 : si j'abandonne pendant la pause avant la mémorisation, rien n'est enregistré et aucune question n'est posée. Pendant la pause avant le rappel, les trois choix d'US10 me sont proposés.
+
 ## Suivi
 
 ### US12 — Consulter mon historique
