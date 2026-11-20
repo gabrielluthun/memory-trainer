@@ -1,10 +1,11 @@
 # B5 / B6 — Exigences
 
-Amont : [besoins](besoins.md), [contraintes](contraintes.md). Les règles détaillées sont dans [regles-de-gestion.md](regles-de-gestion.md). Les exigences de sécurité (ES) seront ajoutées en partie 3.
+Amont : [besoins](besoins.md), [contraintes](contraintes.md). Les règles détaillées sont dans [regles-de-gestion.md](regles-de-gestion.md). Les exigences de sécurité (ES) sont en fin de fichier.
 
 ## B5 — Exigences fonctionnelles (EF)
 
 ### Disciplines
+
 | ID | Exigence | RG liées |
 |---|---|---|
 | EF01 | Proposer la discipline **Numbers** au format Memory League. | RG01, RG02 |
@@ -16,6 +17,7 @@ Amont : [besoins](besoins.md), [contraintes](contraintes.md). Les règles détai
 | EF07 | Proposer, en plus du format standard, un **mode personnalisé** où l'on règle la durée et le nombre d'éléments. | RG15 |
 
 ### Déroulé d'un essai
+
 | ID | Exigence | RG liées |
 |---|---|---|
 | EF08 | **Chronométrer** la mémorisation et le rappel, permettre de **naviguer parmi les éléments** et de **terminer la mémorisation avant la fin** du temps imparti. | RG01, RG08, RG09, RG11 |
@@ -25,6 +27,7 @@ Amont : [besoins](besoins.md), [contraintes](contraintes.md). Les règles détai
 | EF12 | Afficher le **détail d'un essai** : éléments montrés, réponses, erreurs, score, temps. | RG19 |
 
 ### Suivi
+
 | ID | Exigence | RG liées |
 |---|---|---|
 | EF13 | Conserver et consulter l'**historique complet** des essais. | RG18, RG19 |
@@ -33,6 +36,7 @@ Amont : [besoins](besoins.md), [contraintes](contraintes.md). Les règles détai
 | EF16 | **Analyser les erreurs** de façon agrégée : éléments les plus ratés, positions, confusions fréquentes. | RG19 |
 
 ### Systèmes mnémotechniques
+
 | ID | Exigence | RG liées |
 |---|---|---|
 | EF17 | **Gérer ses systèmes d'images** : images associées aux chiffres et aux cartes, avec la taille de groupe propre à chaque système (création, consultation, modification). | RG20 |
@@ -40,6 +44,7 @@ Amont : [besoins](besoins.md), [contraintes](contraintes.md). Les règles détai
 | EF19 | **Rattacher chaque erreur** d'exercice à l'image du système concernée, et afficher ces erreurs depuis le système. | RG20 |
 
 ### Transverses
+
 | ID | Exigence | RG liées |
 |---|---|---|
 | EF20 | **Choisir la langue de l'interface** : français ou anglais. | — |
@@ -60,5 +65,18 @@ Amont : [besoins](besoins.md), [contraintes](contraintes.md). Les règles détai
 | ENF09 | Compatibilité navigateurs | Fonctionne sur les versions récentes des principaux navigateurs. |
 
 Précisions (décision) :
+
 - ENF08 : « aucune latence perceptible » = **moins de 100 ms** entre l'action (élément suivant, saisie) et l'affichage. Les contenus d'un essai (images, visages) sont chargés **avant** le début du chronomètre.
 - ENF09 : les **deux dernières versions** de Chrome, Safari (macOS et iOS), Firefox et Edge.
+
+## Exigences de sécurité (ES)
+
+Les 19 exigences **ES01 à ES19** sont détaillées dans [exigences-securite.md](../03-analyse-securite/exigences-securite.md), avec les menaces qu'elles traitent et la façon de les vérifier.
+
+| Thème | Exigences |
+|---|---|
+| Un seul compte, bien protégé | ES01 à ES03 |
+| La base fait la loi | ES04 à ES07 |
+| Rien de privé dans le repo | ES08 à ES11 |
+| Le moins de choses possible | ES12 à ES16 |
+| Toujours pouvoir revenir en arrière | ES17 à ES19 |
