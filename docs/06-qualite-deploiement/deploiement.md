@@ -72,7 +72,7 @@ Déclenchée par la fusion d'une pull request `release/X.Y.Z` ou `hotfix/X.Y.Z` 
 |---|---|---|
 | **1. Build** | Construit l'application depuis le commit fusionné | Aucun |
 | **2. Export complet** | `pg_dump` de toute la base, envoyé dans l'espace privé de R2 ; le nom du fichier porte la date et la version | Rôle de migration, écriture dans R2 |
-| **3. Migrations** | `dbmate up` : applique les migrations pas encore appliquées, chacune dans une transaction | Rôle de migration |
+| **3. Migrations** | `dbmate up` : applique les migrations pas encore appliquées, chacune dans une transaction, sous un verrou qui fait attendre une autre exécution | Rôle de migration |
 | **4. Compte autorisé** | Enregistre le compte unique dans `accounts`, s'il n'y est pas déjà ([modèle physique](../04-specifications/bdd/mpd.md)) | Rôle de migration, identifiant du compte |
 | **5. Publication** | Envoie le build à Cloudflare Pages | Jeton Cloudflare limité à Pages |
 
@@ -90,12 +90,12 @@ Chaque échec envoie un e-mail de GitHub ([sécurité du back](../05-securite/ba
 
 ## 2. Secrets de la CI
 
-| Secret | Rangé dans | Utilisé par | Droits |
-|---|---|---|---|
-| **Adresse de la base avec le rôle de migration** | Environnement `production` | Export, migrations, compte autorisé, reprise | Propriétaire des tables ; ne peut pas modifier un essai terminé ([accès aux données](../04-specifications/acces.md)) |
-| **Clé R2** | Environnement `production` | Export, reprise | Lecture et écriture sur l'espace de sauvegarde seulement |
-| **Identifiant du compte autorisé** | Environnement `production` | Compte autorisé | — |
-| **Jeton Cloudflare** | Environnement `production` | Publication | Modification de Cloudflare Pages seulement |
+| Secret | Nom dans GitHub | Rangé dans | Utilisé par | Droits |
+|---|---|---|---|---|
+| **Adresse de la base avec le rôle de migration** (connexion directe, sans pooler) | `MIGRATION_DATABASE_URL` | Environnement `production` | Export, migrations, compte autorisé, reprise | Propriétaire des tables ; ne peut pas modifier un essai terminé ([accès aux données](../04-specifications/acces.md)) |
+| **Clé R2**, avec l'adresse et le nom de l'espace | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT`, `R2_BUCKET` | Environnement `production` | Export, reprise | Lecture et écriture sur l'espace de sauvegarde seulement |
+| **Identifiant du compte autorisé** | `AUTHORIZED_ACCOUNT_ID` | Environnement `production` | Compte autorisé | — |
+| **Jeton Cloudflare**, avec l'identifiant du compte | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | Environnement `production` | Publication | Modification de Cloudflare Pages seulement |
 
 Aucun de ces secrets n'est sur le poste du développeur ([surface d'attaque](../05-securite/surface-attaque.md)). La procédure en cas de fuite est dans la [sécurité de la base](../05-securite/bdd.md), section 3.
 
