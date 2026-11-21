@@ -8,9 +8,9 @@ Amont : [surface d'attaque](surface-attaque.md), [défense en profondeur](defens
 - **Des en-têtes de sécurité sur chaque réponse**, envoyés par Cloudflare Pages : HTTPS imposé, politique de sécurité du contenu (CSP), interdiction d'être affiché dans un cadre, permissions limitées (section 1).
 - **Les scripts ne viennent que de l'application** ; les styles en ligne sont autorisés (décision ci-dessous).
 - **Aucun texte n'est inséré comme du HTML** : Svelte échappe tout par défaut, et le lint interdit `{@html}` (ES12).
-- **Les données de l'appareil ne sont pas chiffrées** : elles sont peu sensibles, et protégées par le verrouillage de l'appareil (MEN12, risque accepté). Le stockage du jeton de session est traité en SE6.
+- **Les données de l'appareil ne sont pas chiffrées** : elles sont peu sensibles, et protégées par le verrouillage de l'appareil (MEN12, risque accepté). Le stockage du jeton de session est traité en [sécurité du back](back.md).
 
-## Décision prise pour SE5 
+## Décision prise 
 
 | Décision | Choix du développeur | Exigences |
 |---|---|---|
@@ -26,7 +26,7 @@ Envoyés sur chaque réponse par Cloudflare Pages, à partir d'un fichier `_head
 | **Content-Security-Policy** | Voir section 2 | N'autorise que ce dont l'application a besoin | ES13, ES15 |
 | **X-Content-Type-Options** | `nosniff` | Le navigateur ne devine pas le type d'un fichier : un fichier texte ne peut pas être exécuté comme un script | ES13 |
 | **Referrer-Policy** | `no-referrer` | Aucune adresse de l'application n'est envoyée à un autre site | ES15 |
-| **Permissions-Policy** | `camera=(), microphone=(), geolocation=(), payment=(), usb=(), screen-wake-lock=(self), publickey-credentials-get=(self), publickey-credentials-create=(self)` | Seules les fonctions utiles sont permises : écran gardé allumé (S3) et passkeys | ES13 |
+| **Permissions-Policy** | `camera=(), microphone=(), geolocation=(), payment=(), usb=(), screen-wake-lock=(self), publickey-credentials-get=(self), publickey-credentials-create=(self)` | Seules les fonctions utiles sont permises : écran gardé allumé ([contraintes techniques](../04-specifications/contraintes-techniques.md)) et passkeys | ES13 |
 | **Cross-Origin-Opener-Policy** | `same-origin` | Une autre page ouverte depuis l'application ne peut pas la piloter | ES13 |
 
 L'application est publiée sur un sous-domaine `pages.dev`, gratuit (ENF06). Le domaine `.dev` impose déjà HTTPS dans les navigateurs ; l'en-tête HSTS le confirme.
@@ -37,7 +37,7 @@ L'application est publiée sur un sous-domaine `pages.dev`, gratuit (ENF06). Le 
 |---|---|---|
 | `default-src` | `'self'` | Par défaut, uniquement l'application |
 | `script-src` | `'self'` et l'empreinte du script de démarrage de SvelteKit | Aucun script d'un autre site, aucun script injecté |
-| `style-src` | `'self' 'unsafe-inline'` | Fichiers CSS de l'application, et styles en ligne (décision SE5) |
+| `style-src` | `'self' 'unsafe-inline'` | Fichiers CSS de l'application, et styles en ligne (décision ci-dessus) |
 | `font-src` | `'self'` | Polices auto-hébergées ([ADR 0020](../04-specifications/adr/0020-polices-auto-hebergees.md)) |
 | `img-src` | `'self' data: blob:` | Images de l'application ; `data:` et `blob:` pour les icônes générées |
 | `connect-src` | `'self'`, l'adresse de la Data API de Neon, l'adresse de Hanko | Le code ne peut envoyer des données qu'à ces deux services, même s'il était piraté (MEN06) |
@@ -67,7 +67,7 @@ Test prévu par ES12 : un texte contenant `<script>` s'affiche tel quel.
 |---|---|---|---|
 | **IndexedDB** (Dexie.js) | Essais, paramètres, file d'envoi, essai en cours, repère de réception | Faible | Isolé par le navigateur (une seule origine) ; verrouillage de l'appareil |
 | **Cache du service worker** | Fichiers de l'application et polices | Aucun | Uniquement les fichiers de l'application ; **jamais les réponses de la Data API** |
-| **Jeton de session** | Jeton Hanko | Moyen | Traité en [SE6](back.md) |
+| **Jeton de session** | Jeton Hanko | Moyen | Traité en [sécurité du back](back.md) |
 
 Les données de l'appareil ne sont pas chiffrées : elles sont peu sensibles, et un appareil perdu est un risque faible, accepté (MEN12). La déconnexion ne vide pas la base locale : l'application reste utilisable hors ligne avec les essais déjà enregistrés.
 
@@ -84,7 +84,7 @@ Les données de l'appareil ne sont pas chiffrées : elles sont peu sensibles, et
 |---|---|---|
 | **Versions figées** | Fichier de verrouillage commité ; installation par `npm ci` dans la CI | ES14 |
 | **Audit** | `npm audit` dans la CI ; alertes de vulnérabilité de GitHub activées | ES14 |
-| **Peu de dépendances** | Celles du benchmark seulement ; chaque ajout est justifié | ES14, [SE3](surface-attaque.md) |
+| **Peu de dépendances** | Celles du benchmark seulement ; chaque ajout est justifié | ES14, [surface d'attaque](surface-attaque.md) |
 | **Rien depuis un CDN** | Tout est inclus dans le build : aucun script ni police chargé d'un autre site | ES15 |
 
 ## 7. Service worker
@@ -93,7 +93,7 @@ Les données de l'appareil ne sont pas chiffrées : elles sont peu sensibles, et
 |---|---|
 | Ne met en cache que les fichiers de l'application, listés au build | Aucune donnée ni aucun jeton dans son cache |
 | Servi depuis l'application, sur sa propre origine | Il ne peut pas être remplacé par un autre site (`worker-src 'self'`) |
-| Une nouvelle version n'est jamais appliquée pendant un essai ([S5](../04-specifications/uml/sequences.md)) | Pas de rechargement au milieu d'un rappel |
+| Une nouvelle version n'est jamais appliquée pendant un essai ([séquences](../04-specifications/uml/sequences.md)) | Pas de rechargement au milieu d'un rappel |
 
 ## Points ouverts
 
