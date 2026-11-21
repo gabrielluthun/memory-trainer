@@ -28,6 +28,7 @@ Aucun commit direct sur `main` ni sur `develop`.
 ## Versions
 
 - **SemVer** : `MAJEUR.MINEUR.CORRECTIF`, tags préfixés `v` (ex. `v0.1.0`).
+- **0.0.1** : premier déploiement, vide, du sprint 0 (le socle).
 - Une version mineure par lot : 0.1.0 à 0.5.0, puis **1.0.0** au lot 6 ([P2](perimetre.md)). Les hotfix incrémentent le correctif (ex. 0.1.1).
 
 ## Commits
