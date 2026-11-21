@@ -32,19 +32,19 @@ Amont : [cas d'utilisation](cas-utilisation.md), [architecture](../architecture.
 | **Conflit sur les paramètres** | L'heure de l'appareil où la modification a été faite. La plus récente gagne. | [ADR 0012](../adr/0012-conflits-parametres-heure-appareil.md), SEQ05 |
 | **Enregistrement de l'essai en cours** | Toutes les N secondes, plus à chaque changement de phase. | SEQ02, SEQ03 |
 
-## Hypothèses à valider
+## Valeurs retenues (validées le 2026-11-21)
 
-> Hypothèse à valider : **N = 2 secondes** pour l'enregistrement de l'essai en cours. L'essai est aussi enregistré quand l'onglet passe en arrière-plan ou se ferme (événements `visibilitychange` et `pagehide`), ce qui réduit encore la perte en cas d'interruption.
+> Décision (2026-11-21) : **N = 2 secondes** pour l'enregistrement de l'essai en cours. L'essai est aussi enregistré quand l'onglet passe en arrière-plan ou se ferme (événements `visibilitychange` et `pagehide`), ce qui réduit encore la perte en cas d'interruption.
 
-> Hypothèse à valider : la synchronisation est relancée **toutes les 5 minutes** tant que l'application est ouverte. Avec une heure d'usage par jour, Neon reste éveillé environ 35 heures par mois, sous la limite de 100 heures ([S3](../contraintes-techniques.md)).
+> Décision (2026-11-21) : la synchronisation est relancée **toutes les 5 minutes** tant que l'application est ouverte. Avec une heure d'usage par jour, Neon reste éveillé environ 35 heures par mois, sous la limite de 100 heures ([S3](../contraintes-techniques.md)).
 
-> Hypothèse à valider : la réception se fait par **pages de 50 essais**, et le Worker sauvegarde **au plus 500 essais** par exécution, pour rester sous les 10 ms de calcul. S'il en reste, la sauvegarde suivante continue.
+> Décision (2026-11-21) : la réception se fait par **pages de 50 essais**, et le Worker sauvegarde **au plus 500 essais** par exécution, pour rester sous les 10 ms de calcul. S'il en reste, la sauvegarde suivante continue.
 
-> Hypothèse à valider : un essai **refusé par la base** (valeur hors bornes, ES07) est marqué « refusé » sur l'appareil, reste consultable, et est signalé au pratiquant. La file d'envoi continue avec les essais suivants, au lieu de rester bloquée. Ce cas révèle un défaut de l'application.
+> Décision (2026-11-21) : un essai **refusé par la base** (valeur hors bornes, ES07) est marqué « refusé » sur l'appareil, reste consultable, et est signalé au pratiquant. La file d'envoi continue avec les essais suivants, au lieu de rester bloquée. Ce cas révèle un défaut de l'application.
 
-> Hypothèse à valider : les paramètres sont envoyés eux aussi par une fonction SQL, qui ne remplace les valeurs que si la modification reçue est plus récente.
+> Décision (2026-11-21) : les paramètres sont envoyés par la fonction SQL `save_settings`, qui ne remplace les valeurs que si la modification reçue est plus récente ([ADR 0018](../adr/0018-roles-et-regles-acces.md)).
 
-> Hypothèse à valider : une nouvelle version de l'application **n'est jamais appliquée pendant un essai**. Comportement exact de la mise à jour fixé en Q3.
+> Décision (2026-11-21) : une nouvelle version de l'application **n'est jamais appliquée pendant un essai**. Comportement exact de la mise à jour fixé en Q3.
 
 ## Participants
 
@@ -100,7 +100,7 @@ sequenceDiagram
 |---|---|
 | **Aucun réseau nécessaire** | L'application, les données et l'historique viennent de l'appareil. La connexion n'est demandée qu'au moment de synchroniser. |
 | **Déclencheurs suivants de la synchronisation** | Retour du réseau, fin d'un essai, et toutes les 5 minutes tant que l'application est ouverte (CU17). |
-| **Mise à jour** | Une nouvelle version téléchargée n'est pas appliquée pendant un essai (hypothèse ci-dessus). |
+| **Mise à jour** | Une nouvelle version téléchargée n'est pas appliquée pendant un essai (valeur retenue ci-dessus). |
 
 ## 2. SEQ02 — Essai Numbers
 
@@ -365,7 +365,7 @@ sequenceDiagram
 |---|---|
 | **Réseau perdu en cours de route** | La synchronisation s'arrête. Les essais non confirmés restent dans la file : le prochain envoi les rejoue sans doublon. |
 | **Jeton refusé** (session expirée entre-temps) | Connexion (SEQ04), puis reprise au début. |
-| **Essai refusé par la base** (ES07) | L'essai est marqué « refusé » sur l'appareil, signalé, et la file continue (hypothèse ci-dessus). |
+| **Essai refusé par la base** (ES07) | L'essai est marqué « refusé » sur l'appareil, signalé, et la file continue (valeur retenue ci-dessus). |
 | **Neon en veille** | La première requête le réveille : la synchronisation est un peu plus lente, sans action manuelle. |
 
 ### Points clés
