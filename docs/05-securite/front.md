@@ -10,7 +10,7 @@ Amont : [surface d'attaque](surface-attaque.md), [défense en profondeur](defens
 - **Aucun texte n'est inséré comme du HTML** : Svelte échappe tout par défaut, et le lint interdit `{@html}` (ES12).
 - **Les données de l'appareil ne sont pas chiffrées** : elles sont peu sensibles, et protégées par le verrouillage de l'appareil (MEN12, risque accepté). Le stockage du jeton de session est traité en SE6.
 
-## Décision prise pour SE5 (2026-11-21)
+## Décision prise pour SE5 
 
 | Décision | Choix du développeur | Exigences |
 |---|---|---|
@@ -52,12 +52,12 @@ Les adresses exactes de la Data API et de Hanko sont connues au sprint 0.
 
 ## 3. Affichage sans injection (XSS)
 
-| Mesure | Comment | Exigences |
-|---|---|---|
-| **Texte échappé** | Svelte affiche toute valeur comme du texte : les mots, prénoms et réponses saisies ne peuvent pas devenir du HTML | ES12 |
-| **`{@html}` interdit** | Règle de lint `svelte/no-at-html-tags`, en erreur dans la CI | ES12 |
+| Mesure                                      | Comment                                                                                                           | Exigences  |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ---------- |
+| **Texte échappé**                           | Svelte affiche toute valeur comme du texte : les mots, prénoms et réponses saisies ne peuvent pas devenir du HTML | ES12       |
+| `{@html}` **interdit**                      | Règle de lint `svelte/no-at-html-tags`, en erreur dans la CI                                                      | ES12       |
 | **Pas de code construit à partir de texte** | Ni `eval`, ni `new Function`, ni gestionnaire d'événement écrit dans une chaîne ; la CSP le bloque de toute façon | ES12, ES13 |
-| **Contenus importés** | Les listes de mots et de prénoms (lots 2 et 3) sont traitées comme du texte, jamais comme du HTML | ES12 |
+| **Contenus importés**                       | Les listes de mots et de prénoms (lots 2 et 3) sont traitées comme du texte, jamais comme du HTML                 | ES12       |
 
 Test prévu par ES12 : un texte contenant `<script>` s'affiche tel quel.
 
