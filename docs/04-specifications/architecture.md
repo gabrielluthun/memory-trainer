@@ -125,10 +125,12 @@ Le score est calculé sur l'appareil, car l'essai doit fonctionner hors ligne. L
 
 | Environnement | Front | Base | Données |
 |---|---|---|---|
-| **Dev local** | Serveur de développement Vite | Branche `dev` de Neon | Données de test fictives (ES10) |
-| **Prod** | Cloudflare Pages | Branche principale de Neon | Données réelles |
+| **Dev local** | Serveur de développement Vite (`http://localhost:5173`) | Branche `dev` de Neon | Données de test fictives (ES10) |
+| **Prod** | Cloudflare Pages (`https://memory-trainer-34d.pages.dev`) | Branche `production` de Neon | Données réelles |
 
 > Décision : la base de dev est une **branche Neon** (gratuite, copie isolée de la structure), plutôt qu'un PostgreSQL local. Mise en place au sprint 0.
+
+> Décision : une fois que la production contient de vraies données, la branche `dev` n'est **jamais** recréée ni réinitialisée depuis la production avec ses données (ES10).
 
 ## 8. Ce qui est décidé plus tard
 
