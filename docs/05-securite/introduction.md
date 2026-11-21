@@ -39,7 +39,7 @@ Amont : [statut RGPD](../03-analyse-securite/rgpd.md), [menaces](../03-analyse-s
 | **STRAT01** : La base fait la loi | Le front peut être lu et contourné. Les règles RLS, les contraintes et les déclencheurs de la base décident de tout. | ES04 à ES07 |
 | **STRAT02** : Rien de privé dans le repo | Ni secret ni donnée réelle ; un scan bloque les commits et les pushs fautifs. | ES08 à ES11 |
 | **STRAT03** : Un seul compte, bien protégé | Inscription fermée, passkey, sessions révocables, compte autorisé seul accepté par la base. | ES01 à ES03 |
-| **STRAT04** : Le moins de choses possible | Peu de dépendances, peu de services, aucun moyen de paiement, aucune ressource tierce (polices auto-hébergées). | ES12 à ES16 |
+| **STRAT04** : Le moins de choses possible | Peu de dépendances, peu de services, un seul moyen de paiement (Cloudflare, exigé par R2), aucune ressource tierce (polices auto-hébergées). | ES12 à ES16 |
 | **STRAT05** : Toujours pouvoir revenir en arrière | Sauvegarde quotidienne chez un autre fournisseur, export complet, restauration testée à chaque lot. | ES17 à ES19 |
 | **Défense en profondeur** | Chaque menace à risque fort a **au moins deux protections indépendantes**. | [défense en profondeur](defense-en-profondeur.md) |
 | **Refus par défaut** | Tout est interdit tant qu'une règle ne l'autorise pas : RLS sur chaque table, droits retirés à tous puis donnés un par un. | ES04, [accès aux données](../04-specifications/acces.md) |
