@@ -1,0 +1,3 @@
+# Personal app: no indexing.
+User-agent: *
+Disallow: /
