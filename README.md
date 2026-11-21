@@ -6,7 +6,7 @@ Train the six Memory League disciplines (Numbers, Cards, Images, Words, Names, I
 
 ## Status
 
-**Design phase.** No application code yet. Next step: sprint 0 (repository, CI/CD, test setup, database, first empty deployment).
+**Sprint 0 (foundation) done.** The app is an empty page, deployed end to end at <https://memory-trainer-34d.pages.dev>. Next step: batch 0.1 (Numbers).
 
 | Part | Status |
 |---|---|
@@ -46,7 +46,35 @@ All services run on free plans. The full comparison is in the [technology benchm
 
 ## Getting started
 
-_Written at sprint 0._ It will cover: prerequisites, installation, the local `.env` file (never committed), the Neon development branch, the git hooks (`git config core.hooksPath .githooks`), and how to run the tests.
+### Prerequisites
+
+- Node.js 26 (see `.nvmrc`)
+- [gitleaks](https://github.com/gitleaks/gitleaks) and [dbmate](https://github.com/amacneil/dbmate) (`brew install gitleaks dbmate`)
+
+### Install
+
+```sh
+npm install
+```
+
+`npm install` also points git to the versioned hooks (`.githooks/`): every commit is scanned for secrets by gitleaks.
+
+### Local environment
+
+Copy `.env.example` to `.env` (ignored by git) and fill it with the values of the Neon **dev** branch and the public Hanko URL. Never put production credentials on this machine: production is only reached by the CI.
+
+### Commands
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Development server on <http://localhost:5173> |
+| `npm run test` | Unit, integration and database tests, in watch mode |
+| `npm run test:coverage` | All Vitest tests once, with the domain coverage threshold |
+| `npm run test:e2e` | End-to-end tests (Playwright) on the built app |
+| `npm run lint` / `npm run format` | Check / apply formatting and lint rules |
+| `npm run check` | Type checking |
+| `npm run db:up` / `npm run db:status` | Apply / list migrations on the dev branch (`DATABASE_URL` in `.env`) |
+| `npm run db:new <name>` | Create a new migration in `db/migrations/` |
 
 ## Deployment
 
