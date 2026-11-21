@@ -111,6 +111,6 @@ L'application n'envoie **aucun journal ni aucune mesure d'usage** (ES15) : les e
 
 | Point | Pourquoi | Quand |
 |---|---|---|
-| **Fermeture de l'inscription, révocation et durée de session chez Hanko** | Déjà relevés en [contraintes techniques](../04-specifications/contraintes-techniques.md) : à confirmer dans la console. | Sprint 0 |
-| **Contrôle de l'émetteur par la Data API** | Configuration générique des clés de Hanko chez Neon ([contraintes techniques](../04-specifications/contraintes-techniques.md)). | Sprint 0 |
-| **Notifications d'erreur des Workers** dans l'offre gratuite de Cloudflare | Si elles n'existent pas, le Worker enverra lui-même l'alerte, ou la vérification se fera à la main. | Sprint 0 |
+| **Révocation des sessions chez Hanko** | Inscription fermée et sessions de 12 heures confirmées dans la console au sprint 0. La révocation se teste avec une vraie session. | Lot 1 |
+| **Audience des jetons dans la Data API** | L'émetteur est couvert : la Data API n'accepte que les jetons signés par les clés du projet Hanko. L'audience (`aud`) sera ajoutée une fois lue dans un vrai jeton. | Lot 1 |
+| **Notifications d'erreur des Workers** dans l'offre gratuite de Cloudflare | Si elles n'existent pas, le Worker enverra lui-même l'alerte, ou la vérification se fera à la main. | Lot 1, avec le Worker |
