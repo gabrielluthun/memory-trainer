@@ -41,7 +41,7 @@ Amont : [introduction](introduction.md), [défense en profondeur](defense-en-pro
 | **Dépendances** | Seulement celles du benchmark : SvelteKit, vite-plugin-pwa, Dexie.js, composants Hanko, outils de test et de lint. Chaque ajout est justifié | Moins de code tiers, moins de risque de dépendance piratée (MEN06) | ES14 |
 | **Données** | Rien d'autre que les essais et les paramètres ; ni e-mail, ni nom, ni date de réception en base | Moins de données, moins à protéger ([dictionnaire](../04-specifications/bdd/dictionnaire.md)) | ES15 |
 | **Poste du développeur** | **Aucun identifiant de production** ; le `.env` ne contient que ceux de la branche Neon de dev | Une erreur de commande ou un poste compromis ne touche jamais la production | ES09, ES19 |
-| **Comptes des fournisseurs** | Aucun moyen de paiement ; double authentification active sur GitHub | Pas de facturation possible ; compte le plus exposé protégé ([défense en profondeur](defense-en-profondeur.md)) | ES16 |
+| **Comptes des fournisseurs** | Moyen de paiement chez Cloudflare seulement (exigé par R2) ; double authentification active sur GitHub | Facturation possible seulement chez Cloudflare, sous alertes ; compte le plus exposé protégé ([défense en profondeur](defense-en-profondeur.md)) | ES16 |
 
 ## 3. Ce qui reste volontairement ouvert
 
@@ -63,4 +63,5 @@ Amont : [introduction](introduction.md), [défense en profondeur](defense-en-pro
 | Schéma `public` seul exposé par la Data API | Console Neon |
 | Jeton par défaut des Actions en lecture seule ; actions tierces épinglées | GitHub |
 | Scan des secrets et blocage des pushs actifs | GitHub, poste du développeur |
-| Aucun moyen de paiement enregistré | Les quatre fournisseurs |
+| Aucun moyen de paiement enregistré | Neon, Hanko, GitHub |
+| Offre gratuite seule, alertes de facturation actives | Cloudflare |
