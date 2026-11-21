@@ -58,7 +58,7 @@ Les six documents de sécurité :
 | **ES13** : En-têtes de sécurité | HSTS, CSP, `nosniff`, `Referrer-Policy`, `Permissions-Policy` | [Sécurité du front](front.md) |
 | **ES14** : Dépendances maîtrisées | Versions figées, audit, alertes, actions épinglées | [Surface d'attaque](surface-attaque.md), [sécurité du front](front.md) |
 | **ES15** : Aucun traceur | Aucune ressource tierce ; aucun journal envoyé par l'application | [Surface d'attaque](surface-attaque.md), [sécurité du front](front.md), [sécurité du back](back.md) |
-| **ES16** : Aucun moyen de paiement | Aucun moyen de paiement enregistré ; alertes de consommation | [Surface d'attaque](surface-attaque.md), [sécurité du back](back.md) |
+| **ES16** : Facturation maîtrisée | Moyen de paiement chez Cloudflare seulement (exigé par R2) ; offre gratuite seule ; alertes de facturation et de consommation | [Surface d'attaque](surface-attaque.md), [sécurité du back](back.md) |
 | **ES17** : Sauvegardes externes | Export quotidien vers R2 par tâche cron ; restauration testée à chaque lot | [Sécurité de la base](bdd.md) |
 | **ES18** : Export complet | Fichiers JSON des sauvegardes, au format ouvert | [Sécurité de la base](bdd.md) |
 | **ES19** : Migrations sûres | Par la CI seulement ; export complet juste avant | [Sécurité de la base](bdd.md), [sécurité du back](back.md) |
