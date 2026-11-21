@@ -23,7 +23,7 @@ Données vérifiées le **2026-11-20**. À revérifier au sprint 0.
 | **Hanko Cloud** | 2 projets ; passkeys et double authentification incluses ; projet mis en pause après une période d'inactivité, **réveillé automatiquement** à la première requête | 1 projet, 1 utilisateur | — |
 | **Cloudflare Pages** | 500 déploiements par mois, 20 000 fichiers par site, 25 Mo par fichier, bande passante sans limite publiée | Quelques déploiements par mois ; quelques centaines de fichiers | Déploiement refusé |
 | **Cloudflare Workers** | 100 000 requêtes par jour, **10 ms de calcul** par exécution, 5 tâches planifiées par compte | 1 exécution par jour (sauvegarde) | Erreur jusqu'au lendemain |
-| **Cloudflare R2** | 10 Go par mois, 1 million d'écritures et 10 millions de lectures par mois, téléchargements gratuits | Quelques Mo par mois, environ 30 écritures par mois | Facturation impossible sans moyen de paiement (ES16) : écritures refusées |
+| **Cloudflare R2** | 10 Go par mois, 1 million d'écritures et 10 millions de lectures par mois, téléchargements gratuits | Quelques Mo par mois, environ 30 écritures par mois | Facturé au tarif de R2 : R2 exige un moyen de paiement ([ADR 0024](adr/0024-moyen-de-paiement-cloudflare-r2.md)). Alertes de facturation (ES16) |
 | **GitHub** (repo public) | Actions gratuites ; détection des secrets et blocage des push contenant un secret gratuits | Une exécution de CI par push | — |
 
 Conséquences pour la conception :
