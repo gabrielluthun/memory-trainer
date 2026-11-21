@@ -153,5 +153,5 @@ Le script `bdd/schema.sql` a été exécuté le 2026-11-20 sur **PostgreSQL 16.4
 
 | Point | Pourquoi | Quand |
 |---|---|---|
-| **`auth.user_id()` chez Neon** | Fonction de Neon qui lit le jeton. Son nom et son comportement avec les jetons Hanko sont à vérifier. | Sprint 0 |
-| **Volume sur Neon** | Mesurer la taille réelle d'un essai, index compris. | Sprint 0 |
+| ~~**`auth.user_id()` chez Neon**~~ | Vérifié au sprint 0 : même nom, renvoie du texte ; migration appliquée sur la branche `dev` (PostgreSQL 18). | Fait |
+| **Volume sur Neon** | Mesurer la taille réelle d'un essai, index compris : il faut un premier vrai essai. | Lot 1 |

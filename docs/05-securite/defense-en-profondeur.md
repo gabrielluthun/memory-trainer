@@ -20,7 +20,7 @@ Amont : [introduction](introduction.md), [menaces](../03-analyse-securite/menace
 | **Base** (Neon) | RLS sur chaque table, refus par défaut ; clés étrangères vers le seul compte autorisé ; droits minimaux par rôle ; contraintes et types ENUM ; contrôles différés de chaque essai ; essais immuables pour tous les rôles | ES04 à ES07 | [sécurité de la base](bdd.md) |
 | **Sauvegarde** (Worker, R2) | Copie quotidienne chez un autre fournisseur que la base, en lecture seule, dans un espace privé ; export complet ; restauration testée à chaque lot | ES17, ES18 | [sécurité de la base](bdd.md) |
 | **Repo et CI** (GitHub) | Scan des secrets avant chaque commit et chaque push ; secrets uniquement dans la CI, limités par tâche ; versions figées des dépendances et audit ; fusion vers `main` seulement si la CI est verte ; migrations par la CI seulement, après une sauvegarde | ES09 à ES11, ES14, ES19 | [surface d'attaque](surface-attaque.md), [sécurité du back](back.md) |
-| **Comptes des fournisseurs** | Aucun moyen de paiement ; alertes de consommation ; double authentification active sur GitHub, recommandée ailleurs (section 4) | ES16 | [sécurité du back](back.md) |
+| **Comptes des fournisseurs** | Moyen de paiement chez Cloudflare seulement (exigé par R2), offre gratuite seule ; alertes de facturation et de consommation ; double authentification active sur GitHub, recommandée ailleurs (section 4) | ES16 | [sécurité du back](back.md) |
 
 ## 2. Menaces à risque fort : au moins deux protections indépendantes
 
@@ -40,7 +40,7 @@ Amont : [introduction](introduction.md), [menaces](../03-analyse-securite/menace
 |---|---|---|---|
 | **MEN04** : Vol du compte | Moyen | Passkey, qui résiste à l'hameçonnage ; sessions limitées et révocables ; double authentification sur GitHub | Faible |
 | **MEN05** : Injection de script (XSS) | Moyen | Aucun texte inséré comme du HTML ; politique de sécurité du contenu qui bloque les scripts non prévus | Faible |
-| **MEN07** : Consommation anormale des quotas | Moyen | Aucun moyen de paiement : le service s'arrête au lieu de facturer ; alertes de consommation ; mode hors ligne en secours | Faible |
+| **MEN07** : Consommation anormale des quotas | Moyen | Aucun moyen de paiement hors de Cloudflare : le service s'arrête au lieu de facturer ; chez Cloudflare, alertes de facturation et clé R2 limitée au bucket ; alertes de consommation ; mode hors ligne en secours | Faible |
 | **MEN11** : Données réelles publiées par erreur | Moyen | Sauvegardes et exports hors du repo ; tests avec des données fictives ; relecture du diff avant `main` | Faible |
 | **MEN12** : Appareil perdu ou volé | Faible | Verrouillage de l'appareil ; révocation de toutes les sessions depuis un autre appareil | **Accepté** |
 

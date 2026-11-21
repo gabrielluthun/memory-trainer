@@ -24,7 +24,7 @@ jobs:
     environment: production
     env:
       # Must follow the PostgreSQL major version of the Neon project (checked when it is created).
-      PG_MAJOR: '17'
+      PG_MAJOR: '18'
       DBMATE_VERSION: 2.38.2
       DBMATE_SHA256: 4c6059e4e52558605d39e8c8075f3b15f96cac293043c0c71bb464d8950f235c
       PAGES_PROJECT: memory-trainer

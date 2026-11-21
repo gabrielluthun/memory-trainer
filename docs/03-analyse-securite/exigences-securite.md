@@ -45,7 +45,7 @@ Amont : [statut RGPD](rgpd.md), [menaces et stratégie](menaces.md). Aval : [exi
 | **ES13** : En-têtes de sécurité | HTTPS obligatoire (HSTS), et une politique de sécurité du contenu (CSP) qui n'autorise que les scripts de l'application. | MEN05 | Analyse des en-têtes du site en production. |
 | **ES14** : Dépendances maîtrisées | Versions figées par le fichier de verrouillage, alertes de vulnérabilité activées, chaque nouvelle dépendance justifiée. | MEN06 | Audit des dépendances dans la CI. |
 | **ES15** : Aucun traceur | Ni mesure d'audience, ni cookie tiers, ni service tiers en dehors de l'hébergeur, de la base et de la connexion (RGPD03). | — (A1) | Inspection des requêtes réseau de l'application. |
-| **ES16** : Aucun moyen de paiement | Aucun moyen de paiement enregistré chez les fournisseurs. Les alertes de consommation sont activées. | MEN07 | Contrôle des comptes fournisseurs. |
+| **ES16** : Facturation maîtrisée | Aucun moyen de paiement chez les fournisseurs, **sauf chez Cloudflare**, où R2 l'exige ([ADR 0024](../04-specifications/adr/0024-moyen-de-paiement-cloudflare-r2.md)). Chez Cloudflare : offre gratuite seulement (aucun abonnement payant), alertes de facturation activées, clé R2 limitée au seul bucket de sauvegarde. Les alertes de consommation sont activées partout. | MEN07 | Contrôle des comptes fournisseurs : moyens de paiement, abonnements, alertes. |
 
 ## 5. Toujours pouvoir revenir en arrière (STRAT05)
 

@@ -91,6 +91,7 @@ Détail : [MPD](../04-specifications/bdd/mpd.md), sections 4 à 6, et [ADR 0018]
 | **Sauvegarde en échec** | E-mail de notification sur les erreurs du Worker | Cloudflare |
 | **CI en échec** (tests, migration, publication) | E-mail de notification des Actions | GitHub |
 | **Quota qui approche** | Alertes de consommation | Neon, Cloudflare |
+| **Facturation qui démarre** | Alerte de facturation (ES16) | Cloudflare |
 | **Secret poussé par erreur** | Blocage du push, et alerte de détection des secrets | GitHub |
 | **Vulnérabilité dans une dépendance** | Alerte de sécurité des dépendances | GitHub |
 
@@ -110,6 +111,6 @@ L'application n'envoie **aucun journal ni aucune mesure d'usage** (ES15) : les e
 
 | Point | Pourquoi | Quand |
 |---|---|---|
-| **Fermeture de l'inscription, révocation et durée de session chez Hanko** | Déjà relevés en [contraintes techniques](../04-specifications/contraintes-techniques.md) : à confirmer dans la console. | Sprint 0 |
-| **Contrôle de l'émetteur par la Data API** | Configuration générique des clés de Hanko chez Neon ([contraintes techniques](../04-specifications/contraintes-techniques.md)). | Sprint 0 |
-| **Notifications d'erreur des Workers** dans l'offre gratuite de Cloudflare | Si elles n'existent pas, le Worker enverra lui-même l'alerte, ou la vérification se fera à la main. | Sprint 0 |
+| **Révocation des sessions chez Hanko** | Inscription fermée et sessions de 12 heures confirmées dans la console au sprint 0. La révocation se teste avec une vraie session. | Lot 1 |
+| **Audience des jetons dans la Data API** | L'émetteur est couvert : la Data API n'accepte que les jetons signés par les clés du projet Hanko. L'audience (`aud`) sera ajoutée une fois lue dans un vrai jeton. | Lot 1 |
+| **Notifications d'erreur des Workers** dans l'offre gratuite de Cloudflare | Si elles n'existent pas, le Worker enverra lui-même l'alerte, ou la vérification se fera à la main. | Lot 1, avec le Worker |
