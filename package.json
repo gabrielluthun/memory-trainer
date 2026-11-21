@@ -23,7 +23,11 @@
 		"test": "vitest",
 		"test:run": "vitest run",
 		"test:coverage": "vitest run --coverage",
-		"test:e2e": "playwright test"
+		"test:e2e": "playwright test",
+		"db:new": "dbmate new",
+		"db:up": "dbmate --migrations-table dbmate.schema_migrations --no-dump-schema --migration-lock up",
+		"db:down": "dbmate --migrations-table dbmate.schema_migrations --no-dump-schema down",
+		"db:status": "dbmate --migrations-table dbmate.schema_migrations status"
 	},
 	"devDependencies": {
 		"@electric-sql/pglite": "^0.5.17",
