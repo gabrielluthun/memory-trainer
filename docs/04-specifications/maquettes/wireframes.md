@@ -9,7 +9,7 @@ Amont : [cas d'utilisation](../uml/cas-utilisation.md), [user stories](../../01-
 - Chaque écran cite les **user stories** et le **cas d'utilisation** qu'il couvre (tableau ci-dessous).
 - **Mémorisation de Numbers en carrousel** : une bande de groupes qui glisse sous un cadre fixe.
 
-## Décisions prises pour S12 (2026-11-21)
+## Décisions prises pour S12
 
 | Décision | Choix du développeur | Règles |
 |---|---|---|

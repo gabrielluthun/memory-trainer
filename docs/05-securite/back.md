@@ -10,7 +10,7 @@ Amont : [surface d'attaque](surface-attaque.md), [base de données](bdd.md), [fr
 - **La CI et le Worker n'ont que les secrets et les droits** dont chaque tâche a besoin (ES11).
 - **Alertes par e-mail** des fournisseurs : échec de la sauvegarde, échec de la CI, quotas qui approchent.
 
-## Décisions prises (2026-11-21)
+## Décisions prises
 
 | Décision | Choix du développeur | Exigences |
 |---|---|---|

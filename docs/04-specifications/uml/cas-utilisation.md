@@ -163,11 +163,11 @@ Une fiche par cas du lot 1. Les fiches des autres lots seront rédigées juste a
 - **5c. Abandon pendant la pause** : retour à l'accueil. Rien n'est enregistré, aucune question n'est posée (RG25).
 - **5d. Interruption pendant la pause** (onglet fermé, batterie vide) : rien n'ayant été enregistré, aucun essai n'est à décider à la réouverture.
 
-Décision (2026-11-20) : en mode personnalisé, la durée de rappel reste de **4 minutes**, conformément à RG15.
+Décision : en mode personnalisé, la durée de rappel reste de **4 minutes**, conformément à RG15.
 
-Décision (2026-11-20) : l'essai « en cours » est enregistré au **démarrage de la mémorisation**, et non au lancement. Une interruption pendant la pause avant la mémorisation ne laisse donc rien à décider (5d), comme l'abandon sans question (5c).
+Décision : l'essai « en cours » est enregistré au **démarrage de la mémorisation**, et non au lancement. Une interruption pendant la pause avant la mémorisation ne laisse donc rien à décider (5d), comme l'abandon sans question (5c).
 
-Décision (2026-11-20) : les dernières durées de pause utilisées pour chaque épreuve sont gardées **avec les paramètres**, et donc synchronisées entre les appareils comme eux ([ADR 0012](../adr/0012-conflits-parametres-heure-appareil.md)).
+Décision : les dernières durées de pause utilisées pour chaque épreuve sont gardées **avec les paramètres**, et donc synchronisées entre les appareils comme eux ([ADR 0012](../adr/0012-conflits-parametres-heure-appareil.md)).
 
 ### CU02 — Mémoriser les éléments
 
@@ -239,7 +239,7 @@ Décision (2026-11-20) : les dernières durées de pause utilisées pour chaque 
 - **3a. Compter tel quel** : l'essai est corrigé avec les réponses déjà saisies, enregistré comme un essai normal et ajouté à la file d'envoi. Puis CU04.
 - **3b. Ne pas garder** : l'essai en cours est effacé de l'appareil. Rien n'est enregistré ni envoyé.
 
-Décision (2026-11-20) : pas d'annulation possible. Les trois choix sont la seule issue d'une demande d'abandon.
+Décision : pas d'annulation possible. Les trois choix sont la seule issue d'une demande d'abandon.
 
 ### CU06 — Décider du sort d'un essai interrompu
 
@@ -258,7 +258,7 @@ Décision (2026-11-20) : pas d'annulation possible. Les trois choix sont la seul
 - **3a. Compter tel quel** : l'essai est corrigé avec les réponses saisies avant l'interruption, puis compté normalement.
 - **3b. Ne pas garder** : l'essai est effacé de l'appareil.
 
-Décision (2026-11-20) : un essai interrompu gardé hors statistiques **conserve le statut « Erreur externe à l'application »**, pour distinguer un incident d'un abandon volontaire.
+Décision : un essai interrompu gardé hors statistiques **conserve le statut « Erreur externe à l'application »**, pour distinguer un incident d'un abandon volontaire.
 
 ### CU07 — Consulter l'historique
 
@@ -289,7 +289,7 @@ Décision (2026-11-20) : un essai interrompu gardé hors statistiques **conserve
 1. Le pratiquant choisit la langue de l'interface : français ou anglais (EF20). L'interface change sans recharger les données.
 2. Il choisit la taille des groupes pour chaque épreuve, par exemple 3 chiffres pour Numbers (RG11). Les tailles proposées et la valeur par défaut seront fixées avec les maquettes (S12).
 
-Décision (2026-11-20) : les paramètres sont **synchronisés entre les appareils**, comme les essais. Ils sont donc modifiables, contrairement aux essais : en cas de modification sur deux appareils, **la dernière modification l'emporte**.
+Décision : les paramètres sont **synchronisés entre les appareils**, comme les essais. Ils sont donc modifiables, contrairement aux essais : en cas de modification sur deux appareils, **la dernière modification l'emporte**.
 
 ### CU16 — Se connecter
 

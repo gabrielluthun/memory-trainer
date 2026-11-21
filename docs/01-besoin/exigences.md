@@ -50,7 +50,7 @@ Amont : [besoins](besoins.md), [contraintes](contraintes.md). Les règles détai
 |---|---|---|
 | EF20 | **Choisir la langue de l'interface** : français ou anglais. | — |
 | EF21 | **Retrouver ses données sur tous ses appareils** (synchronisation). | RG18, RG22 |
-| EF22 | **Installer l'application sur ordinateur** et l'utiliser comme une application de bureau, dans sa propre fenêtre (ajoutée le 2026-11-20, voir [ADR 0006](../04-specifications/adr/0006-bureau-pwa-installee.md)). | — |
+| EF22 | **Installer l'application sur ordinateur** et l'utiliser comme une application de bureau, dans sa propre fenêtre (ajoutée pendant le benchmark, voir [ADR 0006](../04-specifications/adr/0006-bureau-pwa-installee.md)). | — |
 
 ## B6 — Exigences non fonctionnelles (ENF)
 

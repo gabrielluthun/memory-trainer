@@ -12,7 +12,7 @@ Amont : [conventions et workflow Git](../02-projet/conventions.md), [architectur
 - **Mise à jour sur les appareils** : un bandeau « Nouvelle version » apparaît hors essai. Tant que la mise à jour n'est pas faite, la synchronisation attend ; la nouvelle version convertit la file d'envoi, puis l'envoie.
 - **Outils** : ESLint, Prettier et svelte-check pour le lint ; gitleaks pour le scan des secrets, en local et dans la CI.
 
-## Décisions prises (2026-11-21)
+## Décisions prises
 
 | Décision | Choix du développeur | Où |
 |---|---|---|
@@ -60,7 +60,7 @@ Déclenchés par chaque push (`develop`, `release/*`, `hotfix/*`) et par chaque 
 | **Secrets** | gitleaks sur les commits poussés | Un secret est trouvé |
 | **Build** | `vite build` | Le build échoue |
 
-> Décision (2026-11-21) : `npm audit` bloque à partir du niveau **élevé** (`--audit-level=high`). Une vulnérabilité faible ou moyenne est signalée, et traitée par la [maintenance](maintenance.md).
+> Décision : `npm audit` bloque à partir du niveau **élevé** (`--audit-level=high`). Une vulnérabilité faible ou moyenne est signalée, et traitée par la [maintenance](maintenance.md).
 
 Le jeton de ces tâches est en **lecture seule**, et elles n'ont **aucun secret** : une pull request venant d'une copie du repo ne peut rien atteindre ([sécurité du back](../05-securite/back.md)).
 
@@ -141,7 +141,7 @@ Contrôle du sprint 0 : un faux secret est bloqué par chacun des trois barrages
 | **Bandeau ignoré** | L'application continue de fonctionner, hors ligne compris. Les essais terminés s'ajoutent à la file d'envoi, mais **la synchronisation attend** la mise à jour, et le bandeau l'indique. |
 | **Après la mise à jour** | La base locale (Dexie.js) passe au nouveau format et **convertit la file d'envoi**, puis la synchronisation reprend. |
 
-> Décision (2026-11-21) : pour savoir qu'elle est périmée, l'application lit, avant chaque synchronisation, un petit fichier `version.json` publié avec le site et jamais mis en cache. Si sa version diffère de celle de l'appareil, la synchronisation attend. Ainsi, un ancien format n'atteint jamais la base, et un essai valide n'est jamais marqué « refusé » à cause de sa version.
+> Décision : pour savoir qu'elle est périmée, l'application lit, avant chaque synchronisation, un petit fichier `version.json` publié avec le site et jamais mis en cache. Si sa version diffère de celle de l'appareil, la synchronisation attend. Ainsi, un ancien format n'atteint jamais la base, et un essai valide n'est jamais marqué « refusé » à cause de sa version.
 
 **Ce que cela impose à chaque lot** :
 - toute modification du format d'un essai arrive avec sa **conversion Dexie.js** et son test d'intégration ([stratégie de tests](tests.md)) ;

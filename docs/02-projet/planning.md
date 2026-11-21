@@ -13,7 +13,7 @@ Amont : [périmètre et lots](perimetre.md), [priorisation](priorisation.md), [c
 
 | Jalon | Contenu | Validé quand |
 |---|---|---|
-| J1 | Cadrage et besoin (parties 0 et 1) | Fait le 2026-11-20 |
+| J1 | Cadrage et besoin (parties 0 et 1) | Fait |
 | J2 | Gestion de projet (partie 2) et PRD | Partie 2 validée |
 | J3 | Sécurité, spécifications et qualité **pour le lot 1** (parties 3 à 6 : Q1 et Q3 rédigés) | Parties 3 à 5 validées, Q1 et Q3 rédigés |
 | J4 | Sprint 0 : repo, environnement, CI/CD, cadre de tests, base créée depuis le MPD, premier déploiement vide | Déploiement vide de bout en bout réussi |
@@ -24,8 +24,8 @@ Amont : [périmètre et lots](perimetre.md), [priorisation](priorisation.md), [c
 | J9 | Lot 5 — Systèmes d'images | Spécification du lot validée, release **0.5**, recette réussie |
 | J10 | Lot 6 — Points IAM | Spécification du lot validée, release **1.0**, recette réussie |
 | J11 | Finalisation en production : documentation (Q4) et maintenance (Q5) | Q4 et Q5 validés |
-| J12 | Lot 7 — Application de bureau (ajouté le 2026-11-20) | Spécification du lot validée, release **1.1**, recette réussie |
+| J12 | Lot 7 — Application de bureau | Spécification du lot validée, release **1.1**, recette réussie |
 
 Pour chaque lot de J6 à J10, puis J12, l'enchaînement est le même : **spécification détaillée du lot** (mises à jour des parties 4 et 5) → validation → user stories → code → tests → release → [recette](../06-qualite-deploiement/recette.md) en production → lot livré.
 
-> Décision (2026-11-21) : la recette se fait **en production, après la release**. Un défaut trouvé à la recette est corrigé par un hotfix (`X.Y.1`). Ordre modifié pendant la partie 6, partie 2 revalidée sur ce point.
+> Décision : la recette se fait **en production, après la release**. Un défaut trouvé à la recette est corrigé par un hotfix (`X.Y.1`). Ordre modifié pendant la partie 6, partie 2 revalidée sur ce point.

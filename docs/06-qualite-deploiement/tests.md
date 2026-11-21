@@ -10,7 +10,7 @@ Amont : [objectifs](../02-projet/objectifs.md) (O3), [règles de gestion](../01-
 - **Couverture contrôlée deux fois** : un seuil bloquant dans la CI sur le domaine, et chaque règle de gestion reliée à ses tests par son identifiant.
 - **Tout tourne dans la CI**, sauf les tests du client de la Data API, qui ont besoin de la branche Neon de dev. Les vrais appareils sont vérifiés à la [recette](recette.md), en production.
 
-## Décisions prises (2026-11-21)
+## Décisions prises
 
 | Décision | Choix du développeur | Où |
 |---|---|---|
@@ -34,7 +34,7 @@ Amont : [objectifs](../02-projet/objectifs.md) (O3), [règles de gestion](../01-
 
 Les tests de la base sont construits à partir des migrations : ils vérifient donc aussi que chaque migration s'applique sur une base vide (ES19).
 
-> Décision (2026-11-21) : dans les tests de bout en bout, la **Data API et Hanko sont simulés** en interceptant les requêtes du navigateur (fonction `page.route` de Playwright). La CI n'a ainsi aucun secret. La vraie connexion et la vraie synchronisation sont vérifiées à la recette en production.
+> Décision : dans les tests de bout en bout, la **Data API et Hanko sont simulés** en interceptant les requêtes du navigateur (fonction `page.route` de Playwright). La CI n'a ainsi aucun secret. La vraie connexion et la vraie synchronisation sont vérifiées à la recette en production.
 
 ### Exigences vérifiées par les tests
 
@@ -52,7 +52,7 @@ Les tests de la base sont construits à partir des migrations : ils vérifient d
 | **ES13** : En-têtes de sécurité | Analyse des en-têtes du site publié | [Recette](recette.md), en production |
 | **ES14** : Dépendances maîtrisées | `npm audit` | CI ([déploiement](deploiement.md)) |
 
-> Décision (2026-11-21) : la mesure de latence (ENF08) est **non bloquante** dans la CI, car les machines partagées de GitHub donnent des temps variables. Elle signale une régression ; la vraie mesure est faite à la recette, sur les appareils.
+> Décision : la mesure de latence (ENF08) est **non bloquante** dans la CI, car les machines partagées de GitHub donnent des temps variables. Elle signale une régression ; la vraie mesure est faite à la recette, sur les appareils.
 
 ## 2. TDD : sur quel périmètre et pourquoi
 
@@ -70,7 +70,7 @@ Cycle suivi : un test qui échoue, le code le plus simple qui le fait passer, pu
 
 **Seuil bloquant** : la CI échoue si la couverture du domaine descend sous le seuil (mesure de Vitest, lignes et branches).
 
-> Décision (2026-11-21) : seuil de **90 %** des lignes et des branches, sur la couche Domaine seulement.
+> Décision : seuil de **90 %** des lignes et des branches, sur la couche Domaine seulement.
 
 **Traçabilité** : chaque test d'une règle porte son identifiant dans son nom, par exemple `RG12 — un chiffre juste à la mauvaise position ne rapporte rien`. Une recherche de `RG12` dans les tests donne donc tous ses tests. Le tableau ci-dessous est tenu à jour à chaque lot.
 

@@ -10,7 +10,7 @@ Amont : [user stories](../01-besoin/user-stories.md) (critères d'acceptation), 
 - **Un procès-verbal par lot**, dans ce fichier (section 5). Le lot est livré quand tous les TR sont réussis et que les 8 livrables sont là.
 - **Un défaut trouvé à la recette donne un hotfix** (`X.Y.1`), puis les TR concernés sont refaits.
 
-## Décisions prises (2026-11-21)
+## Décisions prises
 
 | Décision | Choix du développeur | Conséquence |
 |---|---|---|
