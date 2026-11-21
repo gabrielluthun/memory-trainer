@@ -1,0 +1,93 @@
+import prettier from 'eslint-config-prettier';
+import path from 'node:path';
+import js from '@eslint/js';
+import svelte from 'eslint-plugin-svelte';
+import { defineConfig, includeIgnoreFile } from 'eslint/config';
+import globals from 'globals';
+import ts from 'typescript-eslint';
+
+const gitignorePath = path.resolve(import.meta.dirname, '.gitignore');
+
+/**
+ * Layered architecture (ADR 0019): each layer may only import the layers below it.
+ * Presentation -> Application -> Domain ; Infrastructure -> Domain (types only).
+ */
+// Matches `#lib/<layer>/...` as well as relative paths such as `../<layer>/...`.
+const layers = (...names) => `(^|/)(${names.join('|')})(/|$)`;
+const forbid = (...names) => ({
+	'no-restricted-imports': [
+		'error',
+		{
+			patterns: [
+				{
+					regex: layers(...names),
+					message: 'This import breaks the layered architecture (ADR 0019).'
+				}
+			]
+		}
+	]
+});
+
+export default defineConfig(
+	includeIgnoreFile(gitignorePath),
+	js.configs.recommended,
+	ts.configs.recommendedTypeChecked,
+	svelte.configs.recommended,
+	prettier,
+	svelte.configs.prettier,
+	{
+		languageOptions: {
+			parserOptions: { projectService: true },
+			globals: { ...globals.browser, ...globals.node }
+		},
+		rules: {
+			// typescript-eslint strongly recommend that you do not use the no-undef lint rule on TypeScript projects.
+			// see: https://typescript-eslint.io/troubleshooting/faqs/eslint/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
+			'no-undef': 'off'
+		}
+	},
+	{
+		files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
+		languageOptions: {
+			parserOptions: {
+				projectService: true,
+				extraFileExtensions: ['.svelte'],
+				parser: ts.parser
+			}
+		}
+	},
+	{
+		// The domain is pure TypeScript: no other layer, no framework, no browser storage.
+		files: ['src/lib/domain/**'],
+		rules: {
+			'no-restricted-imports': [
+				'error',
+				{
+					patterns: [
+						{
+							regex: layers('application', 'infrastructure', 'presentation'),
+							message: 'The domain depends on nothing (ADR 0019).'
+						},
+						{
+							group: ['svelte', 'svelte/**', '$app/**', '@sveltejs/**', 'dexie', '@teamhanko/**'],
+							message: 'The domain stays framework-free (ADR 0019).'
+						}
+					]
+				}
+			]
+		}
+	},
+	{
+		files: ['src/lib/application/**'],
+		rules: forbid('infrastructure', 'presentation')
+	},
+	{
+		files: ['src/lib/infrastructure/**'],
+		rules: forbid('application', 'presentation')
+	},
+	{
+		// Root config files are plain JavaScript, outside the TypeScript project.
+		files: ['*.js'],
+		extends: [ts.configs.disableTypeChecked]
+	}
+);
