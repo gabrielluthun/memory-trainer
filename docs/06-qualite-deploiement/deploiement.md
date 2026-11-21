@@ -105,7 +105,7 @@ Aucun de ces secrets n'est sur le poste du développeur ([surface d'attaque](../
 |---|---|
 | **Fichiers** | `db/migrations/AAAAMMJJHHMMSS_nom.sql`, en SQL pur, avec une partie `-- migrate:up` et une partie `-- migrate:down`. Commités avec le code. |
 | **Première migration** | Le script testé du [modèle physique](../04-specifications/bdd/mpd.md) et de l'[accès aux données](../04-specifications/acces.md) : tables, fonctions, déclencheurs, rôles, règles RLS. |
-| **Suivi** | dbmate note chaque migration appliquée dans sa table `schema_migrations`. |
+| **Suivi** | dbmate note chaque migration appliquée dans sa table `dbmate.schema_migrations`, rangée **hors du schéma `public`** exposé par la Data API. |
 | **Testées avant la fusion** | Les tests de la base reconstruisent la base depuis les migrations (PGlite, dans la CI), puis `dbmate up` est lancé sur la branche Neon de dev, depuis le poste. |
 | **En production** | Uniquement par la CI, après l'export complet (ES19). Aucune migration à la main. |
 | **Retour en arrière** | La partie `down` sert sur le poste et sur la branche de dev. En production, on ne revient pas en arrière par `down` : on corrige par une nouvelle migration, ou on restaure l'export. |
