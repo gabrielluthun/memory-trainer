@@ -76,7 +76,7 @@ Elles seront vérifiées par la base (ES07), et écrites dans le MPD (S10).
 
 ## 5. Volume estimé
 
-> Estimation retenue (2026-11-21), à mesurer sur Neon au sprint 0 : environ **14 Ko par essai Numbers** standard, index compris. Avec la spécialisation, chaque chiffre occupe deux lignes : une dans ÉLÉMENT, une dans ÉLÉMENT_NUMBERS. C'est un peu plus que les 12 Ko estimés en [S3](../contraintes-techniques.md). À 10 essais par jour, cela fait environ **50 Mo par an** : la limite de 1 Go de Neon tient encore une vingtaine d'années. Taille exacte à mesurer avec le MPD (S10).
+> Estimation retenue, à mesurer sur Neon au sprint 0 : environ **14 Ko par essai Numbers** standard, index compris. Avec la spécialisation, chaque chiffre occupe deux lignes : une dans ÉLÉMENT, une dans ÉLÉMENT_NUMBERS. C'est un peu plus que les 12 Ko estimés en [S3](../contraintes-techniques.md). À 10 essais par jour, cela fait environ **50 Mo par an** : la limite de 1 Go de Neon tient encore une vingtaine d'années. Taille exacte à mesurer avec le MPD (S10).
 
 ## 6. Vue cible de la v1.0 (indicative)
 
@@ -147,11 +147,11 @@ flowchart LR
 
 Les **contenus** (images, mots, prénoms, visages) ne sont pas des entités : ce sont des fichiers statiques hors de la base ([S3](../contraintes-techniques.md)). Les sous-entités des lots 2 et 3 ne gardent qu'une **référence** à chaque contenu.
 
-> Décision (2026-11-21) : l'imputation d'une erreur à une entrée du système (IMPUTER, lot 5) est **stockée**. Elle pourrait aussi se déduire de la position et de la taille de groupe du système utilisé. À trancher avant le lot 5.
+> Décision : l'imputation d'une erreur à une entrée du système (IMPUTER, lot 5) est **stockée**. Elle pourrait aussi se déduire de la position et de la taille de groupe du système utilisé. À trancher avant le lot 5.
 
-> Décision (2026-11-21) : la révision des systèmes (US17, lot 5) ne garde **aucun historique**. Si un suivi des révisions est voulu, une entité s'ajoutera.
+> Décision : la révision des systèmes (US17, lot 5) ne garde **aucun historique**. Si un suivi des révisions est voulu, une entité s'ajoutera.
 
-> Décision (2026-11-21) : les standards IAM appartiennent au **compte** (SAISIR), comme le reste des données, ce qui les place sous les mêmes règles d'accès (ES04).
+> Décision : les standards IAM appartiennent au **compte** (SAISIR), comme le reste des données, ce qui les place sous les mêmes règles d'accès (ES04).
 
 ## Points ouverts
 

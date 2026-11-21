@@ -9,7 +9,7 @@ Amont : [wireframes](wireframes.md), [user stories](../../01-besoin/user-stories
 - **Atkinson Hyperlegible** partout : une police conçue pour que les chiffres ne se confondent jamais (1 et 7, 3 et 8, 0 et 6).
 - **Mode sombre** pour chaque écran (ENF04) : une nuit bleue, pas un gris neutre, avec les mêmes rôles de couleur.
 
-## Décisions prises pour S13 (2026-11-21)
+## Décisions prises pour S13
 
 | Décision | Choix du développeur |
 |---|---|

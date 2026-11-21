@@ -23,7 +23,7 @@ Amont : [cas d'utilisation](cas-utilisation.md), [architecture](../architecture.
 | **SEQ06** : Sauvegarde | Export quotidien et incrémental vers R2 | CU19 | ES17, ES18 |
 | **SEQ07** : Déploiement | Pull request, tests, migrations, publication | — | ES09, ES11, ES14, ES19 |
 
-## Décisions prises pour S5 (2026-11-20)
+## Décisions prises pour S5
 
 | Décision | Choix du développeur | Où |
 |---|---|---|
@@ -32,19 +32,19 @@ Amont : [cas d'utilisation](cas-utilisation.md), [architecture](../architecture.
 | **Conflit sur les paramètres** | L'heure de l'appareil où la modification a été faite. La plus récente gagne. | [ADR 0012](../adr/0012-conflits-parametres-heure-appareil.md), SEQ05 |
 | **Enregistrement de l'essai en cours** | Toutes les N secondes, plus à chaque changement de phase. | SEQ02, SEQ03 |
 
-## Valeurs retenues (validées le 2026-11-21)
+## Valeurs retenues
 
-> Décision (2026-11-21) : **N = 2 secondes** pour l'enregistrement de l'essai en cours. L'essai est aussi enregistré quand l'onglet passe en arrière-plan ou se ferme (événements `visibilitychange` et `pagehide`), ce qui réduit encore la perte en cas d'interruption.
+> Décision : **N = 2 secondes** pour l'enregistrement de l'essai en cours. L'essai est aussi enregistré quand l'onglet passe en arrière-plan ou se ferme (événements `visibilitychange` et `pagehide`), ce qui réduit encore la perte en cas d'interruption.
 
-> Décision (2026-11-21) : la synchronisation est relancée **toutes les 5 minutes** tant que l'application est ouverte. Avec une heure d'usage par jour, Neon reste éveillé environ 35 heures par mois, sous la limite de 100 heures ([S3](../contraintes-techniques.md)).
+> Décision : la synchronisation est relancée **toutes les 5 minutes** tant que l'application est ouverte. Avec une heure d'usage par jour, Neon reste éveillé environ 35 heures par mois, sous la limite de 100 heures ([S3](../contraintes-techniques.md)).
 
-> Décision (2026-11-21) : la réception se fait par **pages de 50 essais**, et le Worker sauvegarde **au plus 500 essais** par exécution, pour rester sous les 10 ms de calcul. S'il en reste, la sauvegarde suivante continue.
+> Décision : la réception se fait par **pages de 50 essais**, et le Worker sauvegarde **au plus 500 essais** par exécution, pour rester sous les 10 ms de calcul. S'il en reste, la sauvegarde suivante continue.
 
-> Décision (2026-11-21) : un essai **refusé par la base** (valeur hors bornes, ES07) est marqué « refusé » sur l'appareil, reste consultable, et est signalé au pratiquant. La file d'envoi continue avec les essais suivants, au lieu de rester bloquée. Ce cas révèle un défaut de l'application.
+> Décision : un essai **refusé par la base** (valeur hors bornes, ES07) est marqué « refusé » sur l'appareil, reste consultable, et est signalé au pratiquant. La file d'envoi continue avec les essais suivants, au lieu de rester bloquée. Ce cas révèle un défaut de l'application.
 
-> Décision (2026-11-21) : les paramètres sont envoyés par la fonction SQL `save_settings`, qui ne remplace les valeurs que si la modification reçue est plus récente ([ADR 0018](../adr/0018-roles-et-regles-acces.md)).
+> Décision : les paramètres sont envoyés par la fonction SQL `save_settings`, qui ne remplace les valeurs que si la modification reçue est plus récente ([ADR 0018](../adr/0018-roles-et-regles-acces.md)).
 
-> Décision (2026-11-21) : une nouvelle version de l'application **n'est jamais appliquée pendant un essai**. Comportement exact de la mise à jour fixé en Q3.
+> Décision : une nouvelle version de l'application **n'est jamais appliquée pendant un essai**. Comportement exact de la mise à jour fixé en Q3.
 
 ## Participants
 

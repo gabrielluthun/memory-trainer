@@ -162,7 +162,7 @@ Aucun chiffre de satisfaction 2026 : l'enquête Stack Overflow 2026 ne couvre pl
 
 ## 7. Choix du développeur
 
-Choix faits le 2026-11-20, au vu des scores et des points faibles. Chaque choix sera consigné dans un ADR.
+Choix faits au vu des scores et des points faibles. Chaque choix sera consigné dans un ADR.
 
 | Catégorie | Choix | ADR |
 |---|---|---|

@@ -53,4 +53,4 @@ Amont : [introduction](introduction.md), [menaces](../03-analyse-securite/menace
 | **Cloudflare** | Recommandée, au choix du développeur | Remplacer le site, lire ou effacer les sauvegardes R2 |
 | **Hanko** | Recommandée, au choix du développeur | Ouvrir l'inscription, ajouter une passkey au compte |
 
-Décision (2026-11-21) : ce n'est **pas une exigence**. Elle est appliquée sur GitHub, le compte le plus exposé, et laissée au choix du développeur pour les trois autres. Si l'un d'eux est pris, les autres protections limitent les dégâts : sauvegardes chez un autre fournisseur que la base, essais immuables, inscription refusée par la base même si Hanko l'ouvrait.
+Décision : ce n'est **pas une exigence**. Elle est appliquée sur GitHub, le compte le plus exposé, et laissée au choix du développeur pour les trois autres. Si l'un d'eux est pris, les autres protections limitent les dégâts : sauvegardes chez un autre fournisseur que la base, essais immuables, inscription refusée par la base même si Hanko l'ouvrait.

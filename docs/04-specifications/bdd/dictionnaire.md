@@ -109,13 +109,13 @@ Les listes sont des types ENUM ([ADR 0017](../adr/0017-integrite-base-donnees.md
 | Langue du contenu, cartes, images, mots, prénoms, visages | Arrivent avec Cards, Images, Words et Names (lots 2 et 3). Ils seront ajoutés ici avant leur lot. |
 | Systèmes d'images, standards IAM | Lots 5 et 6. |
 
-## Valeurs retenues (validées le 2026-11-21)
+## Valeurs retenues
 
-> Décision (2026-11-21) : en mode personnalisé, le **nombre d'éléments** va de **1 à 500**. RG15 dit « de très peu d'éléments jusqu'au format standard et au-delà », sans plafond.
+> Décision : en mode personnalisé, le **nombre d'éléments** va de **1 à 500**. RG15 dit « de très peu d'éléments jusqu'au format standard et au-delà », sans plafond.
 
-> Décision (2026-11-21) : en mode personnalisé, la **durée de mémorisation** va de **1 seconde à 1 heure** (3 600 000 ms). RG15 ne fixe pas de bornes.
+> Décision : en mode personnalisé, la **durée de mémorisation** va de **1 seconde à 1 heure** (3 600 000 ms). RG15 ne fixe pas de bornes.
 
-> Décision (2026-11-21) : la **taille des groupes** va de **1 à 10** chiffres. Les tailles proposées et la valeur par défaut seront fixées avec les maquettes (S12, CU15).
+> Décision : la **taille des groupes** va de **1 à 10** chiffres. Les tailles proposées et la valeur par défaut seront fixées avec les maquettes (S12, CU15).
 
 ## Points ouverts
 

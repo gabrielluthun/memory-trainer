@@ -81,7 +81,7 @@ Aucun chiffrement supplémentaire dans l'application : les données sont de faib
 
 Volume : environ 50 Mo par an pour les exports quotidiens, très en dessous des 10 Go gratuits de R2 ([contraintes techniques](../04-specifications/contraintes-techniques.md)).
 
-Décision (2026-11-21) : **pas de copie complète planifiée** en plus du cron quotidien. Une copie complète hebdomadaire ou mensuelle par un cron GitHub Actions a été envisagée : elle aurait simplifié la restauration, mais GitHub suspend les crons d'un repo resté 60 jours sans activité, et la CI aurait gardé un accès à la production en dehors des migrations.
+Décision : **pas de copie complète planifiée** en plus du cron quotidien. Une copie complète hebdomadaire ou mensuelle par un cron GitHub Actions a été envisagée : elle aurait simplifié la restauration, mais GitHub suspend les crons d'un repo resté 60 jours sans activité, et la CI aurait gardé un accès à la production en dehors des migrations.
 
 ## 6. Restauration
 
@@ -92,7 +92,9 @@ Décision (2026-11-21) : **pas de copie complète planifiée** en plus du cron q
 3. Rejouer les fichiers dans l'ordre : les essais passent par la même logique que `submit_trial`, les doublons sont ignorés.
 4. Comparer : nombre d'essais, dernier numéro d'ordre, quelques essais au hasard.
 
-**Reprise en production** (perte ou corruption de la base) : une tâche de la CI, lancée à la main, restaure le dernier export avant migration, puis rejoue les exports quotidiens qui le suivent. Le poste du développeur n'a jamais d'accès direct à la production. Le détail de cette tâche est fixé avec le déploiement (déploiement (partie 6)) et la maintenance (maintenance (partie 6)).
+**Reprise en production** (perte ou corruption de la base) : une tâche de la CI, lancée à la main, restaure le dernier export avant migration, puis rejoue les exports quotidiens qui le suivent. Le poste du développeur n'a jamais d'accès direct à la production. Le détail de cette tâche est fixé avec le [déploiement](../06-qualite-deploiement/deploiement.md) et la [maintenance](../06-qualite-deploiement/maintenance.md).
+
+> Décision (partie 6) : **moins de 6 heures** après l'incident, la reprise se fait par l'**historique de Neon**, depuis sa console, sans perte. La tâche de la CI sert au-delà ([maintenance](../06-qualite-deploiement/maintenance.md), section 3).
 
 ## 7. Export complet (ES18)
 
@@ -114,4 +116,4 @@ L'export complet, ce sont **les fichiers JSON de R2** : un format ouvert, lisibl
 | Point | Pourquoi | Quand |
 |---|---|---|
 | **Chiffrement au repos de Neon et de R2** | À confirmer dans la documentation des fournisseurs. | Sprint 0 |
-| **Tâche de reprise en production** | Déclenchement, rôle utilisé, ordre de rejeu. | déploiement (partie 6), maintenance (partie 6) |
+| ~~**Tâche de reprise en production**~~ | Fixée : lancée à la main, rôle de migration, rejeu dans l'ordre ([maintenance](../06-qualite-deploiement/maintenance.md), section 3). | Fait |

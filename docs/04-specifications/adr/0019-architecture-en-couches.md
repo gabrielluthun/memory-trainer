@@ -5,7 +5,7 @@
 
 ## Contexte
 
-L'[architecture](../architecture.md) (S2) organise l'application en couches : présentation, application, domaine, infrastructure. Cette organisation a été validée par le développeur au point d'étape S1 à S3, le 2026-11-20, mais elle n'avait pas sa fiche. Elle conditionne le diagramme de classes ([ADR 0013](0013-organisation-code-metier.md)) et la stratégie de tests (O3 : règles de gestion couvertes par des tests automatisés).
+L'[architecture](../architecture.md) (S2) organise l'application en couches : présentation, application, domaine, infrastructure. Cette organisation a été validée par le développeur au point d'étape S1 à S3, mais elle n'avait pas sa fiche. Elle conditionne le diagramme de classes ([ADR 0013](0013-organisation-code-metier.md)) et la stratégie de tests (O3 : règles de gestion couvertes par des tests automatisés).
 
 ## Options envisagées
 

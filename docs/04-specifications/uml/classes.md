@@ -417,9 +417,9 @@ Le **Worker de sauvegarde** (SEQ06) est un programme à part, d'une seule foncti
 | **Application** | Les cas d'usage de bout en bout : essai, abandon, interruption, synchronisation | Fausses implémentations en mémoire des interfaces |
 | **Infrastructure** | `TrialMapper` (aller-retour sans perte), les transactions Dexie.js, `DataApiClient` face à une base de test | Base Neon de dev (S2, section 7) |
 
-## Valeurs retenues (validées le 2026-11-21)
+## Valeurs retenues
 
-> Décision (2026-11-21) : « → deux fois **rapidement** » (RG09) = deux appuis à moins de **400 ms** d'écart. La valeur exacte de Memory League n'est pas connue. Elle est réglable dans le code.
+> Décision : « → deux fois **rapidement** » (RG09) = deux appuis à moins de **400 ms** d'écart. La valeur exacte de Memory League n'est pas connue. Elle est réglable dans le code.
 
 ## Points ouverts
 
