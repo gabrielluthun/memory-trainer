@@ -42,6 +42,8 @@ Chaque couleur a un rôle fixe, dans les deux thèmes.
 | Chiffres à mémoriser et à saisir | Atkinson Hyperlegible Mono : chaque chiffre occupe la même place, zéro barré |
 | Corrections et score | Kalam, écriture manuscrite, réservée au stylo rouge |
 
+Dans l'application, ces polices sont **auto-hébergées** ([ADR 0020](../adr/0020-polices-auto-hebergees.md)). Google Fonts n'a servi qu'à l'export des PNG.
+
 ## Écrans
 
 | Écran | Ordinateur clair | Ordinateur sombre | Mobile clair | Mobile sombre | User stories |
