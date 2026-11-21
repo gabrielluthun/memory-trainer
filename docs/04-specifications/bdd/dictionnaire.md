@@ -45,8 +45,8 @@ Colonnes des tableaux :
 | **mode** : Mode | Liste de valeurs | `trial_mode` (section 7) | Non | — | Élémentaire | `standard` ou `custom` | RG15 |
 | **status** : Statut | Liste de valeurs | `trial_status` (section 7) | Non | — | Élémentaire | `completed`, `abandoned` ou `external_error` | RG18, RG23, RG24 |
 | **started_at** : Début de l'essai | Date et heure (instant universel), 8 octets | `timestamptz` | Non | — | Élémentaire | Heure de l'appareil, conservée telle quelle | RG19, RG22 |
-| **item_count** : Nombre d'éléments | Entier, 2 octets | `smallint` | Non | — | Élémentaire | De 1 à 500 (hypothèse ci-dessous). Numbers standard : 80. | RG02, RG15 |
-| **memorization_limit_ms** : Durée de mémorisation prévue | Entier (millisecondes), 4 octets | `integer` | Non | — | Élémentaire | De 1 000 à 3 600 000 (hypothèse ci-dessous). Numbers standard : 60 000. | RG01, RG15 |
+| **item_count** : Nombre d'éléments | Entier, 2 octets | `smallint` | Non | — | Élémentaire | De 1 à 500 (valeur retenue ci-dessous). Numbers standard : 80. | RG02, RG15 |
+| **memorization_limit_ms** : Durée de mémorisation prévue | Entier (millisecondes), 4 octets | `integer` | Non | — | Élémentaire | De 1 000 à 3 600 000 (valeur retenue ci-dessous). Numbers standard : 60 000. | RG01, RG15 |
 | **recall_limit_ms** : Durée de rappel prévue | Entier (millisecondes), 4 octets | `integer` | Non | — | Élémentaire | Égale à 240 000, dans les deux modes | RG01, RG15 |
 | **memorization_ms** : Temps de mémorisation utilisé | Entier (millisecondes), 4 octets | `integer` | Non | — | Élémentaire | De 0 à `memorization_limit_ms` | RG08, ENF01 |
 | **recall_ms** : Temps de rappel utilisé | Entier (millisecondes), 4 octets | `integer` | Non | — | Élémentaire | De 0 à `recall_limit_ms` | RG19, ENF01 |
@@ -82,7 +82,7 @@ Les réglages de chaque discipline. Clé primaire : `owner_id` et `discipline`. 
 
 | Donnée | Type | Type PostgreSQL | Vide | Défaut | Nature | Contraintes | Règles |
 |---|---|---|---|---|---|---|---|
-| **group_size** : Taille des groupes | Entier, 2 octets | `smallint` | Non | — | Élémentaire | De 1 à 10 (hypothèse ci-dessous) | RG11 |
+| **group_size** : Taille des groupes | Entier, 2 octets | `smallint` | Non | — | Élémentaire | De 1 à 10 (valeur retenue ci-dessous) | RG11 |
 | **pause_before_memorization_s** : Pause avant la mémorisation | Entier (secondes), 2 octets | `smallint` | Non | — | Élémentaire | 0, 5, 10 ou 20 | RG25 |
 | **pause_before_recall_s** : Pause avant le rappel | Entier (secondes), 2 octets | `smallint` | Non | — | Élémentaire | 0, 5, 10 ou 20 | RG25 |
 
@@ -109,13 +109,13 @@ Les listes sont des types ENUM ([ADR 0017](../adr/0017-integrite-base-donnees.md
 | Langue du contenu, cartes, images, mots, prénoms, visages | Arrivent avec Cards, Images, Words et Names (lots 2 et 3). Ils seront ajoutés ici avant leur lot. |
 | Systèmes d'images, standards IAM | Lots 5 et 6. |
 
-## Hypothèses à valider
+## Valeurs retenues (validées le 2026-11-21)
 
-> Hypothèse à valider : en mode personnalisé, le **nombre d'éléments** va de **1 à 500**. RG15 dit « de très peu d'éléments jusqu'au format standard et au-delà », sans plafond.
+> Décision (2026-11-21) : en mode personnalisé, le **nombre d'éléments** va de **1 à 500**. RG15 dit « de très peu d'éléments jusqu'au format standard et au-delà », sans plafond.
 
-> Hypothèse à valider : en mode personnalisé, la **durée de mémorisation** va de **1 seconde à 1 heure** (3 600 000 ms). RG15 ne fixe pas de bornes.
+> Décision (2026-11-21) : en mode personnalisé, la **durée de mémorisation** va de **1 seconde à 1 heure** (3 600 000 ms). RG15 ne fixe pas de bornes.
 
-> Hypothèse à valider : la **taille des groupes** va de **1 à 10** chiffres. Les tailles proposées et la valeur par défaut seront fixées avec les maquettes (S12, CU15).
+> Décision (2026-11-21) : la **taille des groupes** va de **1 à 10** chiffres. Les tailles proposées et la valeur par défaut seront fixées avec les maquettes (S12, CU15).
 
 ## Points ouverts
 
