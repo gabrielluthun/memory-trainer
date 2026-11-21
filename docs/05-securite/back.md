@@ -91,6 +91,7 @@ Détail : [MPD](../04-specifications/bdd/mpd.md), sections 4 à 6, et [ADR 0018]
 | **Sauvegarde en échec** | E-mail de notification sur les erreurs du Worker | Cloudflare |
 | **CI en échec** (tests, migration, publication) | E-mail de notification des Actions | GitHub |
 | **Quota qui approche** | Alertes de consommation | Neon, Cloudflare |
+| **Facturation qui démarre** | Alerte de facturation (ES16) | Cloudflare |
 | **Secret poussé par erreur** | Blocage du push, et alerte de détection des secrets | GitHub |
 | **Vulnérabilité dans une dépendance** | Alerte de sécurité des dépendances | GitHub |
 
