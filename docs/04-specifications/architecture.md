@@ -128,7 +128,7 @@ Le score est calculé sur l'appareil, car l'essai doit fonctionner hors ligne. L
 | **Dev local** | Serveur de développement Vite | Branche `dev` de Neon | Données de test fictives (ES10) |
 | **Prod** | Cloudflare Pages | Branche principale de Neon | Données réelles |
 
-> Hypothèse à valider : la base de dev est une **branche Neon** (gratuite, copie isolée de la structure). L'autre option est un PostgreSQL local. Choix au sprint 0.
+> Décision (2026-11-21) : la base de dev est une **branche Neon** (gratuite, copie isolée de la structure), plutôt qu'un PostgreSQL local. Mise en place au sprint 0.
 
 ## 8. Ce qui est décidé plus tard
 
