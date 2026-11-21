@@ -103,6 +103,6 @@ Ces cas deviendront des tests automatiques de la CI (ES04 : « une requête sans
 
 | Point | Pourquoi | Quand |
 |---|---|---|
-| **Rôles et schéma `auth` chez Neon** | Vérifier les noms `authenticated` et `anonymous`, et que `auth.user_id()` leur est bien accessible. | Sprint 0 |
+| ~~**Rôles et schéma `auth` chez Neon**~~ | Vérifié au sprint 0 : `authenticated` et `anonymous` existent, `auth.user_id()` (extension `pg_session_jwt`) renvoie l'identité du jeton, en texte. | Fait |
 | **Mot de passe de `backup_reader`** | Créé dans Neon, rangé dans les secrets du Worker, jamais dans le repo. Changement en cas de fuite. | Sprint 0, SE4 |
 | **Nouvelle table à un lot suivant** | Chaque table devra avoir ses droits, ses règles pour `authenticated` et sa règle `_backup_read`. Le test « tables sans RLS » le rappellera. | Avant chaque lot |
