@@ -1,3 +1,29 @@
+# Local design files (never committed)
 docs/CHECKLIST.md
 docs/lexique.md
 docs/04-specifications/bdd/schema.sql
+
+# Dependencies
+node_modules
+
+# Output
+.output
+.wrangler
+/.svelte-kit
+/build
+/coverage
+/test-results
+/playwright-report
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env (secrets stay local, ES09)
+.env
+.env.*
+!.env.example
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*

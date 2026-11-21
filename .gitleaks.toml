@@ -1,0 +1,3 @@
+# Secret scanning (ES09): default gitleaks rules, used by the pre-commit hook and the CI.
+[extend]
+useDefault = true
