@@ -1,0 +1,34 @@
+# Dependency updates (docs/06-qualite-deploiement/maintenance.md): weekly pull requests to develop,
+# reviewed then merged locally. Security updates are opened as soon as GitHub raises an alert.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+    # Wait a few days before proposing a fresh release: a hijacked version is usually
+    # spotted and pulled within that time (MEN06).
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      # Patches and minor versions together; each major version on its own.
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      actions:
+        patterns: ['*']
