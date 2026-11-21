@@ -4,30 +4,30 @@ Amont : [MPD](../04-specifications/bdd/mpd.md), [accès aux données](../04-spec
 
 ## En bref
 
-- **Les règles d'accès et l'intégrité sont déjà décrites et testées** dans le [MPD](../04-specifications/bdd/mpd.md) et l'[accès aux données](../04-specifications/acces.md) : SE4 les résume et y renvoie.
+- **Les règles d'accès et l'intégrité sont déjà décrites et testées** dans le [MPD](../04-specifications/bdd/mpd.md) et l'[accès aux données](../04-specifications/acces.md) : ce document les résume et y renvoie.
 - **Trois sauvegardes indépendantes** : un export incrémental quotidien vers R2, lancé par une **tâche cron** (Cron Trigger de Cloudflare) ; un export complet avant chaque migration ; et toutes les données sur l'appareil.
-- **Restauration testée à chaque lot**, dans une base locale. En production, elle passe par une tâche de la CI : le poste du développeur n'a aucun identifiant de production ([SE3](surface-attaque.md)).
+- **Restauration testée à chaque lot**, dans une base locale. En production, elle passe par une tâche de la CI : le poste du développeur n'a aucun identifiant de production ([surface d'attaque](surface-attaque.md)).
 - **Export complet** (ES18) : les fichiers JSON des sauvegardes, au format ouvert. Aucune fonctionnalité d'export ni d'import dans l'application.
 - **Mots de passe** des deux rôles de la base : changés en cas de doute, selon une procédure écrite.
 
-## Décisions prises pour SE4
+## Décisions prises
 
 | Décision | Choix du développeur | Exigences |
 |---|---|---|
 | **Changement des mots de passe** | **En cas de doute seulement**, selon la procédure de la section 3 | ES09, ES11 |
-| **Sauvegarde avant migration** | **Export complet** de la base (`pg_dump`) par la CI vers R2, juste avant la migration. Point ouvert de [S5](../04-specifications/uml/sequences.md) fermé. | ES19 |
+| **Sauvegarde avant migration** | **Export complet** de la base (`pg_dump`) par la CI vers R2, juste avant la migration. Point ouvert de [séquences](../04-specifications/uml/sequences.md) fermé. | ES19 |
 | **Export complet** | **Ce que prévoit la conception** : les fichiers JSON des sauvegardes R2 ([ADR 0009](../04-specifications/adr/0009-sauvegarde-cloudflare-worker-r2.md)). Rien n'est ajouté à l'application. | ES18 |
 
 ## 1. Accès
 
 | Rôle | Peut | Ne peut pas | Détail |
 |---|---|---|---|
-| **anonymous** | Rien | Tout | [S11](../04-specifications/acces.md) |
-| **authenticated** (l'application) | Lire ses lignes ; insérer des essais ; appeler `submit_trial` et `save_settings` | Modifier ou supprimer un essai ; écrire directement les paramètres ; voir les lignes d'un autre compte | [S11](../04-specifications/acces.md), sections 2 et 3 |
+| **anonymous** | Rien | Tout | [accès aux données](../04-specifications/acces.md) |
+| **authenticated** (l'application) | Lire ses lignes ; insérer des essais ; appeler `submit_trial` et `save_settings` | Modifier ou supprimer un essai ; écrire directement les paramètres ; voir les lignes d'un autre compte | [accès aux données](../04-specifications/acces.md), sections 2 et 3 |
 | **backup_reader** (Worker) | Tout lire, par ses propres règles RLS | Écrire, appeler une fonction | [ADR 0018](../04-specifications/adr/0018-roles-et-regles-acces.md) |
 | **Rôle de migration** (CI) | Faire évoluer la structure | Modifier ou supprimer un essai : le déclencheur d'immuabilité le refuse aussi | [ADR 0017](../04-specifications/adr/0017-integrite-base-donnees.md) |
 
-**Refus par défaut** : RLS est actif sur les 6 tables, les droits sont retirés à tous puis donnés un par un, et les fonctions ne sont exécutables par personne d'autre que `authenticated`. Les 31 cas de test sont dans [S11](../04-specifications/acces.md#6-tests).
+**Refus par défaut** : RLS est actif sur les 6 tables, les droits sont retirés à tous puis donnés un par un, et les fonctions ne sont exécutables par personne d'autre que `authenticated`. Les 31 cas de test sont dans [accès aux données](../04-specifications/acces.md#6-tests).
 
 ## 2. Intégrité
 
@@ -68,7 +68,7 @@ Les clés publiques de Hanko (JWKS) ne sont pas des secrets : la Data API les li
 | **Base au repos** | Chiffrement des disques | Neon (à vérifier au sprint 0) |
 | **Sauvegardes au repos** | Chiffrement des objets | Cloudflare R2 (à vérifier au sprint 0) |
 
-Aucun chiffrement supplémentaire dans l'application : les données sont de faible sensibilité ([SE1](introduction.md), section 2).
+Aucun chiffrement supplémentaire dans l'application : les données sont de faible sensibilité ([introduction](introduction.md), section 2).
 
 ## 5. Sauvegardes
 
@@ -79,7 +79,7 @@ Aucun chiffrement supplémentaire dans l'application : les données sont de faib
 | **Historique de Neon** | En continu | Toute la base | Neon | 6 heures (offre gratuite) |
 | **Base de l'appareil** | En continu | Tous les essais et les paramètres | Chaque appareil (Dexie.js) | Tant que l'appareil garde ses données |
 
-Volume : environ 50 Mo par an pour les exports quotidiens, très en dessous des 10 Go gratuits de R2 ([S3](../04-specifications/contraintes-techniques.md)).
+Volume : environ 50 Mo par an pour les exports quotidiens, très en dessous des 10 Go gratuits de R2 ([contraintes techniques](../04-specifications/contraintes-techniques.md)).
 
 Décision (2026-11-21) : **pas de copie complète planifiée** en plus du cron quotidien. Une copie complète hebdomadaire ou mensuelle par un cron GitHub Actions a été envisagée : elle aurait simplifié la restauration, mais GitHub suspend les crons d'un repo resté 60 jours sans activité, et la CI aurait gardé un accès à la production en dehors des migrations.
 
@@ -92,7 +92,7 @@ Décision (2026-11-21) : **pas de copie complète planifiée** en plus du cron q
 3. Rejouer les fichiers dans l'ordre : les essais passent par la même logique que `submit_trial`, les doublons sont ignorés.
 4. Comparer : nombre d'essais, dernier numéro d'ordre, quelques essais au hasard.
 
-**Reprise en production** (perte ou corruption de la base) : une tâche de la CI, lancée à la main, restaure le dernier export avant migration, puis rejoue les exports quotidiens qui le suivent. Le poste du développeur n'a jamais d'accès direct à la production. Le détail de cette tâche est fixé avec le déploiement (Q3) et la maintenance (Q5).
+**Reprise en production** (perte ou corruption de la base) : une tâche de la CI, lancée à la main, restaure le dernier export avant migration, puis rejoue les exports quotidiens qui le suivent. Le poste du développeur n'a jamais d'accès direct à la production. Le détail de cette tâche est fixé avec le déploiement (déploiement (partie 6)) et la maintenance (maintenance (partie 6)).
 
 ## 7. Export complet (ES18)
 
@@ -100,13 +100,13 @@ L'export complet, ce sont **les fichiers JSON de R2** : un format ouvert, lisibl
 
 ## 8. Tests automatiques de la base
 
-À reprendre dans la CI ([Q1](../06-qualite-deploiement/tests.md)) à partir des tests déjà menés en S10 et S11 :
+À reprendre dans la CI ([stratégie de tests](../06-qualite-deploiement/tests.md)) à partir des tests déjà menés dans le [modèle physique](../04-specifications/bdd/mpd.md) et l'[accès aux données](../04-specifications/acces.md) :
 
 | Ce qui est testé | Origine |
 |---|---|
 | Les 14 cas d'intégrité : essai incomplet, score faux, chiffre hors bornes, modification, suppression, vidage… | [MPD](../04-specifications/bdd/mpd.md), section 8 |
-| Les 17 cas d'accès : isolement entre comptes, `anonymous`, `backup_reader`, écritures directes | [S11](../04-specifications/acces.md), section 6 |
-| Aucune table sans RLS, aucune fonction exécutable par tous | S11 ; ES04 |
+| Les 17 cas d'accès : isolement entre comptes, `anonymous`, `backup_reader`, écritures directes | [accès aux données](../04-specifications/acces.md), section 6 |
+| Aucune table sans RLS, aucune fonction exécutable par tous | [accès aux données](../04-specifications/acces.md) ; ES04 |
 | Chaque table est lisible par `backup_reader` | [ADR 0018](../04-specifications/adr/0018-roles-et-regles-acces.md) |
 
 ## Points ouverts
@@ -114,4 +114,4 @@ L'export complet, ce sont **les fichiers JSON de R2** : un format ouvert, lisibl
 | Point | Pourquoi | Quand |
 |---|---|---|
 | **Chiffrement au repos de Neon et de R2** | À confirmer dans la documentation des fournisseurs. | Sprint 0 |
-| **Tâche de reprise en production** | Déclenchement, rôle utilisé, ordre de rejeu. | Q3, Q5 |
+| **Tâche de reprise en production** | Déclenchement, rôle utilisé, ordre de rejeu. | déploiement (partie 6), maintenance (partie 6) |
