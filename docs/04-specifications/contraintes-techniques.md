@@ -63,7 +63,7 @@ ENF09 vise les deux dernières versions de Chrome, Safari (macOS et iOS), Firefo
 | La connexion par passkey **demande le réseau** (échange avec Hanko). | Hors ligne, l'application s'ouvre avec les données locales, **sans se reconnecter**. La connexion n'est demandée qu'au moment de synchroniser. |
 | Une session Hanko dure 12 heures par défaut (réglable de 1 minute à 1 mois), avec un délai d'inactivité. | Si la session a expiré, les essais attendent dans la file d'envoi jusqu'à la prochaine connexion. Durée exacte fixée en partie 5 (ES03). |
 | La Data API de Neon n'accepte qu'**un seul fournisseur de connexion** à la fois. | Hanko est ce fournisseur unique. |
-| Fermeture de l'inscription chez Hanko : **non documentée** sur les pages consultées. | Parade en base, quoi qu'il arrive : les règles d'accès n'autorisent que **l'identifiant du compte unique**. Un compte créé par un inconnu ne peut rien lire ni écrire (ES01, ES04). |
+| Fermeture de l'inscription chez Hanko : **non documentée** sur les pages consultées. Vérifié au sprint 0 : elle se ferme dans la console. | Parade en base, quoi qu'il arrive : les règles d'accès n'autorisent que **l'identifiant du compte unique**. Un compte créé par un inconnu ne peut rien lire ni écrire (ES01, ES04). |
 
 ## 5. À vérifier au sprint 0
 
