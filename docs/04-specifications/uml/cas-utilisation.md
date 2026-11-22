@@ -124,7 +124,7 @@ CU17 est déclenché **automatiquement** par l'application (à l'ouverture, au r
 | **CU12** : Gérer ses systèmes | Créer, consulter et modifier un système d'images. | US16 | EF17 | 5 |
 | **CU13** : Réviser ses systèmes | Retrouver l'image associée à un élément. | US17 | EF18 | 5 |
 | **CU14** : Voir les erreurs d'une image | Erreurs imputées à une image, révision ciblée. | US18 | EF19 | 5 |
-| **CU15** : Régler ses paramètres | Langue de l'interface, taille des groupes par épreuve. | US19, US07 | EF20, EF08 | 1 |
+| **CU15** : Régler ses paramètres | Langue de l'interface, motif d'affichage et pauses par épreuve. | US19, US07 | EF20, EF08 | 1 |
 | **CU16** : Se connecter | Connexion par passkey auprès de Hanko. | US21 | ES01 à ES03 | 1 |
 | **CU17** : Synchroniser ses données | Envoyer les essais en attente, recevoir ceux des autres appareils. | US20, US21 | EF21 | 1 |
 | **CU18** : Installer l'application | Installer la PWA sur ordinateur, téléphone ou tablette. | US22 | EF22 | 1 (mobile), 7 (bureau) |
@@ -179,7 +179,7 @@ Décision : les dernières durées de pause utilisées pour chaque épreuve sont
 
 **Scénario nominal**
 1. Le chronomètre de mémorisation démarre. L'essai « en cours » est enregistré sur l'appareil, ce qui permet de détecter une interruption (RG24).
-2. L'application affiche le premier groupe de chiffres, dont la taille est réglée dans les paramètres (RG11, CU15).
+2. L'application affiche le premier groupe de chiffres, découpé selon le motif d'affichage réglé dans les paramètres, par exemple « 45 83 » pour le motif « 2 2 » (RG11, CU15).
 3. Le pratiquant navigue : → avance d'un groupe, ← recule, barre d'espace ou ↑ revient au début (RG09). Sur écran tactile, des équivalents sont proposés (maquettes, S12).
 4. Le pratiquant termine : → deux fois rapidement à la fin des éléments, bouton **Finished** ou touche Entrée (RG09).
 5. Le chronomètre s'arrête. La pause avant le rappel commence : seul un compte à rebours s'affiche, les chiffres sont cachés (RG25).
@@ -287,7 +287,7 @@ Décision : un essai interrompu gardé hors statistiques **conserve le statut «
 
 **Scénario nominal**
 1. Le pratiquant choisit la langue de l'interface : français ou anglais (EF20). L'interface change sans recharger les données.
-2. Il choisit la taille des groupes pour chaque épreuve, par exemple 3 chiffres pour Numbers (RG11). Les tailles proposées et la valeur par défaut seront fixées avec les maquettes (S12).
+2. Il construit le motif d'affichage de chaque épreuve : 1 à 3 sous-groupes de 1 à 5 éléments, par exemple « 2 3 » pour Numbers, avec un aperçu (RG11). « 2 » par défaut pour Numbers.
 3. Il choisit les deux pauses de préparation de chaque épreuve : 0, 5, 10 ou 20 s (RG25).
 
 Décision : les **pauses de préparation** de chaque épreuve sont aussi un paramètre. C'est **une seule valeur** : la modifier ici ou au lancement d'un essai (CU01) change la même valeur, celle qui est proposée au lancement suivant (RG25). Sur un appareil neuf, il n'y a **aucune pause** (0 s et 0 s).
