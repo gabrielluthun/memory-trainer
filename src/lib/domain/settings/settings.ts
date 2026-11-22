@@ -1,4 +1,5 @@
 import type { DisciplineName } from '../disciplines/discipline';
+import { assertDisplayPattern, type DisplayPattern } from '../navigation/display-pattern';
 import type { PreparationPauses } from '../trial/trial';
 
 export type Language = 'fr' | 'en';
@@ -6,11 +7,20 @@ export type Language = 'fr' | 'en';
 /** The only pause durations allowed: 0, 5, 10 or 20 s (RG25). */
 export const PAUSE_DURATIONS_MS = [0, 5_000, 10_000, 20_000] as const;
 
+/** Settings stored before the display pattern (ADR 0027): one group size per discipline. */
+export interface LegacySettingsData {
+	interfaceLanguage: Language;
+	groupSizes: Record<DisciplineName, number>;
+	pauses?: Partial<Record<DisciplineName, PreparationPauses>>;
+	modifiedAt: Date;
+}
+
 const NO_PAUSE: PreparationPauses = { beforeMemorizationMs: 0, beforeRecallMs: 0 };
 
 export interface SettingsData {
 	interfaceLanguage: Language;
-	groupSizes: Record<DisciplineName, number>;
+	/** Display pattern per discipline (RG11, ADR 0027). */
+	groupPatterns: Record<DisciplineName, DisplayPattern>;
 	/** Last pauses chosen per discipline (RG25). Missing in settings stored before US23. */
 	pauses?: Partial<Record<DisciplineName, PreparationPauses>>;
 	modifiedAt: Date;
@@ -29,16 +39,25 @@ export class Settings {
 	static defaults(): Settings {
 		return new Settings({
 			interfaceLanguage: 'fr',
-			groupSizes: { numbers: 2 },
+			groupPatterns: { numbers: [2] },
 			modifiedAt: new Date(0)
 		});
 	}
 
-	static restore(data: SettingsData): Settings {
+	/**
+	 * Rebuilds stored settings. Settings stored before the display pattern only had a group size:
+	 * 1 to 5 becomes the matching pattern, a larger one the default "2" (ADR 0027).
+	 */
+	static restore(data: SettingsData | LegacySettingsData): Settings {
+		const groupPatterns =
+			'groupPatterns' in data
+				? data.groupPatterns
+				: { numbers: data.groupSizes.numbers <= 5 ? [data.groupSizes.numbers] : [2] };
 		return new Settings({
-			...data,
-			groupSizes: { ...data.groupSizes },
-			pauses: { ...data.pauses }
+			interfaceLanguage: data.interfaceLanguage,
+			groupPatterns: { ...groupPatterns },
+			pauses: { ...data.pauses },
+			modifiedAt: data.modifiedAt
 		});
 	}
 
@@ -50,17 +69,15 @@ export class Settings {
 		return this.data.modifiedAt;
 	}
 
-	groupSizeFor(discipline: DisciplineName): number {
-		return this.data.groupSizes[discipline];
+	groupPatternFor(discipline: DisciplineName): DisplayPattern {
+		return this.data.groupPatterns[discipline];
 	}
 
-	withGroupSize(discipline: DisciplineName, size: number, at: Date): Settings {
-		if (!Number.isInteger(size) || size < 1 || size > 10) {
-			throw new RangeError(`Group size must be from 1 to 10, got ${size}`);
-		}
+	withGroupPattern(discipline: DisciplineName, pattern: DisplayPattern, at: Date): Settings {
+		assertDisplayPattern(pattern);
 		return new Settings({
 			...this.data,
-			groupSizes: { ...this.data.groupSizes, [discipline]: size },
+			groupPatterns: { ...this.data.groupPatterns, [discipline]: [...pattern] },
 			modifiedAt: at
 		});
 	}
@@ -86,7 +103,7 @@ export class Settings {
 	toData(): SettingsData {
 		return {
 			...this.data,
-			groupSizes: { ...this.data.groupSizes },
+			groupPatterns: { ...this.data.groupPatterns },
 			pauses: { ...this.data.pauses }
 		};
 	}
