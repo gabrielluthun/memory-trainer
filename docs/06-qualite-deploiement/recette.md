@@ -61,7 +61,7 @@ Le procès-verbal note, pour chaque appareil, son système et son navigateur ave
 | **TR05** : Abandonner | CU05 | Les trois choix, pendant la mémorisation, la pause avant le rappel et le rappel. Abandon pendant la pause avant la mémorisation : aucune question, rien d'enregistré. | Ordinateur, téléphone |
 | **TR06** : Essai interrompu | CU06 | Fermer l'application pendant un rappel, la rouvrir : statut « Erreur externe à l'application », trois choix proposés, essai jamais envoyé avant le choix. | Téléphone |
 | **TR07** : Consulter l'historique | CU07 | Du plus récent au plus ancien, filtres par discipline et par mode, essais personnalisés en couleur, abandonnés signalés, aucune action de modification ni de suppression. | Ordinateur, tablette |
-| **TR08** : Régler ses paramètres | CU15 | Langue FR et EN sans perte de données ; taille des groupes appliquée à l'essai suivant ; réglage retrouvé sur un autre appareil. | Ordinateur, téléphone |
+| **TR08** : Régler ses paramètres | CU15 | Langue FR et EN sans perte de données ; motif d'affichage appliqué à l'essai suivant, à la mémorisation et au rappel ; réglage retrouvé sur un autre appareil. | Ordinateur, téléphone |
 | **TR09** : Se connecter | CU16 | Connexion par passkey sur chaque appareil ; aucune autre méthode proposée ; hors ligne, l'application reste utilisable. | Tous |
 | **TR10** : Synchroniser | CU17 | Essai fait en mode avion, puis réseau rétabli : il apparaît **une seule fois**, avec ses temps d'origine, sur les autres appareils. | Tous |
 | **TR11** : Installer l'application | CU18 | Installation sur l'écran d'accueil du téléphone et de la tablette ; rappel d'installation affiché tant qu'elle n'est pas faite ; stockage persistant accordé. | Téléphone, tablette |
