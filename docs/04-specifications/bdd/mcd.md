@@ -26,7 +26,7 @@ flowchart LR
     REALISER(["<b>RÉALISER</b>"])
     RELEVER(["<b>RELEVER DE</b>"])
     CONTENIR(["<b>CONTENIR</b>"])
-    REGLER(["<b>RÉGLER</b><br/>group_size<br/>pause_before_memorization_s<br/>pause_before_recall_s"])
+    REGLER(["<b>RÉGLER</b><br/>group_pattern<br/>pause_before_memorization_s<br/>pause_before_recall_s"])
 
     COMPTE ---|"0,n"| REALISER
     REALISER ---|"1,1"| ESSAI
@@ -56,7 +56,7 @@ flowchart LR
 | **RÉALISER** | COMPTE et ESSAI | COMPTE 0,n — ESSAI 1,1 | Un compte peut n'avoir aucun essai. Un essai appartient à un seul compte. |
 | **RELEVER DE** | ESSAI et DISCIPLINE | ESSAI 1,1 — DISCIPLINE 0,n | Un essai relève d'une seule discipline. Une discipline peut n'avoir aucun essai. |
 | **CONTENIR** | ESSAI et ÉLÉMENT | ESSAI 1,n — ÉLÉMENT 1,1 (R) | Un essai contient au moins un élément. Un élément n'existe que dans son essai. |
-| **RÉGLER** | COMPTE et DISCIPLINE | COMPTE 0,n — DISCIPLINE 0,n | Pour chaque discipline réglée, le compte retient la taille des groupes et les deux pauses. L'association porte ces trois données. |
+| **RÉGLER** | COMPTE et DISCIPLINE | COMPTE 0,n — DISCIPLINE 0,n | Pour chaque discipline réglée, le compte retient le motif d'affichage et les deux pauses. L'association porte ces trois données. |
 
 **Spécialisation** : ÉLÉMENT_NUMBERS **est un** ÉLÉMENT. La contrainte **XT** (exclusion et totalité) dit que chaque élément appartient à **une et une seule** sous-entité. Au lot 1, il n'y en a qu'une.
 
