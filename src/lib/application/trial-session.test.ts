@@ -5,19 +5,29 @@ import { InMemoryTrialRepository } from '../../../tests/fakes/in-memory-trial-re
 import { SeededRandomSource } from '../../../tests/fakes/seeded-random-source';
 import { NumbersDiscipline } from '../domain/disciplines/numbers';
 import { Settings } from '../domain/settings/settings';
+import type { PreparationPauses } from '../domain/trial/trial';
 import { TrialSession } from './trial-session.svelte';
 
 let clock: FakeMonotonicClock;
 let scheduler: FakeScheduler;
 let repository: InMemoryTrialRepository;
 let session: TrialSession;
-let settings: { current: Settings };
+let settings: {
+	current: Settings;
+	setPauses: (discipline: 'numbers', pauses: PreparationPauses) => Promise<void>;
+};
 
 beforeEach(() => {
 	clock = new FakeMonotonicClock();
 	scheduler = new FakeScheduler(clock);
 	repository = new InMemoryTrialRepository();
-	settings = { current: Settings.defaults() };
+	settings = {
+		current: Settings.defaults(),
+		setPauses(discipline, pauses) {
+			this.current = this.current.withPauses(discipline, pauses, new Date('2026-11-22T12:00:00Z'));
+			return Promise.resolve();
+		}
+	};
 	let id = 0;
 	session = new TrialSession({
 		discipline: new NumbersDiscipline(),
@@ -257,5 +267,93 @@ describe('TrialSession — launch screen', () => {
 			memorizationMs: 60_000,
 			recallMs: 240_000
 		});
+	});
+});
+
+describe('TrialSession — US23, preparation pauses', () => {
+	const pauses = (beforeMemorizationMs: number, beforeRecallMs: number) => ({
+		beforeMemorizationMs,
+		beforeRecallMs
+	});
+
+	it('US23 CA1, CA2 — counts down the chosen pause before showing the digits', () => {
+		session.start({ pauses: pauses(10_000, 0) });
+
+		scheduler.advance(9_999);
+		expect(session.current?.phase).toBe('paused-before-memorization');
+
+		scheduler.advance(1);
+		expect(session.current?.phase).toBe('memorizing');
+	});
+
+	it('US23 CA1, RG25 — the pauses chosen are kept for the next launch', () => {
+		session.start({ pauses: pauses(5_000, 20_000) });
+
+		expect(settings.current.pausesFor('numbers')).toEqual(pauses(5_000, 20_000));
+	});
+
+	it('RG25 — without a choice, uses the pauses of the settings', () => {
+		settings.current = Settings.defaults().withPauses('numbers', pauses(20_000, 0), new Date(0));
+
+		session.start();
+		scheduler.advance(19_999);
+
+		expect(session.current?.phase).toBe('paused-before-memorization');
+	});
+
+	it('US23 CA3 — the practitioner can cut a pause short, before memorization or before recall', () => {
+		session.start({ pauses: pauses(20_000, 20_000) });
+
+		session.skipPause();
+		expect(session.current?.phase).toBe('memorizing');
+
+		session.finishMemorization();
+		expect(session.current?.phase).toBe('paused-before-recall');
+		session.skipPause();
+		expect(session.current?.phase).toBe('recalling');
+	});
+
+	it('US23 CA3 — a pause cut short does not start the next phase a second time', () => {
+		session.start({ pauses: pauses(10_000, 0) });
+		session.skipPause();
+		scheduler.advance(3_000);
+
+		scheduler.advance(10_000);
+
+		expect(session.current?.phase).toBe('memorizing');
+		expect(session.memorizationMs).toBeNull();
+	});
+
+	it('US23 CA5 — the pauses never count in the memorization and recall times', async () => {
+		session.start({ pauses: pauses(5_000, 10_000) });
+		scheduler.advance(5_000);
+		scheduler.advance(20_000);
+		session.finishMemorization();
+		scheduler.advance(10_000);
+		scheduler.advance(30_000);
+
+		await session.finishRecall();
+
+		expect(repository.closed[0].memorizationMs).toBe(20_000);
+		expect(repository.closed[0].recallMs).toBe(30_000);
+	});
+
+	it('US23 CA6 — abandoning during the first pause keeps nothing and asks nothing', () => {
+		session.start({ pauses: pauses(10_000, 0) });
+
+		session.cancel();
+		scheduler.advance(600_000);
+
+		expect(session.current).toBeNull();
+		expect(repository.closed).toHaveLength(0);
+	});
+
+	it('US23 CA6 — once the digits are shown, cancel does nothing (abandon comes with US10)', () => {
+		session.start();
+		scheduler.advance(0);
+
+		session.cancel();
+
+		expect(session.current?.phase).toBe('memorizing');
 	});
 });

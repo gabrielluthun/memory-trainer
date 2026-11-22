@@ -40,4 +40,23 @@ describe('DexieSettingsStore', () => {
 		expect(await db.settings.count()).toBe(1);
 		expect((await store.load())?.groupSizeFor('numbers')).toBe(7);
 	});
+
+	it('RG25 — gives back the pauses chosen for each discipline', async () => {
+		db = new MemoryTrainerDatabase(`test-${crypto.randomUUID()}`);
+		const store = new DexieSettingsStore(db);
+		const at = new Date('2026-11-22T12:00:00Z');
+
+		await store.save(
+			Settings.defaults().withPauses(
+				'numbers',
+				{ beforeMemorizationMs: 10_000, beforeRecallMs: 5_000 },
+				at
+			)
+		);
+
+		expect((await store.load())?.pausesFor('numbers')).toEqual({
+			beforeMemorizationMs: 10_000,
+			beforeRecallMs: 5_000
+		});
+	});
 });

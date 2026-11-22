@@ -1,10 +1,12 @@
 import type { Digit, NumbersDiscipline } from '../domain/disciplines/numbers';
+import type { DisciplineName } from '../domain/disciplines/discipline';
 import type { Format } from '../domain/format';
 import type { RandomSource } from '../domain/random';
 import type { Settings } from '../domain/settings/settings';
 import type { MonotonicClock } from '../domain/timing/timing';
 import {
 	PausedBeforeMemorization,
+	type PreparationPauses,
 	type CompletedTrial,
 	type MemorizingTrial,
 	type PausedBeforeRecall,
@@ -20,8 +22,11 @@ export interface TrialSessionDependencies {
 	ids: IdGenerator;
 	scheduler: Scheduler;
 	repository: TrialRepository;
-	/** The current settings; read at launch (US07 CA1bis). */
-	settings: { readonly current: Settings };
+	/** The current settings, read at launch (US07 CA1bis); the pauses chosen are kept there (RG25). */
+	settings: {
+		readonly current: Settings;
+		setPauses(discipline: DisciplineName, pauses: PreparationPauses): Promise<void>;
+	};
 }
 
 export type TrialPhase =
@@ -48,18 +53,23 @@ export class TrialSession {
 
 	constructor(private readonly deps: TrialSessionDependencies) {}
 
-	/** US01: a standard trial. Pauses are 0 s until US23 makes them adjustable. */
-	start(): void {
+	/** US01: a standard trial. */
+	start(options: { pauses?: PreparationPauses } = {}): void {
 		const { discipline, random, ids, wallClock, clock } = this.deps;
 		const format = discipline.standardFormat();
 		this.groupSize = this.deps.settings.current.groupSizeFor(discipline.name);
+		const pauses = options.pauses ?? this.deps.settings.current.pausesFor(discipline.name);
+		if (options.pauses) {
+			// RG25: the pauses chosen become the ones proposed next time. Not worth blocking the trial.
+			void this.deps.settings.setPauses(discipline.name, pauses).catch(() => {});
+		}
 		const paused = PausedBeforeMemorization.begin(
 			{
 				id: ids.next(),
 				discipline,
 				mode: 'standard',
 				format,
-				pauses: { beforeMemorizationMs: 0, beforeRecallMs: 0 },
+				pauses,
 				groupSize: this.groupSize,
 				items: discipline.draw(format.itemCount, random),
 				startedAt: wallClock.now()
@@ -68,6 +78,23 @@ export class TrialSession {
 		);
 		this.#show(paused);
 		this.#schedule(paused.countdown.remainingMs(), () => this.#startMemorization());
+	}
+
+	/** "Commencer maintenant": the next phase starts at once (US23 CA3). */
+	skipPause(): void {
+		if (this.current?.phase === 'paused-before-memorization') this.#startMemorization();
+		else if (this.current?.phase === 'paused-before-recall') this.#startRecall();
+	}
+
+	/**
+	 * Abandon during the pause before memorization: nothing was recorded, nothing is asked
+	 * (US23 CA6, RG25). Abandoning later offers three choices and comes with US10.
+	 */
+	cancel(): void {
+		if (this.current?.phase !== 'paused-before-memorization') return;
+		this.#cancelPending?.();
+		this.#cancelPending = null;
+		this.current = null;
 	}
 
 	/** → : next group; twice quickly on the last group finishes the memorization (RG09). */

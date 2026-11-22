@@ -42,3 +42,56 @@ describe('Settings', () => {
 		expect(settings.modifiedAt).toEqual(at);
 	});
 });
+
+describe('Settings — preparation pauses (US23)', () => {
+	const at = new Date('2026-11-22T12:00:00Z');
+
+	it('RG25 — no pause by default, before memorization or before recall', () => {
+		expect(Settings.defaults().pausesFor('numbers')).toEqual({
+			beforeMemorizationMs: 0,
+			beforeRecallMs: 0
+		});
+	});
+
+	it('RG25 — keeps the last pauses chosen for a discipline, dated by the device', () => {
+		const settings = Settings.defaults().withPauses(
+			'numbers',
+			{ beforeMemorizationMs: 10_000, beforeRecallMs: 5_000 },
+			at
+		);
+
+		expect(settings.pausesFor('numbers')).toEqual({
+			beforeMemorizationMs: 10_000,
+			beforeRecallMs: 5_000
+		});
+		expect(settings.modifiedAt).toEqual(at);
+	});
+
+	it('RG25 — refuses any pause other than 0, 5, 10 or 20 s', () => {
+		expect(() =>
+			Settings.defaults().withPauses(
+				'numbers',
+				{ beforeMemorizationMs: 15_000, beforeRecallMs: 0 },
+				at
+			)
+		).toThrow(RangeError);
+		expect(() =>
+			Settings.defaults().withPauses(
+				'numbers',
+				{ beforeMemorizationMs: 0, beforeRecallMs: 30_000 },
+				at
+			)
+		).toThrow(RangeError);
+	});
+
+	it('RG25 — settings stored before US23, without pauses, get no pause', () => {
+		const settings = Settings.restore({
+			interfaceLanguage: 'fr',
+			groupSizes: { numbers: 3 },
+			modifiedAt: at
+		});
+
+		expect(settings.pausesFor('numbers')).toEqual({ beforeMemorizationMs: 0, beforeRecallMs: 0 });
+		expect(settings.groupSizeFor('numbers')).toBe(3);
+	});
+});

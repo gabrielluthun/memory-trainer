@@ -1,15 +1,20 @@
 <script lang="ts">
 	import { getApp } from '#lib/app-container.ts';
 	import AppHeader from '#lib/presentation/components/app-header.svelte';
+	import PausePicker from '#lib/presentation/components/pause-picker.svelte';
 
 	const app = getApp();
 	const sizes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 	let saved = $state(false);
 
+	const groupSize = $derived(app.settings.current.groupSizeFor('numbers'));
+	const pauses = $derived(app.settings.current.pausesFor('numbers'));
+
 	// Interface language comes with US19; synchronisation between devices with US21.
-	async function choose(size: number) {
+	async function save(change: () => Promise<void>) {
+		saved = false;
 		await app.ready;
-		await app.settings.setGroupSize('numbers', size);
+		await change();
 		saved = true;
 	}
 </script>
@@ -23,31 +28,52 @@
 <main class="settings">
 	<h1>Paramètres</h1>
 
-	<section class="card" aria-labelledby="groups-title">
-		<h2 id="groups-title">Taille des groupes</h2>
-		<p class="hint">
-			Pendant la mémorisation, chaque appui sur → avance d'un groupe. S'applique aux essais
-			suivants.
-		</p>
+	<section class="card" aria-label="Numbers">
 		<div class="row">
-			<span id="numbers-label" class="discipline">Numbers</span>
-			<div class="sizes" role="radiogroup" aria-labelledby="numbers-label">
-				{#each sizes as size (size)}
-					<button
-						type="button"
-						role="radio"
-						aria-checked={app.settings.current.groupSizeFor('numbers') === size}
-						class:selected={app.settings.current.groupSizeFor('numbers') === size}
-						onclick={() => choose(size)}
-					>
-						{size}
-					</button>
-				{/each}
+			<div>
+				<label for="group-size" class="title">Taille des groupes, Numbers</label>
+				<p class="hint">Chiffres affichés à la fois, de 1 à 10</p>
 			</div>
-			<span class="unit">chiffres</span>
+			<select
+				id="group-size"
+				value={groupSize}
+				onchange={(event) => {
+					// Read now: the browser clears currentTarget once the event is over.
+					const size = Number(event.currentTarget.value);
+					void save(() => app.settings.setGroupSize('numbers', size));
+				}}
+			>
+				{#each sizes as size (size)}
+					<option value={size}>{size}</option>
+				{/each}
+			</select>
 		</div>
-		<p class="status" role="status">{saved ? 'Enregistré sur cet appareil.' : ''}</p>
+
+		<div class="row pauses">
+			<div>
+				<span class="title">Pauses de préparation, Numbers</span>
+				<p class="hint">
+					Proposées au lancement ; changer les pauses au lancement les met à jour ici.
+				</p>
+			</div>
+			<div class="pickers">
+				<PausePicker
+					label="Avant la mémorisation"
+					valueMs={pauses.beforeMemorizationMs}
+					onchange={(ms: number) =>
+						save(() => app.settings.setPauses('numbers', { ...pauses, beforeMemorizationMs: ms }))}
+				/>
+				<PausePicker
+					label="Avant le rappel"
+					valueMs={pauses.beforeRecallMs}
+					onchange={(ms: number) =>
+						save(() => app.settings.setPauses('numbers', { ...pauses, beforeRecallMs: ms }))}
+				/>
+			</div>
+		</div>
 	</section>
+
+	<p class="status" role="status">{saved ? 'Enregistré sur cet appareil.' : ''}</p>
 </main>
 
 <style>
@@ -60,51 +86,50 @@
 		margin-bottom: 2rem;
 	}
 	.card {
-		padding: 2rem;
+		padding: 0.5rem 2rem;
 		background: var(--sheet);
 		border: 1px solid var(--line);
 		border-radius: 1.25rem;
-		box-shadow: var(--shadow);
-	}
-	h2 {
-		font-size: 1.4rem;
-	}
-	.hint {
-		margin: 0.5rem 0 1.5rem;
-		color: var(--ink-muted);
 	}
 	.row {
 		display: flex;
-		flex-wrap: wrap;
+		justify-content: space-between;
 		align-items: center;
-		gap: 1rem;
+		gap: 2rem;
+		padding: 1.5rem 0;
 	}
-	.discipline {
-		min-width: 7rem;
+	.row + .row {
+		border-top: 1px solid var(--line);
+	}
+	.pauses {
+		flex-direction: column;
+		align-items: stretch;
+	}
+	.pickers {
+		display: grid;
+		gap: 1.5rem;
+	}
+	.title {
+		display: block;
 		font-weight: 700;
+		font-size: 1.2rem;
 	}
-	.sizes {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.4rem;
-	}
-	.sizes button {
-		min-width: 2.75rem;
-		min-height: 2.75rem;
-		border: 1.5px solid var(--line);
-		border-radius: var(--radius-small);
-		background: var(--sheet);
-		font-family: var(--font-digits);
-		font-weight: 700;
-		cursor: pointer;
-	}
-	.sizes button.selected {
-		border-color: var(--pen);
-		background: var(--pen-wash);
-		color: var(--pen);
-	}
-	.unit {
+	.hint {
+		margin: 0.25rem 0 0;
 		color: var(--ink-muted);
+	}
+	select {
+		min-width: 6rem;
+		min-height: 3.5rem;
+		padding: 0 1rem;
+		border: 1.5px solid var(--line);
+		border-radius: var(--radius);
+		background: var(--sheet);
+		color: var(--ink);
+		font: inherit;
+		font-family: var(--font-digits);
+		font-size: 1.3rem;
+		text-align: center;
 	}
 	.status {
 		min-height: 1.5rem;
@@ -117,6 +142,9 @@
 		}
 		h1 {
 			font-size: 2.25rem;
+		}
+		.card {
+			padding: 0.5rem 1.25rem;
 		}
 	}
 </style>

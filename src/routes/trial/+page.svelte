@@ -7,6 +7,7 @@
 	import MemorizationCarousel from '#lib/presentation/components/memorization-carousel.svelte';
 	import RecallGrid from '#lib/presentation/components/recall-grid.svelte';
 	import TrialHeader from '#lib/presentation/components/trial-header.svelte';
+	import PauseCountdown from '#lib/presentation/components/pause-countdown.svelte';
 	import TrialResult from '#lib/presentation/components/trial-result.svelte';
 	import { formatClock, formatCountdown } from '#lib/presentation/format.ts';
 
@@ -53,9 +54,20 @@
 		};
 	});
 
+	/** Abandon during the first pause: nothing recorded, no question, back home (US23 CA6). */
+	function abandonPause() {
+		session.cancel();
+		void goto(resolve('/'));
+	}
+
 	function onkeydown(event: KeyboardEvent) {
 		if (event.repeat && event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
-		if (trial?.phase === 'memorizing') {
+		if (trial?.phase === 'paused-before-memorization' || trial?.phase === 'paused-before-recall') {
+			if (event.key === 'Enter') {
+				event.preventDefault();
+				session.skipPause();
+			}
+		} else if (trial?.phase === 'memorizing') {
 			const actions: Record<string, () => void> = {
 				ArrowRight: () => session.next(),
 				ArrowLeft: () => session.previous(),
@@ -118,6 +130,8 @@
 				<span>Case <strong>{session.selected + 1}</strong> sur {trial.items.length}</span>
 				<span class="clock" data-testid="recall-countdown">{formatCountdown(recallRemaining)}</span>
 				<span>restantes</span>
+			{:else if trial.phase === 'paused-before-memorization'}
+				<button class="button button-quiet" type="button" onclick={abandonPause}>Abandonner</button>
 			{/if}
 		{/snippet}
 	</TrialHeader>
@@ -191,11 +205,14 @@
 			<p class="keys">
 				<kbd>0</kbd>–<kbd>9</kbd> saisir · flèches ou clic pour changer de case
 			</p>
-		{:else}
-			<div class="pause" role="timer" aria-live="polite">
-				<p>Pause</p>
-				<strong>{Math.ceil(pauseRemaining / 1_000)}</strong>
-			</div>
+		{:else if trial.countdown.durationMs > 0}
+			<!-- A 0 s pause shows nothing: the next phase starts directly (US23 CA4). -->
+			<PauseCountdown
+				next={trial.phase === 'paused-before-memorization' ? 'memorization' : 'recall'}
+				remainingMs={pauseRemaining}
+				durationMs={trial.countdown.durationMs}
+				onskip={() => session.skipPause()}
+			/>
 		{/if}
 	</main>
 {/if}
@@ -262,18 +279,6 @@
 		margin-top: 2rem;
 		padding-top: 2rem;
 		border-top: 1px solid var(--line);
-	}
-	.pause {
-		display: grid;
-		place-items: center;
-		gap: 1rem;
-		padding: 6rem 0;
-		color: var(--ink-muted);
-	}
-	.pause strong {
-		color: var(--ink);
-		font-size: 8rem;
-		font-family: var(--font-digits);
 	}
 	/* Touch screens: navigation buttons within thumb reach (wireframes). */
 	@media (pointer: coarse) {

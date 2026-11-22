@@ -38,4 +38,21 @@ describe('SettingsService', () => {
 		expect(repository.stored?.groupSizeFor('numbers')).toBe(3);
 		expect(repository.stored?.modifiedAt).toEqual(new Date('2026-11-22T11:00:00Z'));
 	});
+
+	it('US23 CA1 — new pauses are saved, dated by the device', async () => {
+		const repository = new InMemorySettingsRepository();
+		const service = new SettingsService(repository, wallClock);
+		await service.load();
+
+		await service.setPauses('numbers', { beforeMemorizationMs: 5_000, beforeRecallMs: 0 });
+
+		expect(service.current.pausesFor('numbers')).toEqual({
+			beforeMemorizationMs: 5_000,
+			beforeRecallMs: 0
+		});
+		expect(repository.stored?.pausesFor('numbers')).toEqual({
+			beforeMemorizationMs: 5_000,
+			beforeRecallMs: 0
+		});
+	});
 });
