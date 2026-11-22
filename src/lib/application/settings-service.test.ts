@@ -11,31 +11,31 @@ describe('SettingsService', () => {
 
 		await service.load();
 
-		expect(service.current.groupSizeFor('numbers')).toBe(2);
+		expect(service.current.groupPatternFor('numbers')).toEqual([2]);
 	});
 
 	it('CU15 — loads the settings stored on the device', async () => {
-		const stored = Settings.defaults().withGroupSize(
+		const stored = Settings.defaults().withGroupPattern(
 			'numbers',
-			5,
+			[5],
 			new Date('2026-11-01T00:00:00Z')
 		);
 		const service = new SettingsService(new InMemorySettingsRepository(stored), wallClock);
 
 		await service.load();
 
-		expect(service.current.groupSizeFor('numbers')).toBe(5);
+		expect(service.current.groupPatternFor('numbers')).toEqual([5]);
 	});
 
-	it('US07 CA1bis — a new group size is saved, dated by the device', async () => {
+	it('US07 CA1bis — a new display pattern is saved, dated by the device', async () => {
 		const repository = new InMemorySettingsRepository();
 		const service = new SettingsService(repository, wallClock);
 		await service.load();
 
-		await service.setGroupSize('numbers', 3);
+		await service.setGroupPattern('numbers', [2, 3]);
 
-		expect(service.current.groupSizeFor('numbers')).toBe(3);
-		expect(repository.stored?.groupSizeFor('numbers')).toBe(3);
+		expect(service.current.groupPatternFor('numbers')).toEqual([2, 3]);
+		expect(repository.stored?.groupPatternFor('numbers')).toEqual([2, 3]);
 		expect(repository.stored?.modifiedAt).toEqual(new Date('2026-11-22T11:00:00Z'));
 	});
 
