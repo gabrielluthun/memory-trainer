@@ -425,6 +425,6 @@ Le **Worker de sauvegarde** (SEQ06) est un programme à part, d'une seule foncti
 
 | Point | Pourquoi | Quand |
 |---|---|---|
-| **Lien entre les cas d'usage et l'affichage Svelte** | Les cas d'usage ont un état qui change (essai en cours, synchronisation). L'écran doit le suivre : runes Svelte dans la couche Application, ou abonnement à des événements. | Sprint 0 |
+| ~~**Lien entre les cas d'usage et l'affichage Svelte**~~ | Tranché : runes Svelte dans la couche Application ([ADR 0025](../adr/0025-etat-des-cas-usage-runes-svelte.md)). | Fait |
 | **Interface `Discipline` face aux disciplines du lot 2** | Cards et Images se saisissent en plaçant des éléments, pas en tapant : `RecallInput` sera peut-être à enrichir. | Avant le lot 2 |
 | **Types exacts** (`Item`, `Answer`, `TrialId`, `TrialStatus`, `OngoingPhase`) | Fixés avec le dictionnaire de données. | S7 |
