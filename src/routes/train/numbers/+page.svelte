@@ -2,34 +2,59 @@
 	import { resolve } from '$app/paths';
 	import { goto } from '$app/navigation';
 	import { getApp } from '#lib/app-container.ts';
+	import { onMount } from 'svelte';
 	import AppHeader from '#lib/presentation/components/app-header.svelte';
+	import PausePicker from '#lib/presentation/components/pause-picker.svelte';
 	import { formatCountdown } from '#lib/presentation/format.ts';
 
 	const app = getApp();
 	const format = app.session.standardFormat;
 	let starting = $state(false);
 
-	// Pauses become adjustable with US23; custom mode comes with US09.
-	const steps = [
-		{ name: 'Pause', hint: 'Les chiffres sont cachés', value: '0 s' },
+	// The last pauses chosen for Numbers are proposed (RG25). Custom mode comes with US09.
+	let pauses = $state(app.settings.current.pausesFor('numbers'));
+	let pausesChanged = false;
+	onMount(() => {
+		// The stored settings may load after a first click: never overwrite a choice just made.
+		void app.ready.then(() => {
+			if (!pausesChanged) pauses = app.settings.current.pausesFor('numbers');
+		});
+	});
+
+	function choosePauses(changed: Partial<typeof pauses>) {
+		pausesChanged = true;
+		pauses = { ...pauses, ...changed };
+	}
+
+	const pauseHint = (ms: number, hidden: string) => (ms === 0 ? 'Aucune' : hidden);
+	const steps = $derived([
+		{
+			name: 'Pause',
+			hint: pauseHint(pauses.beforeMemorizationMs, 'Les chiffres sont cachés'),
+			value: `${pauses.beforeMemorizationMs / 1_000} s`
+		},
 		{
 			name: 'Mémorisation',
 			hint: 'Arrêtez quand vous voulez',
 			value: formatCountdown(format.memorizationMs)
 		},
-		{ name: 'Pause', hint: 'Aucune', value: '0 s' },
+		{
+			name: 'Pause',
+			hint: pauseHint(pauses.beforeRecallMs, 'Les chiffres sont cachés'),
+			value: `${pauses.beforeRecallMs / 1_000} s`
+		},
 		{
 			name: 'Rappel',
 			hint: 'Saisissez les chiffres dans l’ordre',
 			value: formatCountdown(format.recallMs)
 		}
-	];
+	]);
 
 	async function start() {
 		if (starting) return;
 		starting = true;
 		await app.ready;
-		app.session.start();
+		app.session.start({ pauses });
 		await goto(resolve('/trial'));
 	}
 
@@ -66,6 +91,20 @@
 				{format.itemCount} chiffres, {format.memorizationMs / 60_000} min de mémorisation, {format.recallMs /
 					60_000} min de rappel. Comme sur Memory League.
 			</p>
+
+			<div class="pauses">
+				<PausePicker
+					label="Pause avant la mémorisation"
+					valueMs={pauses.beforeMemorizationMs}
+					onchange={(ms: number) => choosePauses({ beforeMemorizationMs: ms })}
+				/>
+				<PausePicker
+					label="Pause avant le rappel"
+					valueMs={pauses.beforeRecallMs}
+					onchange={(ms: number) => choosePauses({ beforeRecallMs: ms })}
+				/>
+				<p class="hint">Reprend vos derniers réglages pour Numbers.</p>
+			</div>
 		</section>
 
 		<section class="plan" aria-labelledby="plan-title">
@@ -146,6 +185,14 @@
 		margin: 0.75rem 0 0;
 		color: var(--ink-muted);
 		font-size: 0.95rem;
+	}
+	.pauses {
+		display: grid;
+		gap: 2rem;
+		margin-top: 2.5rem;
+	}
+	.pauses .hint {
+		margin-top: -1rem;
 	}
 	.centered {
 		text-align: center;
