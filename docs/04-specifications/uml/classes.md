@@ -118,7 +118,7 @@ classDiagram
     }
     class GroupNavigation {
         -position [1] : number
-        +groupSize [1] : number
+        +pattern [1..3] : number
         +next()
         +previous()
         +toStart()
@@ -136,7 +136,7 @@ classDiagram
     }
     class Settings {
         +interfaceLanguage [1] : Language
-        +groupSizes [1..*] : number
+        +groupPatterns [1..*] : DisplayPattern
         +modifiedAt [1] : Date
         +withLanguage()
         +withGroupSize()
@@ -191,9 +191,9 @@ classDiagram
 | **Discipline** | Ce qui change d'une discipline à l'autre : format standard, tirage, saisie, correction | EF01 à EF06 |
 | **NumbersDiscipline** | 80 chiffres de 0 à 9 tirés au hasard, 1 point par chiffre juste à la bonne position | RG02, RG12, RG21 |
 | **SequenceRecall** | Taper, effacer à gauche, insérer une case (+), supprimer une case (−). Resservira pour Cards, Images et Words | RG10 |
-| **GroupNavigation** | Position dans les groupes. `next()` signale la fin quand → est pressé deux fois rapidement sur le dernier groupe | RG09, RG11 |
+| **GroupNavigation** | Position dans les groupes, dont la taille est la somme du motif d'affichage (« 2 3 » : 5 éléments). `next()` signale la fin quand → est pressé deux fois rapidement sur le dernier groupe | RG09, RG11 |
 | **Stopwatch**, **Countdown** | Chronomètre et compte à rebours, sur l'horloge monotone (section 3) | ENF01, RG25 |
-| **Settings** | Langue, tailles de groupes et dernières pauses par discipline. Chaque modification renvoie de nouveaux paramètres, datés par l'appareil | EF20, RG11, RG25, [ADR 0012](../adr/0012-conflits-parametres-heure-appareil.md) |
+| **Settings** | Langue, motif d'affichage et dernières pauses par discipline. Chaque modification renvoie de nouveaux paramètres, datés par l'appareil | EF20, RG11, RG25, [ADR 0012](../adr/0012-conflits-parametres-heure-appareil.md) |
 
 `finishMemorization()` et `finishRecall()` sont appelées de deux façons : par le pratiquant (Finished, Entrée), ou par l'application quand le temps du format est écoulé.
 
