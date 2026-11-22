@@ -23,5 +23,5 @@ Les cas d'usage de la couche Application ([diagramme de classes](../uml/classes.
 | Positives | Négatives |
 |---|---|
 | Les écrans restent simples : ils lisent l'état, sans abonnement à gérer. | La couche Application ne pourrait pas être réutilisée hors de Svelte sans réécriture. |
-| Un seul style de réactivité dans tout le projet. | Les tests de la couche Application doivent être des fichiers `.svelte.test.ts`, compilés par Svelte. |
+| Un seul style de réactivité dans tout le projet. | Les cas d'usage sont des fichiers `.svelte.ts`, compilés par Svelte, y compris dans les tests (Vitest utilise la configuration de Vite). Les fichiers de test eux-mêmes restent des `.test.ts` ordinaires. |
 | Le TDD de la couche Application reste possible avec Vitest, qui utilise déjà la configuration de Vite. | Il faut éviter de mettre de la logique métier dans les runes : elle reste dans le domaine, testé sans Svelte. |
