@@ -86,7 +86,7 @@ test('US07 CA1bis — the group size chosen in the settings applies to the next 
 	page
 }) => {
 	await page.goto('/settings');
-	await page.getByRole('radio', { name: '4' }).click();
+	await page.getByLabel('Taille des groupes, Numbers').selectOption('4');
 	await expect(page.getByText('Enregistré sur cet appareil.')).toBeVisible();
 
 	await launch(page);
