@@ -1,0 +1,199 @@
+/*
+ * Visual identity "Cahier de correction" (docs/04-specifications/maquettes/mockups.md).
+ * Each colour has a fixed role, in both themes. Fonts are self-hosted (ADR 0020).
+ */
+
+@font-face {
+	font-family: 'Atkinson Hyperlegible Next';
+	src: url('/fonts/atkinson-hyperlegible-next-latin-400.woff2') format('woff2');
+	font-weight: 400;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Atkinson Hyperlegible Next';
+	src: url('/fonts/atkinson-hyperlegible-next-latin-500.woff2') format('woff2');
+	font-weight: 500;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Atkinson Hyperlegible Next';
+	src: url('/fonts/atkinson-hyperlegible-next-latin-700.woff2') format('woff2');
+	font-weight: 700;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Atkinson Hyperlegible Mono';
+	src: url('/fonts/atkinson-hyperlegible-mono-latin-400.woff2') format('woff2');
+	font-weight: 400;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Atkinson Hyperlegible Mono';
+	src: url('/fonts/atkinson-hyperlegible-mono-latin-700.woff2') format('woff2');
+	font-weight: 700;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Kalam';
+	src: url('/fonts/kalam-latin-700.woff2') format('woff2');
+	font-weight: 700;
+	font-display: swap;
+}
+
+:root {
+	color-scheme: light;
+	--ink: #1b2a4a;
+	--paper: #f4f7fb;
+	--sheet: #ffffff;
+	--pen: #2350c8;
+	--correction: #c42b2b;
+	--right: #1c7a4e;
+	--custom: #5e45a8;
+	--waiting: #8f5b00;
+
+	--ink-muted: color-mix(in srgb, var(--ink) 65%, var(--paper));
+	--ink-faint: color-mix(in srgb, var(--ink) 40%, var(--paper));
+	--line: color-mix(in srgb, var(--ink) 14%, var(--paper));
+	--pen-wash: color-mix(in srgb, var(--pen) 10%, var(--sheet));
+	--correction-wash: color-mix(in srgb, var(--correction) 9%, var(--sheet));
+
+	--font-ui: 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+	--font-digits: 'Atkinson Hyperlegible Mono', ui-monospace, monospace;
+	--font-hand: 'Kalam', 'Comic Sans MS', cursive;
+
+	--radius: 0.75rem;
+	--radius-small: 0.5rem;
+	--shadow: 0 1px 2px rgb(27 42 74 / 6%), 0 8px 24px rgb(27 42 74 / 6%);
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		color-scheme: dark;
+		--ink: #e4eaf5;
+		--paper: #0e1525;
+		--sheet: #152036;
+		--pen: #93b2ff;
+		--correction: #ff7b7b;
+		--right: #62d49c;
+		--custom: #bba8f7;
+		--waiting: #f0b85e;
+		--shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 25%);
+	}
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	-webkit-text-size-adjust: 100%;
+	text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	min-height: 100dvh;
+	background: var(--paper);
+	color: var(--ink);
+	font-family: var(--font-ui);
+	font-size: 1.0625rem;
+	line-height: 1.5;
+	font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3 {
+	margin: 0;
+	line-height: 1.15;
+	font-weight: 700;
+}
+
+a {
+	color: inherit;
+}
+
+button {
+	font: inherit;
+	color: inherit;
+}
+
+:focus-visible {
+	outline: 3px solid var(--pen);
+	outline-offset: 2px;
+}
+
+/* Buttons shared by every screen. */
+.button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.6rem;
+	min-height: 3.25rem;
+	padding: 0 1.75rem;
+	border: 1.5px solid transparent;
+	border-radius: var(--radius-small);
+	font-weight: 700;
+	font-size: 1.125rem;
+	text-decoration: none;
+	cursor: pointer;
+}
+.button-primary {
+	background: var(--ink);
+	color: var(--paper);
+}
+.button-secondary {
+	background: var(--sheet);
+	border-color: var(--line);
+	color: var(--ink);
+}
+.button-quiet {
+	background: transparent;
+	color: var(--ink-muted);
+}
+
+/* Small label next to a trial: mode, status. */
+.badge {
+	display: inline-block;
+	padding: 0.15rem 0.6rem;
+	border: 1px solid var(--line);
+	border-radius: 0.4rem;
+	background: var(--paper);
+	color: var(--ink-muted);
+	font-size: 0.875rem;
+	font-weight: 700;
+}
+
+/* Keyboard key in the shortcut hints. */
+kbd {
+	display: inline-block;
+	min-width: 1.6rem;
+	padding: 0.05rem 0.4rem;
+	border: 1px solid var(--line);
+	border-bottom-width: 2px;
+	border-radius: 0.35rem;
+	background: var(--sheet);
+	font-family: var(--font-digits);
+	font-size: 0.8rem;
+	text-align: center;
+}
+
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms !important;
+	}
+}
