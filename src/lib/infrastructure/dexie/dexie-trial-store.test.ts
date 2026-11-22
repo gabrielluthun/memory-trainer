@@ -15,7 +15,7 @@ const completedTrial = (id: string) => {
 			mode: 'standard',
 			format: { itemCount: 3, memorizationMs: 60_000, recallMs: 240_000 },
 			pauses: { beforeMemorizationMs: 0, beforeRecallMs: 0 },
-			groupSize: 2,
+			displayPattern: [2],
 			items: [1, 2, 3],
 			startedAt: new Date('2026-11-22T10:00:00Z')
 		},
