@@ -39,7 +39,7 @@ export async function loadMigrations(): Promise<Migration[]> {
  * What Neon provides and the migrations rely on, simulated: the `auth` schema and
  * `auth.user_id()`. Here the identity comes from the `test.user_id` setting instead of a JWT.
  */
-const neonPrerequisites = `
+export const neonPrerequisites = `
 	CREATE SCHEMA auth;
 	CREATE FUNCTION auth.user_id() RETURNS text LANGUAGE sql STABLE
 		AS $$ SELECT nullif(current_setting('test.user_id', true), '') $$;
