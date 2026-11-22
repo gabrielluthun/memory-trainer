@@ -27,6 +27,7 @@ export default defineConfig({
 					include: [
 						'src/lib/domain/**/*.test.ts',
 						'src/lib/application/**/*.test.ts',
+						'src/lib/presentation/**/*.test.ts',
 						'tests/fakes/**/*.test.ts'
 					]
 				}

@@ -1,0 +1,308 @@
+<script lang="ts">
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { onMount } from 'svelte';
+	import { getApp } from '#lib/app-container.ts';
+	import AppHeader from '#lib/presentation/components/app-header.svelte';
+	import MemorizationCarousel from '#lib/presentation/components/memorization-carousel.svelte';
+	import RecallGrid from '#lib/presentation/components/recall-grid.svelte';
+	import TrialHeader from '#lib/presentation/components/trial-header.svelte';
+	import TrialResult from '#lib/presentation/components/trial-result.svelte';
+	import { formatClock, formatCountdown } from '#lib/presentation/format.ts';
+
+	const session = getApp().session;
+	const trial = $derived(session.current);
+
+	// The stopwatch is read on the monotonic clock; this tick only refreshes the display.
+	let now = $state(0);
+	const memorizationElapsed = $derived.by(() => {
+		void now;
+		return trial?.phase === 'memorizing' ? trial.elapsedMs() : 0;
+	});
+	const recallRemaining = $derived.by(() => {
+		void now;
+		return trial?.phase === 'recalling' ? trial.format.recallMs - trial.elapsedMs() : 0;
+	});
+	const pauseRemaining = $derived.by(() => {
+		void now;
+		return trial?.phase === 'paused-before-memorization' || trial?.phase === 'paused-before-recall'
+			? trial.countdown.remainingMs()
+			: 0;
+	});
+
+	onMount(() => {
+		if (!session.current) {
+			void goto(resolve('/'));
+			return;
+		}
+		let frame = requestAnimationFrame(function tick() {
+			now = performance.now();
+			frame = requestAnimationFrame(tick);
+		});
+
+		// Keep the screen on during the trial: 4 minutes of recall on a phone (technical constraints).
+		let wakeLock: WakeLockSentinel | null = null;
+		navigator.wakeLock
+			?.request('screen')
+			.then((lock) => (wakeLock = lock))
+			.catch(() => {});
+
+		return () => {
+			cancelAnimationFrame(frame);
+			void wakeLock?.release();
+		};
+	});
+
+	function onkeydown(event: KeyboardEvent) {
+		if (event.repeat && event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+		if (trial?.phase === 'memorizing') {
+			const actions: Record<string, () => void> = {
+				ArrowRight: () => session.next(),
+				ArrowLeft: () => session.previous(),
+				' ': () => session.toStart(),
+				ArrowUp: () => session.toStart(),
+				Enter: () => session.finishMemorization()
+			};
+			const action = actions[event.key];
+			if (action) {
+				event.preventDefault();
+				action();
+			}
+		} else if (trial?.phase === 'recalling') {
+			// The hidden field of the grid handles its own input (touch screens).
+			if ((event.target as HTMLElement | null)?.dataset?.recallField !== undefined) {
+				if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') event.preventDefault();
+				else return;
+			}
+			if (/^[0-9]$/.test(event.key)) {
+				event.preventDefault();
+				session.type(Number(event.key));
+			} else if (event.key === 'ArrowRight') {
+				event.preventDefault();
+				session.moveSelection(1);
+			} else if (event.key === 'ArrowLeft') {
+				event.preventDefault();
+				session.moveSelection(-1);
+			}
+		}
+	}
+</script>
+
+<svelte:head>
+	<title>Essai de Numbers — memory-trainer</title>
+</svelte:head>
+
+<svelte:window {onkeydown} />
+
+{#if trial?.phase === 'completed'}
+	<AppHeader />
+	<main>
+		<TrialResult
+			score={trial.score}
+			itemCount={trial.items.length}
+			memorizationMs={trial.memorizationMs}
+			recallMs={trial.recallMs}
+			mode={trial.mode}
+		/>
+	</main>
+{:else if trial}
+	<TrialHeader phase={trial.phase} mode={trial.mode}>
+		{#snippet status()}
+			{#if trial.phase === 'memorizing'}
+				<span>Groupe <strong>{session.groupIndex + 1}</strong> sur {session.groupCount}</span>
+				<span class="clock" data-testid="memorization-clock">
+					{formatClock(memorizationElapsed)}
+				</span>
+				<span>/ {formatCountdown(trial.format.memorizationMs)}</span>
+			{:else if trial.phase === 'recalling'}
+				<span>Case <strong>{session.selected + 1}</strong> sur {trial.items.length}</span>
+				<span class="clock" data-testid="recall-countdown">{formatCountdown(recallRemaining)}</span>
+				<span>restantes</span>
+			{/if}
+		{/snippet}
+	</TrialHeader>
+
+	<main class="trial">
+		{#if trial.phase === 'memorizing'}
+			<MemorizationCarousel
+				items={trial.items}
+				groupSize={session.groupSize}
+				groupIndex={session.groupIndex}
+			/>
+			<p class="hint">La bande glisse sous le cadre, un groupe à la fois.</p>
+
+			<div class="touch-nav" aria-label="Navigation">
+				<button class="button button-secondary" type="button" onclick={() => session.toStart()}>
+					Début
+				</button>
+				<button
+					class="button button-secondary"
+					type="button"
+					aria-label="Groupe précédent"
+					onclick={() => session.previous()}
+				>
+					←
+				</button>
+				<button
+					class="button button-secondary"
+					type="button"
+					aria-label="Groupe suivant"
+					onclick={() => session.next()}
+				>
+					→
+				</button>
+			</div>
+			<div class="actions">
+				<button
+					class="button button-primary finished"
+					type="button"
+					onclick={() => session.finishMemorization()}
+				>
+					Finished
+				</button>
+			</div>
+			<p class="keys">
+				<kbd>→</kbd> groupe suivant <kbd>←</kbd> précédent <kbd>Espace</kbd> début
+				<kbd>Entrée</kbd> terminer
+			</p>
+		{:else if trial.phase === 'recalling'}
+			<section class="sheet" aria-labelledby="recall-title">
+				<div class="sheet-head">
+					<h1 id="recall-title">Votre rappel</h1>
+					<span>{trial.items.length} chiffres, dans l'ordre</span>
+				</div>
+				<RecallGrid
+					answers={session.answers}
+					selected={session.selected}
+					groupSize={session.groupSize}
+					onselect={(index: number) => session.select(index)}
+					ontype={(digit: number) => session.type(digit)}
+				/>
+				<div class="sheet-actions">
+					<button
+						class="button button-primary finished"
+						type="button"
+						onclick={() => session.finishRecall()}
+					>
+						Finished
+					</button>
+				</div>
+			</section>
+			<p class="keys">
+				<kbd>0</kbd>–<kbd>9</kbd> saisir · flèches ou clic pour changer de case
+			</p>
+		{:else}
+			<div class="pause" role="timer" aria-live="polite">
+				<p>Pause</p>
+				<strong>{Math.ceil(pauseRemaining / 1_000)}</strong>
+			</div>
+		{/if}
+	</main>
+{/if}
+
+<style>
+	.trial {
+		padding: 3rem 2.5rem;
+		max-width: 110rem;
+		margin: 0 auto;
+	}
+	.clock {
+		color: var(--ink);
+		font-size: 2.6rem;
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
+	}
+	.hint {
+		text-align: center;
+		color: var(--ink-muted);
+	}
+	.actions {
+		display: flex;
+		justify-content: center;
+		margin-top: 6rem;
+	}
+	.finished {
+		min-width: 20rem;
+		min-height: 4.25rem;
+		font-size: 1.4rem;
+	}
+	.keys {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 2rem;
+		color: var(--ink-muted);
+	}
+	.touch-nav {
+		display: none;
+	}
+	.sheet {
+		padding: 2.5rem 2.75rem;
+		background: var(--sheet);
+		border: 1px solid var(--line);
+		border-radius: 1.25rem;
+		box-shadow: var(--shadow);
+	}
+	.sheet-head {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		margin-bottom: 1.75rem;
+		color: var(--ink-muted);
+	}
+	.sheet-head h1 {
+		color: var(--ink);
+		font-size: 1.3rem;
+	}
+	.sheet-actions {
+		display: flex;
+		justify-content: flex-end;
+		margin-top: 2rem;
+		padding-top: 2rem;
+		border-top: 1px solid var(--line);
+	}
+	.pause {
+		display: grid;
+		place-items: center;
+		gap: 1rem;
+		padding: 6rem 0;
+		color: var(--ink-muted);
+	}
+	.pause strong {
+		color: var(--ink);
+		font-size: 8rem;
+		font-family: var(--font-digits);
+	}
+	/* Touch screens: navigation buttons within thumb reach (wireframes). */
+	@media (pointer: coarse) {
+		.touch-nav {
+			display: grid;
+			grid-template-columns: 1fr 1fr 1fr;
+			gap: 0.75rem;
+			margin-top: 3rem;
+		}
+		.actions {
+			margin-top: 1rem;
+		}
+		.finished {
+			width: 100%;
+			min-width: 0;
+		}
+		.keys {
+			display: none;
+		}
+	}
+	@media (max-width: 760px) {
+		.trial {
+			padding: 1.5rem 1rem;
+		}
+		.clock {
+			font-size: 1.6rem;
+		}
+		.sheet {
+			padding: 1.25rem 1rem;
+		}
+	}
+</style>

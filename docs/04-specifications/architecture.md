@@ -83,7 +83,7 @@ flowchart TB
 | **Présentation** | Écrans, saisie au clavier et au toucher, affichage du chronomètre | Application | Bout en bout |
 | **Application** | Enchaînement d'un essai, abandon, file d'envoi, synchronisation | Domaine, Infrastructure | Intégration |
 | **Domaine** | Règles de gestion RG01 à RG25 : formats, pauses de préparation, tirage, correction, score, points IAM | Rien | **Unitaires**, en priorité (O3) |
-| **Infrastructure** | Accès à Dexie.js, à la Data API et à Hanko ; horloge monotone | Domaine (types seulement) | Intégration |
+| **Infrastructure** | Accès à Dexie.js, à la Data API et à Hanko ; horloge monotone | Domaine (types seulement), et les interfaces de la couche Application qu'elle implémente ([ADR 0013](adr/0013-organisation-code-metier.md)) | Intégration |
 
 Deux conséquences :
 - Les règles de gestion sont testables **sans navigateur ni base** : c'est le terrain du TDD (choix justifié en Q1).

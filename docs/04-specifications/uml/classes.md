@@ -421,6 +421,8 @@ Le **Worker de sauvegarde** (SEQ06) est un programme à part, d'une seule foncti
 
 > Décision : « → deux fois **rapidement** » (RG09) = deux appuis à moins de **400 ms** d'écart. La valeur exacte de Memory League n'est pas connue. Elle est réglable dans le code.
 
+> Décision : seuls les appuis faits **sur le dernier groupe** comptent pour ce double appui. L'appui qui amène sur le dernier groupe ne compte pas : en faisant défiler vite, on ne peut pas arrêter sa mémorisation par erreur.
+
 ## Points ouverts
 
 | Point | Pourquoi | Quand |
