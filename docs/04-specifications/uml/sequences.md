@@ -140,7 +140,7 @@ sequenceDiagram
     loop Navigation
         P->>E: Flèches, barre d'espace
         E->>A: Change de groupe (RG09)
-        A-->>E: Groupe à afficher (taille RG11)
+        A-->>E: Groupe à afficher (motif RG11)
     end
     Note over A,L: Essai en cours enregistré toutes les 2 secondes
     alt Le pratiquant termine

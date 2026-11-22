@@ -82,7 +82,7 @@ Les réglages de chaque discipline. Clé primaire : `owner_id` et `discipline`. 
 
 | Donnée | Type | Type PostgreSQL | Vide | Défaut | Nature | Contraintes | Règles |
 |---|---|---|---|---|---|---|---|
-| **group_size** : Taille des groupes | Entier, 2 octets | `smallint` | Non | — | Élémentaire | De 1 à 10 (valeur retenue ci-dessous) | RG11 |
+| **group_pattern** : Motif d'affichage | Tableau d'entiers, 2 octets chacun | `smallint[]` | Non | — | Élémentaire | 1 à 3 valeurs, chacune de 1 à 5 (ex. `{2,3}`) | RG11 |
 | **pause_before_memorization_s** : Pause avant la mémorisation | Entier (secondes), 2 octets | `smallint` | Non | — | Élémentaire | 0, 5, 10 ou 20 | RG25 |
 | **pause_before_recall_s** : Pause avant le rappel | Entier (secondes), 2 octets | `smallint` | Non | — | Élémentaire | 0, 5, 10 ou 20 | RG25 |
 
@@ -115,7 +115,7 @@ Les listes sont des types ENUM ([ADR 0017](../adr/0017-integrite-base-donnees.md
 
 > Décision : en mode personnalisé, la **durée de mémorisation** va de **1 seconde à 1 heure** (3 600 000 ms). RG15 ne fixe pas de bornes.
 
-> Décision : la **taille des groupes** va de **1 à 10** chiffres. Les tailles proposées et la valeur par défaut seront fixées avec les maquettes (S12, CU15).
+> Décision : la taille des groupes est remplacée par un **motif d'affichage** de **1 à 3 sous-groupes de 1 à 5 éléments**, stocké en **tableau d'entiers** ([ADR 0027](../adr/0027-motif-affichage.md)). « 2 » par défaut pour Numbers.
 
 ## Points ouverts
 

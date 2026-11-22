@@ -55,7 +55,7 @@ Couvre : EF06, EF08, EF10 · RG01, RG07, RG08, RG12, RG13, RG14, RG21
 Je veux parcourir les éléments à mon rythme et passer au rappel dès que je suis prêt, afin que mon temps de mémorisation reflète ma vitesse réelle.
 Couvre : EF08 · RG08, RG09, RG11, RG13 · ENF01
 - CA1 : dans toutes les disciplines, → avance d'un groupe, ← recule d'un groupe, barre d'espace ou ↑ revient au début.
-- CA1bis : la taille des groupes se règle dans les paramètres (ex. 3 chiffres, 2 cartes) et s'applique aux essais suivants.
+- CA1bis : le motif d'affichage se règle dans les paramètres (ex. « 2 2 » ou « 2 3 » chiffres, « 2 » cartes) et s'applique aux essais suivants ; la grille de rappel suit le même découpage.
 - CA2 : → deux fois rapidement à la fin des éléments, le bouton Finished ou la touche Entrée arrêtent le chronomètre et lancent le rappel.
 - CA3 : le temps enregistré est le temps réellement écoulé, mesuré à la milliseconde.
 - CA4 : à score égal, l'essai au temps le plus court est classé devant ; un score plus élevé l'emporte toujours (10 éléments en 60 s battent 9 en 30 s).

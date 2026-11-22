@@ -48,7 +48,7 @@ Notation : National / International / World.
 ## Points reportés
 
 - **À définir en partie 4** (maquettes S12, S13) :
-  - RG11 : les tailles de groupe proposées et la valeur par défaut de chaque épreuve ;
+  - RG11 : les motifs d'affichage possibles et la valeur par défaut de chaque épreuve (fixés : 1 à 3 sous-groupes de 1 à 5, « 2 » pour Numbers) ;
   - **tactile** : les instructions officielles décrivent clavier et souris ; sur téléphone et tablette (ENF03), chaque raccourci aura un équivalent tactile (boutons, glissements).
 - **Base de prénoms** de Names (par langue) et d'International Names : provenance et taille. Recherche de sources libres de droits et vérification des licences en partie 3 (A1), choix en partie 4.
 
