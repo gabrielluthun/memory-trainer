@@ -140,7 +140,7 @@
 		{#if trial.phase === 'memorizing'}
 			<MemorizationCarousel
 				items={trial.items}
-				groupSize={session.groupSize}
+				pattern={session.displayPattern}
 				groupIndex={session.groupIndex}
 			/>
 			<p class="hint">La bande glisse sous le cadre, un groupe à la fois.</p>
@@ -188,7 +188,7 @@
 				<RecallGrid
 					answers={session.answers}
 					selected={session.selected}
-					groupSize={session.groupSize}
+					pattern={session.displayPattern}
 					onselect={(index: number) => session.select(index)}
 					ontype={(digit: number) => session.type(digit)}
 				/>
