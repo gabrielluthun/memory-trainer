@@ -2,6 +2,7 @@ import type { Discipline, DisciplineName, ItemResult } from '../disciplines/disc
 import type { Digit } from '../disciplines/numbers';
 import type { Format } from '../format';
 import { SequenceRecall } from '../recall/sequence-recall';
+import type { DisplayPattern } from '../navigation/display-pattern';
 import { GroupNavigation } from '../navigation/group-navigation';
 import { Countdown, Stopwatch, type MonotonicClock } from '../timing/timing';
 
@@ -27,8 +28,8 @@ export interface TrialSetup {
 	readonly mode: Mode;
 	readonly format: Format;
 	readonly pauses: PreparationPauses;
-	/** Size of the groups shown during memorization, from the settings (RG11). */
-	readonly groupSize: number;
+	/** How each group is shown and split during memorization and recall, from the settings (RG11). */
+	readonly displayPattern: DisplayPattern;
 	readonly items: Digit[];
 	readonly startedAt: Date;
 }
@@ -60,6 +61,9 @@ abstract class Trial {
 	}
 	get startedAt(): Date {
 		return this.setup.startedAt;
+	}
+	get displayPattern(): DisplayPattern {
+		return this.setup.displayPattern;
 	}
 }
 
@@ -94,7 +98,7 @@ export class MemorizingTrial extends Trial {
 		private readonly stopwatch: Stopwatch
 	) {
 		super(setup, clock);
-		this.navigation = new GroupNavigation(setup.items.length, setup.groupSize, clock);
+		this.navigation = new GroupNavigation(setup.items.length, setup.displayPattern, clock);
 	}
 
 	/** The items of the group currently in the frame. */

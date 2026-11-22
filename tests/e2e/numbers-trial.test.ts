@@ -82,11 +82,11 @@ test('US07 — → twice quickly on the last group finishes the memorization', a
 	await expect(page.getByRole('heading', { name: 'Votre rappel' })).toBeVisible();
 });
 
-test('US07 CA1bis — the group size chosen in the settings applies to the next trial', async ({
+test('US07 CA1bis — the display pattern chosen in the settings applies to the next trial', async ({
 	page
 }) => {
 	await page.goto('/settings');
-	await page.getByLabel('Taille des groupes, Numbers').selectOption('4');
+	await page.getByLabel('Groupe 1').selectOption('4');
 	await expect(page.getByText('Enregistré sur cet appareil.')).toBeVisible();
 
 	await launch(page);

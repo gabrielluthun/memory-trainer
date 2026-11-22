@@ -4,16 +4,22 @@
 	 * in blue pen. Digits come from the keyboard or, on touch screens, from the system numeric
 	 * keyboard through a hidden field (wireframes).
 	 */
+	import {
+		isSubgroupStart,
+		patternSize,
+		type DisplayPattern
+	} from '../../domain/navigation/display-pattern';
+
 	let {
 		answers,
 		selected,
-		groupSize,
+		pattern,
 		onselect,
 		ontype
 	}: {
 		answers: (number | null)[];
 		selected: number;
-		groupSize: number;
+		pattern: DisplayPattern;
 		onselect: (index: number) => void;
 		ontype: (digit: number) => void;
 	} = $props();
@@ -22,6 +28,7 @@
 	let field: HTMLInputElement | undefined = $state();
 
 	// About 20 cells per row on a computer, 10 on a phone, always cut on whole groups.
+	const groupSize = $derived(patternSize(pattern));
 	const rowSize = $derived(
 		Math.max(groupSize, Math.floor((width < 760 ? 10 : 20) / groupSize) * groupSize)
 	);
@@ -58,7 +65,7 @@
 					type="button"
 					class="cell"
 					class:selected={index === selected}
-					class:group-start={index % groupSize === 0 && index % rowSize !== 0}
+					class:group-start={isSubgroupStart(index, pattern) && index % rowSize !== 0}
 					aria-label="Case {index + 1}, {answers[index] ?? 'vide'}"
 					aria-pressed={index === selected}
 					onclick={() => choose(index)}

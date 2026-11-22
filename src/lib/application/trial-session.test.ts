@@ -179,13 +179,14 @@ describe('TrialSession — US07, navigating and finishing the memorization', () 
 		scheduler.advance(0);
 	};
 
-	it('US07 CA1bis — uses the group size of the settings at launch', () => {
-		settings.current = Settings.defaults().withGroupSize('numbers', 4, at);
+	it('US07 CA1bis — uses the display pattern of the settings at launch', () => {
+		settings.current = Settings.defaults().withGroupPattern('numbers', [2, 3], at);
 
 		memorizing();
 
-		expect(session.groupCount).toBe(20);
-		expect(session.group).toHaveLength(4);
+		expect(session.displayPattern).toEqual([2, 3]);
+		expect(session.groupCount).toBe(16);
+		expect(session.group).toHaveLength(5);
 	});
 
 	it('RG09 — → and ← move through the groups, Space or ↑ goes back to the start', () => {
@@ -212,7 +213,7 @@ describe('TrialSession — US07, navigating and finishing the memorization', () 
 	});
 
 	it('RG09 — → twice quickly on the last group finishes the memorization', () => {
-		settings.current = Settings.defaults().withGroupSize('numbers', 10, at);
+		settings.current = Settings.defaults().withGroupPattern('numbers', [5, 5], at);
 		memorizing();
 		for (let i = 0; i < 7; i++) session.next();
 		scheduler.advance(12_000);

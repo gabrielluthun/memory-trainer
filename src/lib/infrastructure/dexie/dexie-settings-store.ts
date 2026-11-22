@@ -9,8 +9,8 @@ export class DexieSettingsStore implements SettingsRepository {
 	async load(): Promise<Settings | null> {
 		const record = await this.db.settings.get('device');
 		if (!record) return null;
-		const { interfaceLanguage, groupSizes, pauses, modifiedAt } = record;
-		return Settings.restore({ interfaceLanguage, groupSizes, pauses, modifiedAt });
+		// The record may predate the display pattern: restore() converts it (ADR 0027).
+		return Settings.restore(record);
 	}
 
 	async save(settings: Settings): Promise<void> {

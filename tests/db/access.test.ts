@@ -85,7 +85,10 @@ describe('authenticated: each owner only sees their own rows', () => {
 	it('cannot write discipline settings directly', async () => {
 		await expect(
 			as(db, 'authenticated', 'owner-1', () =>
-				db.query(`INSERT INTO discipline_settings VALUES ('owner-1', 'numbers', 3, 0, 0)`)
+				db.query(
+					`INSERT INTO discipline_settings (owner_id, discipline, group_pattern, pause_before_memorization_s, pause_before_recall_s)
+					 VALUES ('owner-1', 'numbers', '{3}', 0, 0)`
+				)
 			)
 		).rejects.toThrow(/permission denied/);
 	});

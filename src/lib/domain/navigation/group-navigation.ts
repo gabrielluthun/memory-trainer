@@ -1,4 +1,5 @@
 import type { MonotonicClock } from '../timing/timing';
+import { assertDisplayPattern, patternSize, type DisplayPattern } from './display-pattern';
 
 /** What a press on → did: moved one group, stayed on the last group, or asked to finish (RG09). */
 export type NextResult = 'moved' | 'stay' | 'finish';
@@ -16,15 +17,17 @@ export class GroupNavigation {
 	readonly groupCount: number;
 	#lastPressOnLastGroupMs: number | null = null;
 
+	/** Number of items in one group: the sum of the display pattern (RG11). */
+	readonly groupSize: number;
+
 	constructor(
 		private readonly itemCount: number,
-		readonly groupSize: number,
+		readonly pattern: DisplayPattern,
 		private readonly clock: MonotonicClock
 	) {
-		if (!Number.isInteger(groupSize) || groupSize < 1 || groupSize > 10) {
-			throw new RangeError(`Group size must be from 1 to 10, got ${groupSize}`);
-		}
-		this.groupCount = Math.ceil(itemCount / groupSize);
+		assertDisplayPattern(pattern);
+		this.groupSize = patternSize(pattern);
+		this.groupCount = Math.ceil(itemCount / this.groupSize);
 	}
 
 	groupBounds(index: number): { start: number; end: number } {

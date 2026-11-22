@@ -18,7 +18,7 @@ const submit = (trial: NumbersTrialPayload, userId: string | null = OWNER) =>
 		return rows[0].result;
 	});
 
-const saveSettings = (modifiedAt: string, language: 'fr' | 'en', groupSize: number) =>
+const saveSettings = (modifiedAt: string, language: 'fr' | 'en', groupPattern: number[]) =>
 	as(db, 'authenticated', OWNER, async () => {
 		const settings = {
 			settings_modified_at: modifiedAt,
@@ -26,7 +26,7 @@ const saveSettings = (modifiedAt: string, language: 'fr' | 'en', groupSize: numb
 			disciplines: [
 				{
 					discipline: 'numbers',
-					group_size: groupSize,
+					group_pattern: groupPattern,
 					pause_before_memorization_s: 5,
 					pause_before_recall_s: 10
 				}
@@ -158,16 +158,33 @@ describe('RG18 — closed trials are immutable, even for the owner of the tables
 
 describe('save_settings keeps the most recent change (ADR 0012)', () => {
 	it('saves a newer change, then ignores an older one', async () => {
-		expect(await saveSettings('2026-11-21T10:00:00Z', 'en', 4)).toBe('saved');
-		expect(await saveSettings('2026-11-21T09:00:00Z', 'fr', 2)).toBe('ignored');
+		expect(await saveSettings('2026-11-21T10:00:00Z', 'en', [2, 3])).toBe('saved');
+		expect(await saveSettings('2026-11-21T09:00:00Z', 'fr', [2])).toBe('ignored');
 
-		const { rows } = await db.query<{ interface_language: string; group_size: number }>(`
-			SELECT a.interface_language, s.group_size
+		const { rows } = await db.query<{ interface_language: string; group_pattern: number[] }>(`
+			SELECT a.interface_language, s.group_pattern
 			FROM accounts a JOIN discipline_settings s USING (owner_id)
 			WHERE owner_id = 'owner-1'
 		`);
-		expect(rows).toEqual([{ interface_language: 'en', group_size: 4 }]);
+		expect(rows).toEqual([{ interface_language: 'en', group_pattern: [2, 3] }]);
 	});
+});
+
+describe('display pattern (RG11, ADR 0027)', () => {
+	const later = (minutes: number) => new Date(Date.UTC(2026, 10, 22, 12, minutes)).toISOString();
+
+	it.each([[[5]], [[1, 1, 1]], [[5, 5, 5]]])('ES07 — accepts the pattern %j', async (pattern) => {
+		expect(await saveSettings(later(pattern.length * 10 + pattern[0]), 'fr', pattern)).toBe(
+			'saved'
+		);
+	});
+
+	it.each([[[]], [[6]], [[0]], [[2, 2, 2, 2]]])(
+		'ES07 — refuses the pattern %j',
+		async (pattern) => {
+			await expect(saveSettings(later(59), 'fr', pattern)).rejects.toThrow(/check constraint/);
+		}
+	);
 });
 
 describe('sequence numbers (ADR 0011)', () => {

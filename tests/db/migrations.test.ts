@@ -1,6 +1,12 @@
 import { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { applyDown, applyUp, createDatabase, loadMigrations } from './support/database';
+import {
+	applyDown,
+	applyUp,
+	createDatabase,
+	loadMigrations,
+	neonPrerequisites
+} from './support/database';
 
 // ES19: every migration applies on an empty database, and its "down" section undoes it
 // (used on the local machine and the dev branch only).
@@ -35,5 +41,31 @@ describe('migrations', () => {
 
 		await applyUp(db, migrations);
 		expect(await publicTableCount()).toBe(6);
+	});
+});
+
+describe('display pattern migration (ADR 0027)', () => {
+	it('turns a group size of 1 to 5 into the matching pattern, a larger one into the default "2"', async () => {
+		const migrations = await loadMigrations();
+		const initial = migrations.filter((migration) => migration.file.includes('initial_schema'));
+		const rest = migrations.slice(initial.length);
+		const fresh = await PGlite.create();
+		await fresh.exec(neonPrerequisites);
+		await applyUp(fresh, initial);
+		await fresh.exec(`
+			INSERT INTO accounts (owner_id) VALUES ('owner-4'), ('owner-8');
+			INSERT INTO discipline_settings VALUES ('owner-4', 'numbers', 4, 0, 0), ('owner-8', 'numbers', 8, 5, 0);
+		`);
+
+		await applyUp(fresh, rest);
+
+		const { rows } = await fresh.query<{ owner_id: string; group_pattern: number[] }>(
+			'SELECT owner_id, group_pattern FROM discipline_settings ORDER BY owner_id'
+		);
+		expect(rows).toEqual([
+			{ owner_id: 'owner-4', group_pattern: [4] },
+			{ owner_id: 'owner-8', group_pattern: [2] }
+		]);
+		await fresh.close();
 	});
 });

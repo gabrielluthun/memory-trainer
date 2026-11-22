@@ -1,6 +1,7 @@
 import type { Digit, NumbersDiscipline } from '../domain/disciplines/numbers';
 import type { DisciplineName } from '../domain/disciplines/discipline';
 import type { Format } from '../domain/format';
+import type { DisplayPattern } from '../domain/navigation/display-pattern';
 import type { RandomSource } from '../domain/random';
 import type { Settings } from '../domain/settings/settings';
 import type { MonotonicClock } from '../domain/timing/timing';
@@ -43,8 +44,8 @@ export class TrialSession {
 	answers = $state<(Digit | null)[]>([]);
 	selected = $state(0);
 	memorizationMs = $state<number | null>(null);
-	/** Group size of the trial in progress, fixed at launch (RG11). */
-	groupSize = $state(2);
+	/** Display pattern of the trial in progress, fixed at launch (RG11). */
+	displayPattern = $state<DisplayPattern>([2]);
 	groupIndex = $state(0);
 	groupCount = $state(0);
 	group = $state<Digit[]>([]);
@@ -57,7 +58,7 @@ export class TrialSession {
 	start(options: { pauses?: PreparationPauses } = {}): void {
 		const { discipline, random, ids, wallClock, clock } = this.deps;
 		const format = discipline.standardFormat();
-		this.groupSize = this.deps.settings.current.groupSizeFor(discipline.name);
+		this.displayPattern = this.deps.settings.current.groupPatternFor(discipline.name);
 		const pauses = options.pauses ?? this.deps.settings.current.pausesFor(discipline.name);
 		if (options.pauses) {
 			// RG25: the pauses chosen become the ones proposed next time. Not worth blocking the trial.
@@ -70,7 +71,7 @@ export class TrialSession {
 				mode: 'standard',
 				format,
 				pauses,
-				groupSize: this.groupSize,
+				displayPattern: this.displayPattern,
 				items: discipline.draw(format.itemCount, random),
 				startedAt: wallClock.now()
 			},

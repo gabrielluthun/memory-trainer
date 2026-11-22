@@ -11,7 +11,7 @@ const setup = (items: number[] = [1, 2, 3, 4, 5, 6, 7, 8]): TrialSetup => ({
 	mode: 'standard',
 	format: { itemCount: items.length, memorizationMs: 60_000, recallMs: 240_000 },
 	pauses: { beforeMemorizationMs: 0, beforeRecallMs: 0 },
-	groupSize: 2,
+	displayPattern: [2],
 	items,
 	startedAt: new Date('2026-11-22T10:00:00Z')
 });
@@ -77,9 +77,9 @@ describe('MemorizingTrial', () => {
 });
 
 describe('MemorizingTrial — navigation (US07)', () => {
-	it('RG11 — navigates groups of the size chosen at launch', () => {
+	it('RG11 — navigates groups of the display pattern chosen at launch', () => {
 		const memorizing = PausedBeforeMemorization.begin(
-			{ ...setup([1, 2, 3, 4, 5, 6, 7, 8]), groupSize: 3 },
+			{ ...setup([1, 2, 3, 4, 5, 6, 7, 8]), displayPattern: [3] },
 			new FakeMonotonicClock()
 		).startMemorization();
 
@@ -87,6 +87,16 @@ describe('MemorizingTrial — navigation (US07)', () => {
 
 		expect(memorizing.navigation.groupCount).toBe(3);
 		expect(memorizing.currentGroup()).toEqual([4, 5, 6]);
+	});
+
+	it('RG11 — with the pattern "2 3", the frame holds 5 digits', () => {
+		const memorizing = PausedBeforeMemorization.begin(
+			{ ...setup([1, 2, 3, 4, 5, 6, 7, 8]), displayPattern: [2, 3] },
+			new FakeMonotonicClock()
+		).startMemorization();
+
+		expect(memorizing.currentGroup()).toEqual([1, 2, 3, 4, 5]);
+		expect(memorizing.navigation.groupCount).toBe(2);
 	});
 });
 
