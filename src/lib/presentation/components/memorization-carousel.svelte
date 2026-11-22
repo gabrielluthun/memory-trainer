@@ -3,17 +3,32 @@
 	 * A strip of groups sliding under a fixed frame (wireframes, mock-up 04): the group in the frame
 	 * is the current one, its neighbours stay readable and fade on the edges.
 	 */
-	let { items, groupSize, groupIndex }: { items: number[]; groupSize: number; groupIndex: number } =
-		$props();
+	import {
+		patternSize,
+		splitGroup,
+		type DisplayPattern
+	} from '../../domain/navigation/display-pattern';
 
+	let {
+		items,
+		pattern,
+		groupIndex
+	}: { items: number[]; pattern: DisplayPattern; groupIndex: number } = $props();
+
+	// Each group is cut as the display pattern says: "2 3" shows "42 791" (RG11).
+	const groupSize = $derived(patternSize(pattern));
 	const groups = $derived(
 		Array.from({ length: Math.ceil(items.length / groupSize) }, (_, index) =>
-			items.slice(index * groupSize, (index + 1) * groupSize).join('')
+			splitGroup(items.slice(index * groupSize, (index + 1) * groupSize), pattern)
+				.map((subgroup) => subgroup.join(''))
+				.join(' ')
 		)
 	);
+	// Characters shown in the widest group, spaces between subgroups included.
+	const width = $derived(groupSize + pattern.length - 1);
 </script>
 
-<div class="carousel" style:--size={groupSize} style:--index={groupIndex}>
+<div class="carousel" style:--size={width} style:--index={groupIndex}>
 	<div class="frame" aria-hidden="true"></div>
 	<ol class="track" aria-hidden="true">
 		{#each groups as group, index (index)}
@@ -21,7 +36,7 @@
 		{/each}
 	</ol>
 	<p class="visually-hidden" aria-live="polite">
-		Groupe {groupIndex + 1} : {groups[groupIndex]?.split('').join(' ')}
+		Groupe {groupIndex + 1} : {groups[groupIndex]?.replaceAll(' ', '').split('').join(' ')}
 	</p>
 </div>
 
@@ -67,6 +82,7 @@
 		flex: 0 0 var(--group);
 		text-align: center;
 		letter-spacing: 0.08em;
+		white-space: pre;
 		color: var(--ink-faint);
 	}
 	.track li.current {
