@@ -288,6 +288,9 @@ Décision : un essai interrompu gardé hors statistiques **conserve le statut «
 **Scénario nominal**
 1. Le pratiquant choisit la langue de l'interface : français ou anglais (EF20). L'interface change sans recharger les données.
 2. Il choisit la taille des groupes pour chaque épreuve, par exemple 3 chiffres pour Numbers (RG11). Les tailles proposées et la valeur par défaut seront fixées avec les maquettes (S12).
+3. Il choisit les deux pauses de préparation de chaque épreuve : 0, 5, 10 ou 20 s (RG25).
+
+Décision : les **pauses de préparation** de chaque épreuve sont aussi un paramètre. C'est **une seule valeur** : la modifier ici ou au lancement d'un essai (CU01) change la même valeur, celle qui est proposée au lancement suivant (RG25). Sur un appareil neuf, il n'y a **aucune pause** (0 s et 0 s).
 
 Décision : les paramètres sont **synchronisés entre les appareils**, comme les essais. Ils sont donc modifiables, contrairement aux essais : en cas de modification sur deux appareils, **la dernière modification l'emporte**.
 
