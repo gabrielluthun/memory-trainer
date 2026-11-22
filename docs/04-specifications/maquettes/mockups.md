@@ -71,6 +71,8 @@ Dans l'application, ces polices sont **auto-hébergées** ([ADR 0020](../adr/002
 | **Résultat** | **Copie corrigée** : réponse fausse barrée, bon chiffre écrit à la main en rouge, case vide remplie en rouge, score entouré « 72 sur 80 ». Chaque ligne reçoit sa **note dans la marge** (17/20 sur ordinateur, 9/10 sur mobile), qui montre où se concentrent les erreurs. Elle se calcule à partir de la correction (RG12). |
 | **Historique** | Une petite jauge sous chaque score, et les statuts en étiquettes de couleur (abandonné, erreur externe, personnalisé). |
 | **Accueil** | Message d'accueil, aperçu des chiffres, derniers essais avec leur mode. |
+| **Mémorisation et rappel** (motif d'affichage) | Le cadre montre le groupe découpé selon le motif (« 45 83 » pour « 2 2 ») ; la grille de rappel est espacée de la même façon. Pas sur les PNG : ajouté pendant le développement ([RG11](../../01-besoin/regles-de-gestion.md)). |
+| **Paramètres** (motif d'affichage) | « Taille des groupes » devient « Motif d'affichage » : jusqu'à 3 listes de 1 à 5, avec un aperçu (« 42 791 »). |
 | **Paramètres** (ajout d'US23) | Une section « Pauses de préparation » par épreuve, avec les mêmes boutons 0, 5, 10 et 20 s que l'écran de lancement. Elle n'existe pas sur les PNG : ajoutée pendant le développement ([CU15](../uml/cas-utilisation.md)). |
 
 ## Source
