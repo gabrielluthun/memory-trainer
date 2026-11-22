@@ -1,5 +1,6 @@
 import { Settings } from '../domain/settings/settings';
 import type { DisciplineName } from '../domain/disciplines/discipline';
+import type { PreparationPauses } from '../domain/trial/trial';
 import type { SettingsRepository, WallClock } from './ports';
 
 /**
@@ -17,6 +18,13 @@ export class SettingsService {
 
 	async load(): Promise<void> {
 		this.current = (await this.repository.load()) ?? Settings.defaults();
+	}
+
+	/** The pauses of a discipline: its setting, and the last ones used (RG25). */
+	async setPauses(discipline: DisciplineName, pauses: PreparationPauses): Promise<void> {
+		const updated = this.current.withPauses(discipline, pauses, this.wallClock.now());
+		await this.repository.save(updated);
+		this.current = updated;
 	}
 
 	async setGroupSize(discipline: DisciplineName, size: number): Promise<void> {
