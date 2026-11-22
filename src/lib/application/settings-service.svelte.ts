@@ -1,5 +1,6 @@
 import { Settings } from '../domain/settings/settings';
 import type { DisciplineName } from '../domain/disciplines/discipline';
+import type { DisplayPattern } from '../domain/navigation/display-pattern';
 import type { PreparationPauses } from '../domain/trial/trial';
 import type { SettingsRepository, WallClock } from './ports';
 
@@ -27,8 +28,9 @@ export class SettingsService {
 		this.current = updated;
 	}
 
-	async setGroupSize(discipline: DisciplineName, size: number): Promise<void> {
-		const updated = this.current.withGroupSize(discipline, size, this.wallClock.now());
+	/** The display pattern of a discipline (RG11, ADR 0027). */
+	async setGroupPattern(discipline: DisciplineName, pattern: DisplayPattern): Promise<void> {
+		const updated = this.current.withGroupPattern(discipline, pattern, this.wallClock.now());
 		await this.repository.save(updated);
 		this.current = updated;
 	}
