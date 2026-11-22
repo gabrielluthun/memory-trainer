@@ -60,7 +60,7 @@ erDiagram
     discipline_settings {
         text owner_id PK, FK
         text discipline PK, FK
-        smallint group_size "NOT NULL, 1 à 10"
+        smallint_array group_pattern "NOT NULL, 1 à 3 valeurs de 1 à 5"
         smallint pause_before_memorization_s "NOT NULL, 0 5 10 20"
         smallint pause_before_recall_s "NOT NULL, 0 5 10 20"
     }
