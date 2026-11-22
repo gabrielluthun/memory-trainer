@@ -62,7 +62,7 @@ La colonne « Base de données » reprend la [vue cible du MCD](bdd/mcd.md#6-vue
 | **Essai Numbers** | Formats standard et personnalisé, deux pauses, carrousel de mémorisation, saisie avec insertion et suppression, correction et score | RG01, RG02, RG08 à RG12, RG15, RG21, RG25 ; [SEQ02](uml/sequences.md) |
 | **Abandon et interruption** | Les trois choix, statuts « abandonné » et « erreur externe », essai en cours enregistré toutes les 2 s | RG23, RG24 ; [SEQ03](uml/sequences.md) |
 | **Historique et détail** | Liste filtrable par discipline et par mode, copie corrigée de chaque essai | RG18, RG19 |
-| **Paramètres** | Langue FR ou EN, taille des groupes, dernières pauses, synchronisés | EF20, RG11, ADR 0012 |
+| **Paramètres** | Langue FR ou EN, motif d'affichage, dernières pauses, synchronisés | EF20, RG11, ADR 0012 |
 | **Hors ligne et synchronisation** | Application en cache, base locale Dexie.js, file d'envoi, envoi par `submit_trial`, réception par numéro d'ordre | ENF02, RG22 ; [SEQ01, SEQ05](uml/sequences.md) ; ADR 0010, 0011 |
 | **Connexion** | Passkey Hanko, compte unique | ES01 à ES03 ; [SEQ04](uml/sequences.md) |
 | **Installation** | PWA installable, rappel d'installation sur iPhone et iPad, stockage persistant | CU18, S3 |
