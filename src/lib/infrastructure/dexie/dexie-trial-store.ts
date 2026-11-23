@@ -1,5 +1,5 @@
 import type { TrialDetail, TrialRepository, TrialSummary } from '../../application/ports';
-import type { CompletedTrial, TrialId } from '../../domain/trial/trial';
+import type { ClosedTrial, TrialId } from '../../domain/trial/trial';
 import type { TrialMapper } from '../trial-mapper';
 import type { MemoryTrainerDatabase } from './database';
 
@@ -13,7 +13,7 @@ export class DexieTrialStore implements TrialRepository {
 		private readonly mapper: TrialMapper
 	) {}
 
-	async close(trial: CompletedTrial): Promise<void> {
+	async close(trial: ClosedTrial): Promise<void> {
 		const record = this.mapper.toRecord(trial);
 		await this.db.transaction('rw', this.db.trials, this.db.outbox, async () => {
 			await this.db.trials.put(record);
