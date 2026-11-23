@@ -1,4 +1,6 @@
-import type { CompletedTrial } from '../domain/trial/trial';
+import type { TrialDetail, TrialSummary } from '../application/ports';
+import type { DisciplineName } from '../domain/disciplines/discipline';
+import type { CompletedTrial, Mode } from '../domain/trial/trial';
 
 /** One item of a stored trial, as in `trial_items` and `trial_items_numbers` (data dictionary). */
 export interface TrialItemRecord {
@@ -27,7 +29,7 @@ export interface TrialRecord {
 	items: TrialItemRecord[];
 }
 
-/** Converts domain trials into stored records (and back, from US12). */
+/** Converts domain trials into stored records, and stored records into what the history reads. */
 export class TrialMapper {
 	toRecord(trial: CompletedTrial): TrialRecord {
 		return {
@@ -47,6 +49,33 @@ export class TrialMapper {
 				expected_digit: result.expected,
 				answered_digit: result.answer,
 				is_correct: result.correct
+			}))
+		};
+	}
+	/** What the history lists (US12): no item, the list stays light. */
+	toSummary(record: TrialRecord): TrialSummary {
+		return {
+			id: record.trial_id,
+			discipline: record.discipline as DisciplineName,
+			mode: record.mode as Mode,
+			status: record.status,
+			startedAt: new Date(record.started_at),
+			itemCount: record.item_count,
+			score: record.score,
+			memorizationMs: record.memorization_ms
+		};
+	}
+
+	/** One trial with its detail, item by item (US11, RG19). */
+	toDetail(record: TrialRecord): TrialDetail {
+		return {
+			...this.toSummary(record),
+			recallMs: record.recall_ms,
+			results: record.items.map((item) => ({
+				position: item.position,
+				expected: item.expected_digit,
+				answer: item.answered_digit,
+				correct: item.is_correct === true
 			}))
 		};
 	}
