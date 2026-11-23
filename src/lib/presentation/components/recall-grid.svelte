@@ -5,11 +5,8 @@
 	 * keyboard through a hidden field (wireframes). The field also carries Backspace, + and −
 	 * once a cell has been clicked (RG10, US08).
 	 */
-	import {
-		isSubgroupStart,
-		patternSize,
-		type DisplayPattern
-	} from '../../domain/navigation/display-pattern';
+	import { isSubgroupStart, type DisplayPattern } from '../../domain/navigation/display-pattern';
+	import { rowSizeFor, rowsOf } from '../grid-rows';
 
 	let {
 		answers,
@@ -40,19 +37,8 @@
 	let width = $state(1200);
 	let field: HTMLInputElement | undefined = $state();
 
-	// About 20 cells per row on a computer, 10 on a phone, always cut on whole groups.
-	const groupSize = $derived(patternSize(pattern));
-	const rowSize = $derived(
-		Math.max(groupSize, Math.floor((width < 760 ? 10 : 20) / groupSize) * groupSize)
-	);
-	const rows = $derived(
-		Array.from({ length: Math.ceil(answers.length / rowSize) }, (_, row) =>
-			Array.from(
-				{ length: Math.min(rowSize, answers.length - row * rowSize) },
-				(_, column) => row * rowSize + column
-			)
-		)
-	);
+	const rowSize = $derived(rowSizeFor(width, pattern));
+	const rows = $derived(rowsOf(answers.length, rowSize));
 
 	function choose(index: number) {
 		onselect(index);

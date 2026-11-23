@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 	import { getApp } from '#lib/app-container.ts';
 	import AppHeader from '#lib/presentation/components/app-header.svelte';
+	import CorrectedCopy from '#lib/presentation/components/corrected-copy.svelte';
 	import MemorizationCarousel from '#lib/presentation/components/memorization-carousel.svelte';
 	import RecallGrid from '#lib/presentation/components/recall-grid.svelte';
 	import TrialHeader from '#lib/presentation/components/trial-header.svelte';
@@ -116,7 +117,7 @@
 
 {#if trial?.phase === 'completed'}
 	<AppHeader />
-	<main>
+	<main class="result">
 		<TrialResult
 			score={trial.score}
 			itemCount={trial.items.length}
@@ -124,6 +125,7 @@
 			recallMs={trial.recallMs}
 			mode={trial.mode}
 		/>
+		<CorrectedCopy results={trial.results} pattern={trial.displayPattern} />
 	</main>
 {:else if trial}
 	<TrialHeader phase={trial.phase} mode={trial.mode}>
@@ -251,6 +253,11 @@
 {/if}
 
 <style>
+	.result {
+		max-width: 110rem;
+		margin: 0 auto;
+		padding: 0 2.5rem 3rem;
+	}
 	.trial {
 		padding: 3rem 2.5rem;
 		max-width: 110rem;
@@ -342,6 +349,9 @@
 	@media (max-width: 760px) {
 		.trial {
 			padding: 1.5rem 1rem;
+		}
+		.result {
+			padding: 0 1rem 2rem;
 		}
 		.clock {
 			font-size: 1.6rem;
