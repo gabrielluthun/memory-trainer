@@ -67,6 +67,15 @@ abstract class Trial {
 	}
 }
 
+/**
+ * The phases a trial can be abandoned or interrupted in (RG23, RG24). The pause before
+ * memorization is not one of them: abandoning there keeps nothing (RG25).
+ */
+abstract class OngoingTrial extends Trial {
+	/** Stops the trial for good and waits for the practitioner's choice (CU05). */
+	abstract abandon(): PendingDecision;
+}
+
 /** Countdown before memorization; the items stay hidden (RG25). */
 export class PausedBeforeMemorization extends Trial {
 	readonly phase = 'paused-before-memorization';
@@ -87,7 +96,7 @@ export class PausedBeforeMemorization extends Trial {
 }
 
 /** Memorization, timed on the monotonic clock (RG01, RG08). */
-export class MemorizingTrial extends Trial {
+export class MemorizingTrial extends OngoingTrial {
 	readonly phase = 'memorizing';
 	/** Moves through the groups of items (RG09, RG11). Mutable within the phase, like the recall grid. */
 	readonly navigation: GroupNavigation;
@@ -117,13 +126,28 @@ export class MemorizingTrial extends Trial {
 
 	/** Called by the practitioner (Finished, Enter) or by the app when the time is up. */
 	finishMemorization(): PausedBeforeRecall {
-		const memorizationMs = Math.min(this.elapsedMs(), this.format.memorizationMs);
-		return new PausedBeforeRecall(this.setup, this.clock, memorizationMs);
+		return new PausedBeforeRecall(this.setup, this.clock, this.#memorizationMs());
+	}
+
+	abandon(): PendingDecision {
+		const noAnswers = this.items.map(() => null);
+		return new PendingDecision(
+			this.setup,
+			this.clock,
+			'abandoned',
+			noAnswers,
+			this.#memorizationMs(),
+			0
+		);
+	}
+
+	#memorizationMs(): number {
+		return Math.min(this.elapsedMs(), this.format.memorizationMs);
 	}
 }
 
 /** Countdown before recall; the memorization time is frozen (RG25). */
-export class PausedBeforeRecall extends Trial {
+export class PausedBeforeRecall extends OngoingTrial {
 	readonly phase = 'paused-before-recall';
 	readonly countdown: Countdown;
 
@@ -134,6 +158,18 @@ export class PausedBeforeRecall extends Trial {
 	) {
 		super(setup, clock);
 		this.countdown = Countdown.start(clock, setup.pauses.beforeRecallMs);
+	}
+
+	abandon(): PendingDecision {
+		const noAnswers = this.items.map(() => null);
+		return new PendingDecision(
+			this.setup,
+			this.clock,
+			'abandoned',
+			noAnswers,
+			this.memorizationMs,
+			0
+		);
 	}
 
 	startRecall(): RecallingTrial {
@@ -148,7 +184,7 @@ export class PausedBeforeRecall extends Trial {
 }
 
 /** Recall, timed, with the answer grid (RG01, RG10). */
-export class RecallingTrial extends Trial {
+export class RecallingTrial extends OngoingTrial {
 	readonly phase = 'recalling';
 
 	constructor(
@@ -178,7 +214,68 @@ export class RecallingTrial extends Trial {
 			answers,
 			this.discipline.score(this.items, answers),
 			this.memorizationMs,
-			Math.min(this.elapsedMs(), this.format.recallMs)
+			this.#recallMs()
+		);
+	}
+
+	abandon(): PendingDecision {
+		return new PendingDecision(
+			this.setup,
+			this.clock,
+			'abandoned',
+			this.recall.answers(),
+			this.memorizationMs,
+			this.#recallMs()
+		);
+	}
+
+	#recallMs(): number {
+		return Math.min(this.elapsedMs(), this.format.recallMs);
+	}
+}
+
+/** Why a trial waits for the practitioner's choice: a voluntary abandon (RG23) or an interruption (RG24). */
+export type DecisionReason = 'abandoned' | 'interrupted';
+
+/**
+ * A stopped trial waiting for one of the three choices of RG23. "Ne pas garder" creates nothing:
+ * the application simply drops this object. The timers are stopped: the times are frozen.
+ */
+export class PendingDecision extends Trial {
+	readonly phase = 'pending-decision';
+
+	constructor(
+		setup: TrialSetup,
+		clock: MonotonicClock,
+		readonly reason: DecisionReason,
+		readonly answers: (Digit | null)[],
+		readonly memorizationMs: number,
+		readonly recallMs: number
+	) {
+		super(setup, clock);
+	}
+
+	/** "Compter tel quel": scored with the answers already given, then counted normally (RG12, RG23). */
+	countAsIs(): CompletedTrial {
+		return new CompletedTrial(
+			this.setup,
+			this.clock,
+			this.answers,
+			this.discipline.score(this.items, this.answers),
+			this.memorizationMs,
+			this.recallMs
+		);
+	}
+
+	/** "Garder hors statistiques": kept in the history, out of the statistics (RG23, RG24). */
+	keepOutOfStats(): ExcludedTrial {
+		return new ExcludedTrial(
+			this.setup,
+			this.clock,
+			this.reason === 'abandoned' ? 'abandoned' : 'external_error',
+			this.answers,
+			this.memorizationMs,
+			this.recallMs
 		);
 	}
 }
@@ -207,3 +304,25 @@ export class CompletedTrial extends Trial {
 		return this.memorizationMs < other.memorizationMs;
 	}
 }
+
+/**
+ * A trial kept out of the statistics: "abandonné", or "Erreur externe à l'application" after an
+ * interruption (RG23, RG24). Not scored. Closed: no method can change it (RG18).
+ */
+export class ExcludedTrial extends Trial {
+	readonly phase = 'excluded';
+
+	constructor(
+		setup: TrialSetup,
+		clock: MonotonicClock,
+		readonly status: 'abandoned' | 'external_error',
+		readonly answers: (Digit | null)[],
+		readonly memorizationMs: number,
+		readonly recallMs: number
+	) {
+		super(setup, clock);
+	}
+}
+
+/** The only trials stored for good and sent to the database (class diagram). */
+export type ClosedTrial = CompletedTrial | ExcludedTrial;
