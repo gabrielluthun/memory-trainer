@@ -211,3 +211,81 @@ describe('RecallingTrial', () => {
 		]);
 	});
 });
+
+describe('Abandon — US10, CU05', () => {
+	it('RG23 — abandoning during memorization keeps the time used, with no answer', () => {
+		const clock = new FakeMonotonicClock();
+		const memorizing = PausedBeforeMemorization.begin(setup([1, 2, 3]), clock).startMemorization();
+		clock.advance(12_000);
+
+		const pending = memorizing.abandon();
+
+		expect(pending.phase).toBe('pending-decision');
+		expect(pending.reason).toBe('abandoned');
+		expect(pending.answers).toEqual([null, null, null]);
+		expect(pending.memorizationMs).toBe(12_000);
+		expect(pending.recallMs).toBe(0);
+	});
+
+	it('RG23 — abandoning during the pause before recall keeps the memorization time', () => {
+		const clock = new FakeMonotonicClock();
+		const memorizing = PausedBeforeMemorization.begin(setup([1, 2]), clock).startMemorization();
+		clock.advance(30_000);
+		const paused = memorizing.finishMemorization();
+		clock.advance(5_000);
+
+		const pending = paused.abandon();
+
+		expect(pending.memorizationMs).toBe(30_000);
+		expect(pending.recallMs).toBe(0);
+	});
+
+	it('RG23 — abandoning during recall keeps the answers and the recall time', () => {
+		const clock = new FakeMonotonicClock();
+		const memorizing = PausedBeforeMemorization.begin(setup([1, 2, 3]), clock).startMemorization();
+		clock.advance(40_000);
+		const recalling = memorizing.finishMemorization().startRecall();
+		recalling.recall.type(1);
+		recalling.recall.type(5);
+		clock.advance(20_000);
+
+		const pending = recalling.abandon();
+
+		expect(pending.answers).toEqual([1, 5, null]);
+		expect(pending.memorizationMs).toBe(40_000);
+		expect(pending.recallMs).toBe(20_000);
+	});
+
+	it('RG23 — "Compter tel quel" scores the answers already given, as a normal trial', () => {
+		const clock = new FakeMonotonicClock();
+		const memorizing = PausedBeforeMemorization.begin(setup([1, 2, 3]), clock).startMemorization();
+		clock.advance(40_000);
+		const recalling = memorizing.finishMemorization().startRecall();
+		recalling.recall.type(1);
+		recalling.recall.type(5);
+		clock.advance(20_000);
+
+		const completed = recalling.abandon().countAsIs();
+
+		expect(completed.status).toBe('completed');
+		expect(completed.score).toBe(1);
+		expect(completed.answers).toEqual([1, 5, null]);
+		expect(completed.memorizationMs).toBe(40_000);
+		expect(completed.recallMs).toBe(20_000);
+	});
+
+	it('RG23 — "Garder hors statistiques" closes the trial as abandoned, without a score', () => {
+		const clock = new FakeMonotonicClock();
+		const memorizing = PausedBeforeMemorization.begin(setup([1, 2]), clock).startMemorization();
+		clock.advance(12_000);
+
+		const excluded = memorizing.abandon().keepOutOfStats();
+
+		expect(excluded.phase).toBe('excluded');
+		expect(excluded.status).toBe('abandoned');
+		expect(excluded).not.toHaveProperty('score');
+		expect(excluded.answers).toEqual([null, null]);
+		expect(excluded.memorizationMs).toBe(12_000);
+		expect(excluded.recallMs).toBe(0);
+	});
+});
