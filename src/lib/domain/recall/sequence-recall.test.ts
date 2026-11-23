@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { Digit } from '../disciplines/numbers';
 import { SequenceRecall } from './sequence-recall';
 
 describe('SequenceRecall', () => {
@@ -42,6 +43,82 @@ describe('SequenceRecall', () => {
 		expect(recall.answers()).toEqual([1, 9, 3]);
 	});
 
+	describe('backspace', () => {
+		it('RG10 — erases the selected cell when it is filled, and keeps it selected', () => {
+			const recall = filled([1, 2, 3]);
+			recall.select(1);
+
+			recall.backspace();
+
+			expect(recall.answers()).toEqual([1, null, 3]);
+			expect(recall.selected).toBe(1);
+		});
+
+		it('RG10 — erases the cell on the left of an empty selected cell, and selects it', () => {
+			const recall = new SequenceRecall(4);
+			recall.type(1);
+			recall.type(2);
+
+			recall.backspace();
+
+			expect(recall.answers()).toEqual([1, null, null, null]);
+			expect(recall.selected).toBe(1);
+		});
+
+		it('RG10 — erases the digit just typed in the last cell', () => {
+			const recall = new SequenceRecall(2);
+			recall.type(1);
+			recall.type(2);
+
+			recall.backspace();
+
+			expect(recall.answers()).toEqual([1, null]);
+			expect(recall.selected).toBe(1);
+		});
+
+		it('RG10 — does nothing on an empty first cell', () => {
+			const recall = new SequenceRecall(3);
+
+			recall.backspace();
+
+			expect(recall.answers()).toEqual([null, null, null]);
+			expect(recall.selected).toBe(0);
+		});
+	});
+
+	describe('insert (+)', () => {
+		it('RG10 — inserts a blank cell at the selection and shifts the rest; the last digit leaves the grid', () => {
+			const recall = filled([4, 1, 5, 9, 2, 6]);
+			recall.select(2);
+
+			recall.insert();
+
+			expect(recall.answers()).toEqual([4, 1, null, 5, 9, 2]);
+			expect(recall.selected).toBe(2);
+		});
+
+		it('RG10 — on the last cell, only blanks it', () => {
+			const recall = filled([1, 2, 3]);
+			recall.select(2);
+
+			recall.insert();
+
+			expect(recall.answers()).toEqual([1, 2, null]);
+		});
+	});
+
+	describe('remove (−)', () => {
+		it('RG10 — removes the selected cell and brings the rest back, with a blank at the end', () => {
+			const recall = filled([4, 1, 5, 9]);
+			recall.select(1);
+
+			recall.remove();
+
+			expect(recall.answers()).toEqual([4, 5, 9, null]);
+			expect(recall.selected).toBe(1);
+		});
+	});
+
 	it('refuses a cell outside the grid', () => {
 		const recall = new SequenceRecall(3);
 
@@ -65,3 +142,10 @@ describe('SequenceRecall', () => {
 		expect(recall.answers()).toEqual([null, null]);
 	});
 });
+
+/** A grid whose cells are all filled with these digits. */
+function filled(digits: Digit[]): SequenceRecall {
+	const recall = new SequenceRecall(digits.length);
+	for (const digit of digits) recall.type(digit);
+	return recall;
+}
