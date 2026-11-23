@@ -4,7 +4,9 @@
 	import { onMount } from 'svelte';
 	import { getApp } from '#lib/app-container.ts';
 	import AppHeader from '#lib/presentation/components/app-header.svelte';
+	import type { AbandonChoice } from '#lib/application/trial-session.svelte.ts';
 	import CorrectedCopy from '#lib/presentation/components/corrected-copy.svelte';
+	import FateDialog from '#lib/presentation/components/fate-dialog.svelte';
 	import MemorizationCarousel from '#lib/presentation/components/memorization-carousel.svelte';
 	import RecallGrid from '#lib/presentation/components/recall-grid.svelte';
 	import TrialHeader from '#lib/presentation/components/trial-header.svelte';
@@ -55,11 +57,25 @@
 		};
 	});
 
-	/** Abandon during the first pause: nothing recorded, no question, back home (US23 CA6). */
-	function abandonPause() {
-		session.cancel();
-		void goto(resolve('/'));
+	/** Abandon (CU05): during the first pause, nothing kept and back home (RG25); later, three choices. */
+	function abandon() {
+		session.abandon();
+		if (!session.current) void goto(resolve('/'));
 	}
+
+	/** "Compter tel quel" shows the result; the two other choices go back home (RG23). */
+	async function choose(choice: AbandonChoice) {
+		await session.decide(choice);
+		if (!session.current) await goto(resolve('/'));
+	}
+
+	// While the choice is pending, the steps stay on the phase the trial was abandoned in (mock-up 06).
+	type Step = 'paused-before-memorization' | 'memorizing' | 'paused-before-recall' | 'recalling';
+	let lastStep = $state<Step>('paused-before-memorization');
+	$effect(() => {
+		const phase = trial?.phase;
+		if (phase && phase !== 'pending-decision' && phase !== 'completed') lastStep = phase;
+	});
 
 	function onkeydown(event: KeyboardEvent) {
 		if (event.repeat && event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
@@ -128,8 +144,15 @@
 		<CorrectedCopy results={trial.results} pattern={trial.displayPattern} />
 	</main>
 {:else if trial}
-	<TrialHeader phase={trial.phase} mode={trial.mode}>
+	<TrialHeader
+		phase={trial.phase === 'pending-decision' ? lastStep : trial.phase}
+		mode={trial.mode}
+	>
 		{#snippet status()}
+			{#if trial.phase === 'memorizing' || trial.phase === 'recalling'}
+				<!-- On a phone, abandoning is the ✕ of the header (mock-ups 04 and 05). -->
+				<button class="close" type="button" aria-label="Abandonner" onclick={abandon}>✕</button>
+			{/if}
 			{#if trial.phase === 'memorizing'}
 				<span>Groupe <strong>{session.groupIndex + 1}</strong> sur {session.groupCount}</span>
 				<span class="clock" data-testid="memorization-clock">
@@ -140,8 +163,8 @@
 				<span>Case <strong>{session.selected + 1}</strong> sur {trial.items.length}</span>
 				<span class="clock" data-testid="recall-countdown">{formatCountdown(recallRemaining)}</span>
 				<span>restantes</span>
-			{:else if trial.phase === 'paused-before-memorization'}
-				<button class="button button-quiet" type="button" onclick={abandonPause}>Abandonner</button>
+			{:else if trial.phase === 'paused-before-memorization' || trial.phase === 'paused-before-recall'}
+				<button class="button button-quiet" type="button" onclick={abandon}>Abandonner</button>
 			{/if}
 		{/snippet}
 	</TrialHeader>
@@ -177,6 +200,9 @@
 				</button>
 			</div>
 			<div class="actions">
+				<button class="button button-quiet abandon" type="button" onclick={abandon}>
+					Abandonner
+				</button>
 				<button
 					class="button button-primary finished"
 					type="button"
@@ -227,19 +253,31 @@
 							− Supprimer<span class="long"> la case</span>
 						</button>
 					</div>
-					<button
-						class="button button-primary finished"
-						type="button"
-						onclick={() => session.finishRecall()}
-					>
-						Finished
-					</button>
+					<div class="ends">
+						<button class="button button-quiet abandon" type="button" onclick={abandon}>
+							Abandonner
+						</button>
+						<button
+							class="button button-primary finished"
+							type="button"
+							onclick={() => session.finishRecall()}
+						>
+							Finished
+						</button>
+					</div>
 				</div>
 			</section>
 			<p class="keys">
 				<kbd>0</kbd>–<kbd>9</kbd> saisir <kbd>⌫</kbd> effacer <kbd>+</kbd> insérer <kbd>−</kbd> supprimer
 				· flèches ou clic pour changer de case
 			</p>
+		{:else if trial.phase === 'pending-decision'}
+			<FateDialog
+				title="Abandonner l'essai ?"
+				intro="Ce choix est définitif : l'essai ne reprendra pas."
+				countAsIsHint="Corrigé avec les réponses déjà saisies."
+				onchoose={choose}
+			/>
 		{:else if trial.countdown.durationMs > 0}
 			<!-- A 0 s pause shows nothing: the next phase starts directly (US23 CA4). -->
 			<PauseCountdown
@@ -276,6 +314,7 @@
 	.actions {
 		display: flex;
 		justify-content: center;
+		gap: 2rem;
 		margin-top: 6rem;
 	}
 	.finished {
@@ -323,9 +362,20 @@
 		padding-top: 2rem;
 		border-top: 1px solid var(--line);
 	}
-	.edits {
+	.edits,
+	.ends {
 		display: flex;
+		align-items: center;
 		gap: 0.75rem;
+	}
+	.close {
+		display: none;
+		padding: 0.25rem 0.5rem;
+		border: none;
+		background: none;
+		color: var(--ink-muted);
+		font-size: 1.6rem;
+		cursor: pointer;
 	}
 	/* Touch screens: navigation buttons within thumb reach (wireframes). */
 	@media (pointer: coarse) {
@@ -358,6 +408,14 @@
 		}
 		.sheet {
 			padding: 1.25rem 1rem;
+		}
+		/* On a phone, abandoning moves to the ✕ of the header (mock-ups 04 and 05). */
+		.abandon {
+			display: none;
+		}
+		.close {
+			display: inline-block;
+			margin-right: auto;
 		}
 		/* Mock-up 05 on a phone: two wide buttons, short labels. */
 		.edits {
