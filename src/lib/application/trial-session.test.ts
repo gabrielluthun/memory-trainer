@@ -3,7 +3,7 @@ import { FakeMonotonicClock } from '../../../tests/fakes/fake-monotonic-clock';
 import { FakeScheduler } from '../../../tests/fakes/fake-scheduler';
 import { InMemoryTrialRepository } from '../../../tests/fakes/in-memory-trial-repository';
 import { SeededRandomSource } from '../../../tests/fakes/seeded-random-source';
-import { NumbersDiscipline } from '../domain/disciplines/numbers';
+import { NumbersDiscipline, type Digit } from '../domain/disciplines/numbers';
 import { Settings } from '../domain/settings/settings';
 import type { PreparationPauses } from '../domain/trial/trial';
 import { TrialSession } from './trial-session.svelte';
@@ -258,6 +258,57 @@ describe('TrialSession — choosing a recall cell', () => {
 		session.select(79);
 		session.moveSelection(1);
 		expect(session.selected).toBe(79);
+	});
+});
+
+describe('TrialSession — US08, fixing the recall', () => {
+	const recallingWith = (...digits: Digit[]) => {
+		session.start();
+		scheduler.advance(0);
+		session.finishMemorization();
+		scheduler.advance(0);
+		for (const digit of digits) session.type(digit);
+	};
+
+	it('US08 — backspace erases the last digit typed, and the grid shows it', () => {
+		recallingWith(4, 1, 5);
+
+		session.backspace();
+
+		expect(session.answers.slice(0, 4)).toEqual([4, 1, null, null]);
+		expect(session.selected).toBe(2);
+	});
+
+	it('US08 CA2 — + inserts a blank cell at the selection and shifts the rest', () => {
+		recallingWith(4, 1, 5);
+		session.select(1);
+
+		session.insert();
+
+		expect(session.answers.slice(0, 5)).toEqual([4, null, 1, 5, null]);
+		expect(session.selected).toBe(1);
+	});
+
+	it('US08 CA2 — − removes the selected cell and brings the rest back', () => {
+		recallingWith(4, 1, 5);
+		session.select(1);
+
+		session.remove();
+
+		expect(session.answers.slice(0, 3)).toEqual([4, 5, null]);
+		expect(session.selected).toBe(1);
+	});
+
+	it('US08 — outside the recall, the three gestures do nothing', () => {
+		session.start();
+		scheduler.advance(0);
+
+		session.backspace();
+		session.insert();
+		session.remove();
+
+		expect(session.current?.phase).toBe('memorizing');
+		expect(session.answers).toEqual([]);
 	});
 });
 
