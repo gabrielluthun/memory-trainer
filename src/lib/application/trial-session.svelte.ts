@@ -3,6 +3,7 @@ import type { DisciplineName } from '../domain/disciplines/discipline';
 import type { Format } from '../domain/format';
 import type { DisplayPattern } from '../domain/navigation/display-pattern';
 import type { RandomSource } from '../domain/random';
+import type { SequenceRecall } from '../domain/recall/sequence-recall';
 import type { Settings } from '../domain/settings/settings';
 import type { MonotonicClock } from '../domain/timing/timing';
 import {
@@ -132,18 +133,12 @@ export class TrialSession {
 	}
 
 	type(digit: Digit): void {
-		const recalling = this.current;
-		if (recalling?.phase !== 'recalling') return;
-		recalling.recall.type(digit);
-		this.#syncRecall(recalling);
+		this.#editRecall((recall) => recall.type(digit));
 	}
 
 	/** Click or tap on a recall cell (RG10). */
 	select(index: number): void {
-		const recalling = this.current;
-		if (recalling?.phase !== 'recalling') return;
-		recalling.recall.select(index);
-		this.#syncRecall(recalling);
+		this.#editRecall((recall) => recall.select(index));
 	}
 
 	/** Arrow keys on the recall grid; the selection stays inside the grid (RG10). */
@@ -153,6 +148,21 @@ export class TrialSession {
 		const last = recalling.items.length - 1;
 		recalling.recall.select(Math.min(last, Math.max(0, recalling.recall.selected + delta)));
 		this.#syncRecall(recalling);
+	}
+
+	/** Backspace: erases the selected cell if filled, otherwise the one on its left (RG10, US08). */
+	backspace(): void {
+		this.#editRecall((recall) => recall.backspace());
+	}
+
+	/** + : inserts a blank cell at the selection (US08 CA2). */
+	insert(): void {
+		this.#editRecall((recall) => recall.insert());
+	}
+
+	/** − : removes the selected cell (US08 CA2). */
+	remove(): void {
+		this.#editRecall((recall) => recall.remove());
 	}
 
 	/** Format of a standard trial, shown on the launch screen (RG01). */
@@ -216,6 +226,14 @@ export class TrialSession {
 		this.groupIndex = memorizing.navigation.current;
 		this.groupCount = memorizing.navigation.groupCount;
 		this.group = memorizing.currentGroup();
+	}
+
+	/** Applies a gesture to the recall grid, only during the recall, then refreshes the screen. */
+	#editRecall(edit: (recall: SequenceRecall) => void): void {
+		const recalling = this.current;
+		if (recalling?.phase !== 'recalling') return;
+		edit(recalling.recall);
+		this.#syncRecall(recalling);
 	}
 
 	#syncRecall(recalling: RecallingTrial): void {
