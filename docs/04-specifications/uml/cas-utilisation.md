@@ -222,6 +222,8 @@ Décision : les dernières durées de pause utilisées pour chaque épreuve sont
 1. L'application affiche le score, le temps de mémorisation et le temps de rappel, au centième de seconde (ENF01).
 2. Elle affiche chaque chiffre attendu face à la réponse donnée. Les erreurs sont mises en évidence (RG19).
 
+Décision : un essai ouvert depuis l'historique s'affiche avec le **motif d'affichage actuel** des paramètres. Le motif n'est pas enregistré avec l'essai, et il ne change que l'espacement des cases, jamais la correction.
+
 ### CU05 — Abandonner un essai
 
 | | |

@@ -52,4 +52,37 @@ describe('TrialMapper', () => {
 
 		expect(record.started_at.endsWith('Z')).toBe(true);
 	});
+
+	it('US12 — reads a stored trial back as a summary for the history', () => {
+		const mapper = new TrialMapper();
+
+		expect(mapper.toSummary(mapper.toRecord(completedTrial()))).toEqual({
+			id: '0b9f4c52-1b0e-4a51-9a3e-2f3c8a1d7e90',
+			discipline: 'numbers',
+			mode: 'standard',
+			status: 'completed',
+			startedAt: new Date('2026-11-22T10:00:00Z'),
+			itemCount: 2,
+			score: 1,
+			memorizationMs: 40_000
+		});
+	});
+
+	it('US11, US12 — reads a stored trial back with its detail, item by item', () => {
+		const mapper = new TrialMapper();
+
+		const detail = mapper.toDetail(mapper.toRecord(completedTrial()));
+
+		expect(detail.recallMs).toBe(30_000);
+		expect(detail.results).toEqual([
+			{ position: 1, expected: 7, answer: 7, correct: true },
+			{ position: 2, expected: 0, answer: null, correct: false }
+		]);
+	});
+
+	it('US12 — the summary carries no item, the list stays light', () => {
+		const mapper = new TrialMapper();
+
+		expect(mapper.toSummary(mapper.toRecord(completedTrial()))).not.toHaveProperty('results');
+	});
 });

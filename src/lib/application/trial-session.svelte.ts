@@ -52,6 +52,8 @@ export class TrialSession {
 	group = $state<Digit[]>([]);
 
 	#cancelPending: Cancel | null = null;
+	/** The storing of the trial being closed, if any. */
+	#closing: Promise<void> | null = null;
 
 	constructor(private readonly deps: TrialSessionDependencies) {}
 
@@ -170,12 +172,22 @@ export class TrialSession {
 		return this.deps.discipline.standardFormat();
 	}
 
-	async finishRecall(): Promise<void> {
+	/**
+	 * Scores the trial, stores it, then shows the result (CU03 step 5): closing the tab once the
+	 * result shows never loses the trial (ENF07). A second call while storing waits for the first.
+	 */
+	finishRecall(): Promise<void> {
+		if (this.#closing) return this.#closing;
 		const recalling = this.current;
-		if (recalling?.phase !== 'recalling') return;
+		if (recalling?.phase !== 'recalling') return Promise.resolve();
+		this.#cancelPending?.();
+		this.#cancelPending = null;
 		const completed = recalling.finishRecall();
-		this.#show(completed);
-		await this.deps.repository.close(completed);
+		this.#closing = this.deps.repository
+			.close(completed)
+			.then(() => this.#show(completed))
+			.finally(() => (this.#closing = null));
+		return this.#closing;
 	}
 
 	#startMemorization(): void {

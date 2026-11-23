@@ -33,3 +33,30 @@ export function formatCountdown(ms: number): string {
 	const totalSeconds = Math.ceil(Math.max(0, ms) / 1_000);
 	return `${Math.floor(totalSeconds / 60)}:${pad(totalSeconds % 60)}`;
 }
+
+const dayAndMonth = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
+const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
+	day: 'numeric',
+	month: 'short',
+	year: 'numeric'
+});
+
+/** Calendar days between two local dates, ignoring the time of day. */
+function daysBetween(earlier: Date, later: Date): number {
+	const start = new Date(earlier.getFullYear(), earlier.getMonth(), earlier.getDate());
+	const end = new Date(later.getFullYear(), later.getMonth(), later.getDate());
+	return Math.round((end.getTime() - start.getTime()) / 86_400_000);
+}
+
+/**
+ * Date of a trial in the history (mock-up 08), in the device's time: "Aujourd'hui", "Hier",
+ * "19 nov.", or "19 nov. 2025" for an earlier year; the time apart, "21:14".
+ */
+export function formatTrialDate(date: Date, now: Date): { day: string; time: string } {
+	const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+	const days = daysBetween(date, now);
+	if (days === 0) return { day: "Aujourd'hui", time };
+	if (days === 1) return { day: 'Hier', time };
+	const format = date.getFullYear() === now.getFullYear() ? dayAndMonth : dayMonthYear;
+	return { day: format.format(date), time };
+}

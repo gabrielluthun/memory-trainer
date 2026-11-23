@@ -1,0 +1,292 @@
+<script lang="ts">
+	import { resolve } from '$app/paths';
+	import { getApp } from '#lib/app-container.ts';
+	import type { HistoryFilter } from '#lib/application/history-query.ts';
+	import type { TrialSummary } from '#lib/application/ports.ts';
+	import AppHeader from '#lib/presentation/components/app-header.svelte';
+	import { formatDuration, formatTrialDate } from '#lib/presentation/format.ts';
+
+	/**
+	 * History (mock-up 08, US12, CU07): every trial, most recent first, read on the device.
+	 * One list of links: a table on a computer, cards on a phone. Nothing here can change or
+	 * delete a trial (RG18).
+	 */
+	const app = getApp();
+
+	// Numbers by default, as on mock-up 08; "Toutes les disciplines" is cut short on a phone.
+	let discipline = $state<HistoryFilter['discipline']>('numbers');
+	let mode = $state<HistoryFilter['mode']>('all');
+	let trials = $state<TrialSummary[] | null>(null);
+	let hasAny = $state(false);
+	const now = new Date();
+
+	// Both lists arrive together: an empty device and empty filters say different things (CU07 1a).
+	$effect(() => {
+		const filter: HistoryFilter = { discipline, mode };
+		void Promise.all([
+			app.history.list(filter),
+			app.history.list({ discipline: 'all', mode: 'all' })
+		]).then(([listed, all]) => {
+			hasAny = all.length > 0;
+			trials = listed;
+		});
+	});
+
+	// Abandoned and interrupted trials come with US10.
+	const statusLabels: Record<string, string> = { completed: 'Compté' };
+</script>
+
+<svelte:head>
+	<title>Historique — memory-trainer</title>
+</svelte:head>
+
+<AppHeader />
+
+<main class="history">
+	<div class="head">
+		<h1>Historique</h1>
+		<div class="filters">
+			<select aria-label="Discipline" bind:value={discipline}>
+				<option value="all">Toutes les disciplines</option>
+				<option value="numbers">Numbers</option>
+			</select>
+			<select aria-label="Mode" bind:value={mode}>
+				<option value="all">Tous les modes</option>
+				<option value="standard">Standard</option>
+				<option value="custom">Personnalisé</option>
+			</select>
+		</div>
+	</div>
+
+	{#if trials !== null}
+		{#if !hasAny}
+			<div class="empty">
+				<p>Aucun essai pour le moment.</p>
+				<a class="button button-primary" href={resolve('/train/numbers')}>
+					<span aria-hidden="true">▶</span> Lancer un essai
+				</a>
+			</div>
+		{:else if trials.length === 0}
+			<p class="empty">Aucun essai pour ces filtres.</p>
+		{:else}
+			<section class="sheet">
+				<div class="columns" aria-hidden="true">
+					<span>Date</span><span>Mode</span><span>Score</span><span>Mémorisation</span><span>
+						Statut
+					</span>
+				</div>
+				<ol class="trials" aria-label="Essais">
+					{#each trials as trial (trial.id)}
+						{@const date = formatTrialDate(trial.startedAt, now)}
+						<li>
+							<a class="trial" href={resolve('/history/[id]', { id: trial.id })}>
+								<span class="date"><strong>{date.day}</strong> {date.time}</span>
+								<span class="mode">
+									<span class="badge" class:custom={trial.mode === 'custom'}>
+										{trial.mode === 'custom' ? `Personnalisé, ${trial.itemCount}` : 'Standard'}
+									</span>
+								</span>
+								<span class="score">
+									{#if trial.score === null}
+										<span class="none">—</span>
+									{:else}
+										<span class="points">{trial.score} / {trial.itemCount}</span>
+										<span class="gauge" aria-hidden="true">
+											<span style:width="{(100 * trial.score) / trial.itemCount}%"></span>
+										</span>
+									{/if}
+								</span>
+								<span class="memorization">
+									{trial.memorizationMs === null ? '—' : formatDuration(trial.memorizationMs)}
+								</span>
+								<span class="status status-{trial.status}">
+									{statusLabels[trial.status] ?? trial.status}
+								</span>
+								<span class="chevron" aria-hidden="true">›</span>
+							</a>
+						</li>
+					{/each}
+				</ol>
+			</section>
+		{/if}
+	{/if}
+</main>
+
+<style>
+	.history {
+		max-width: 110rem;
+		margin: 0 auto;
+		padding: 3rem 2.5rem;
+	}
+	.head {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: center;
+		gap: 1.5rem;
+		margin-bottom: 2rem;
+	}
+	h1 {
+		margin: 0;
+		font-size: 3rem;
+	}
+	.filters {
+		display: flex;
+		gap: 1rem;
+	}
+	.filters select {
+		min-height: 3.25rem;
+		padding: 0 1.25rem;
+		border: 1.5px solid var(--line);
+		border-radius: var(--radius-small);
+		background: var(--sheet);
+		color: var(--ink);
+		font: inherit;
+		font-weight: 700;
+	}
+	.empty {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 1.25rem;
+		color: var(--ink-muted);
+		font-size: 1.2rem;
+	}
+	.sheet {
+		padding: 0.5rem 1rem;
+		background: var(--sheet);
+		border: 1px solid var(--line);
+		border-radius: 1.25rem;
+	}
+	.columns,
+	.trial {
+		display: grid;
+		grid-template-columns: 1.3fr 1.3fr 1.3fr 1fr 1fr 2rem;
+		align-items: center;
+		gap: 1rem;
+		padding: 1.1rem 1rem;
+	}
+	.columns {
+		color: var(--ink-muted);
+		font-weight: 700;
+	}
+	.trials {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.trials li,
+	.columns {
+		border-bottom: 1px solid var(--line);
+	}
+	.trials li:last-child {
+		border-bottom: none;
+	}
+	.trial {
+		color: var(--ink);
+		text-decoration: none;
+	}
+	.trial:hover {
+		background: var(--paper);
+	}
+	.date {
+		font-variant-numeric: tabular-nums;
+		color: var(--ink-muted);
+	}
+	.date strong {
+		color: var(--ink);
+	}
+	.badge.custom {
+		border-color: transparent;
+		background: color-mix(in srgb, var(--custom) 14%, transparent);
+		color: var(--custom);
+	}
+	.score {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+	}
+	.points {
+		font-family: var(--font-digits);
+		font-weight: 700;
+		font-size: 1.3rem;
+	}
+	.gauge {
+		width: 9rem;
+		max-width: 100%;
+		height: 0.3rem;
+		border-radius: 1rem;
+		background: var(--line);
+		overflow: hidden;
+	}
+	.gauge span {
+		display: block;
+		height: 100%;
+		background: var(--pen);
+	}
+	.none {
+		color: var(--ink-muted);
+	}
+	.memorization {
+		color: var(--ink-muted);
+		font-family: var(--font-digits);
+	}
+	.status-completed {
+		color: var(--right);
+		font-weight: 700;
+	}
+	.chevron {
+		color: var(--ink-muted);
+		font-size: 1.6rem;
+		justify-self: end;
+	}
+	/* Mock-up 08 on a phone: cards with the score first, the date under it. */
+	@media (max-width: 760px) {
+		.history {
+			padding: 1.5rem 1rem;
+		}
+		h1 {
+			font-size: 1.8rem;
+		}
+		.filters {
+			width: 100%;
+		}
+		.filters select {
+			flex: 1 1 0;
+			min-width: 0;
+		}
+		.sheet {
+			padding: 0 1rem;
+		}
+		.columns,
+		.chevron,
+		.gauge,
+		.status-completed,
+		.badge:not(.custom) {
+			display: none;
+		}
+		.trial {
+			grid-template-columns: 1fr auto auto;
+			grid-template-areas:
+				'score mode memorization'
+				'date  mode memorization';
+			gap: 0.3rem 1rem;
+			padding: 1.25rem 0.25rem;
+		}
+		.score {
+			grid-area: score;
+		}
+		.date {
+			grid-area: date;
+		}
+		.mode {
+			grid-area: mode;
+		}
+		.memorization {
+			grid-area: memorization;
+		}
+		.status {
+			grid-area: mode;
+		}
+	}
+</style>
