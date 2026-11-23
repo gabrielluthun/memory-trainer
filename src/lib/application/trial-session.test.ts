@@ -142,8 +142,7 @@ describe('TrialSession — US01, a standard Numbers trial', () => {
 
 		expect(session.current?.phase).toBe('completed');
 		expect(repository.closed).toHaveLength(1);
-		expect(repository.closed[0].score).toBe(1);
-		expect(repository.closed[0].recallMs).toBe(240_000);
+		expect(repository.closed[0]).toMatchObject({ score: 1, recallMs: 240_000 });
 	});
 
 	it('RG12 — the practitioner can finish the recall earlier; the trial is stored once', async () => {
@@ -430,5 +429,80 @@ describe('TrialSession — US23, preparation pauses', () => {
 		session.cancel();
 
 		expect(session.current?.phase).toBe('memorizing');
+	});
+});
+
+describe('TrialSession — US10, abandoning a trial (CU05)', () => {
+	const recallingWith = (...digits: Digit[]) => {
+		session.start();
+		scheduler.advance(0);
+		scheduler.advance(20_000);
+		session.finishMemorization();
+		scheduler.advance(0);
+		for (const digit of digits) session.type(digit);
+		scheduler.advance(10_000);
+	};
+
+	it('CU05 — abandoning stops the timers for good and waits for a choice', () => {
+		session.start();
+		scheduler.advance(0);
+		scheduler.advance(10_000);
+
+		session.abandon();
+		scheduler.advance(600_000);
+
+		expect(session.current?.phase).toBe('pending-decision');
+		expect(repository.closed).toHaveLength(0);
+	});
+
+	it('RG25 — abandoning during the first pause keeps nothing and asks nothing', () => {
+		settings.current = settings.current.withPauses(
+			'numbers',
+			{ beforeMemorizationMs: 5_000, beforeRecallMs: 0 },
+			new Date('2026-11-22T12:00:00Z')
+		);
+		session.start();
+
+		session.abandon();
+
+		expect(session.current).toBeNull();
+	});
+
+	it('US10 CA2 — "Garder hors statistiques" stores the trial as abandoned, then leaves it', async () => {
+		recallingWith(4, 2);
+		session.abandon();
+
+		await session.decide('keep-out-of-stats');
+
+		expect(repository.closed[0]).toMatchObject({ status: 'abandoned', recallMs: 10_000 });
+		expect(session.current).toBeNull();
+	});
+
+	it('US10 CA3 — "Compter tel quel" scores the answers given and shows the result', async () => {
+		recallingWith(4, 2);
+		session.abandon();
+
+		await session.decide('count-as-is');
+
+		expect(repository.closed[0]).toMatchObject({ status: 'completed', memorizationMs: 20_000 });
+		expect(session.current?.phase).toBe('completed');
+	});
+
+	it('US10 CA4 — "Ne pas garder" stores nothing', async () => {
+		recallingWith(4, 2);
+		session.abandon();
+
+		await session.decide('discard');
+
+		expect(repository.closed).toHaveLength(0);
+		expect(session.current).toBeNull();
+	});
+
+	it('CU05 — without an abandon, a choice does nothing', async () => {
+		recallingWith(4);
+
+		await session.decide('discard');
+
+		expect(session.current?.phase).toBe('recalling');
 	});
 });
