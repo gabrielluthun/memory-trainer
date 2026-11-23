@@ -86,9 +86,17 @@
 				if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') event.preventDefault();
 				else return;
 			}
+			const edits: Record<string, () => void> = {
+				Backspace: () => session.backspace(),
+				'+': () => session.insert(),
+				'-': () => session.remove()
+			};
 			if (/^[0-9]$/.test(event.key)) {
 				event.preventDefault();
 				session.type(Number(event.key));
+			} else if (edits[event.key]) {
+				event.preventDefault();
+				edits[event.key]();
 			} else if (event.key === 'ArrowRight') {
 				event.preventDefault();
 				session.moveSelection(1);
@@ -191,8 +199,32 @@
 					pattern={session.displayPattern}
 					onselect={(index: number) => session.select(index)}
 					ontype={(digit: number) => session.type(digit)}
+					onbackspace={() => session.backspace()}
+					oninsert={() => session.insert()}
+					onremove={() => session.remove()}
 				/>
 				<div class="sheet-actions">
+					<!-- pointerdown keeps the focus in the hidden field: the touch keyboard stays open. -->
+					<div class="edits">
+						<button
+							class="button button-secondary"
+							type="button"
+							aria-label="Insérer une case"
+							onpointerdown={(event) => event.preventDefault()}
+							onclick={() => session.insert()}
+						>
+							+ Insérer<span class="long"> une case</span>
+						</button>
+						<button
+							class="button button-secondary"
+							type="button"
+							aria-label="Supprimer la case"
+							onpointerdown={(event) => event.preventDefault()}
+							onclick={() => session.remove()}
+						>
+							− Supprimer<span class="long"> la case</span>
+						</button>
+					</div>
 					<button
 						class="button button-primary finished"
 						type="button"
@@ -203,7 +235,8 @@
 				</div>
 			</section>
 			<p class="keys">
-				<kbd>0</kbd>–<kbd>9</kbd> saisir · flèches ou clic pour changer de case
+				<kbd>0</kbd>–<kbd>9</kbd> saisir <kbd>⌫</kbd> effacer <kbd>+</kbd> insérer <kbd>−</kbd> supprimer
+				· flèches ou clic pour changer de case
 			</p>
 		{:else if trial.countdown.durationMs > 0}
 			<!-- A 0 s pause shows nothing: the next phase starts directly (US23 CA4). -->
@@ -275,10 +308,17 @@
 	}
 	.sheet-actions {
 		display: flex;
-		justify-content: flex-end;
+		justify-content: space-between;
+		align-items: center;
+		gap: 1rem;
+		flex-wrap: wrap;
 		margin-top: 2rem;
 		padding-top: 2rem;
 		border-top: 1px solid var(--line);
+	}
+	.edits {
+		display: flex;
+		gap: 0.75rem;
 	}
 	/* Touch screens: navigation buttons within thumb reach (wireframes). */
 	@media (pointer: coarse) {
@@ -308,6 +348,16 @@
 		}
 		.sheet {
 			padding: 1.25rem 1rem;
+		}
+		/* Mock-up 05 on a phone: two wide buttons, short labels. */
+		.edits {
+			flex: 1 1 100%;
+		}
+		.edits .button {
+			flex: 1 1 0;
+		}
+		.long {
+			display: none;
 		}
 	}
 </style>
