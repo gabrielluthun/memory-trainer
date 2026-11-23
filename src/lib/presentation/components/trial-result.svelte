@@ -4,7 +4,7 @@
 
 	/**
 	 * Result of a counted trial (mock-up 07, US01 CA3 and CA4): the score circled in red pen,
-	 * both times to the hundredth. The corrected copy, digit by digit, comes with US11.
+	 * both times to the hundredth. The corrected copy below it is CorrectedCopy (US11).
 	 */
 	let {
 		score,
