@@ -12,6 +12,7 @@ import {
 	type CompletedTrial,
 	type MemorizingTrial,
 	type PausedBeforeRecall,
+	type PendingDecision,
 	type RecallingTrial
 } from '../domain/trial/trial';
 import type { Cancel, IdGenerator, Scheduler, TrialRepository, WallClock } from './ports';
@@ -32,7 +33,15 @@ export interface TrialSessionDependencies {
 }
 
 export type TrialPhase =
-	PausedBeforeMemorization | MemorizingTrial | PausedBeforeRecall | RecallingTrial | CompletedTrial;
+	| PausedBeforeMemorization
+	| MemorizingTrial
+	| PausedBeforeRecall
+	| RecallingTrial
+	| PendingDecision
+	| CompletedTrial;
+
+/** The three choices offered after an abandon (RG23). */
+export type AbandonChoice = 'keep-out-of-stats' | 'count-as-is' | 'discard';
 
 /**
  * Runs one trial from launch to closing (CU01 to CU04): chains the phases, stops memorization
@@ -98,6 +107,39 @@ export class TrialSession {
 		if (this.current?.phase !== 'paused-before-memorization') return;
 		this.#cancelPending?.();
 		this.#cancelPending = null;
+		this.current = null;
+	}
+
+	/**
+	 * Abandon (CU05). During the first pause, nothing was recorded: the trial is dropped, nothing
+	 * is asked (RG25). Later, the timers stop for good and the trial waits for a choice (RG23).
+	 */
+	abandon(): void {
+		const trial = this.current;
+		if (trial?.phase === 'paused-before-memorization') return this.cancel();
+		if (
+			trial?.phase !== 'memorizing' &&
+			trial?.phase !== 'paused-before-recall' &&
+			trial?.phase !== 'recalling'
+		)
+			return;
+		this.#show(trial.abandon());
+	}
+
+	/**
+	 * The practitioner's choice after an abandon (RG23). "Compter tel quel" shows the result;
+	 * the two others leave the trial. A stored trial is stored before anything changes on screen.
+	 */
+	async decide(choice: AbandonChoice): Promise<void> {
+		const pending = this.current;
+		if (pending?.phase !== 'pending-decision') return;
+		if (choice === 'count-as-is') {
+			const completed = pending.countAsIs();
+			await this.deps.repository.close(completed);
+			this.#show(completed);
+			return;
+		}
+		if (choice === 'keep-out-of-stats') await this.deps.repository.close(pending.keepOutOfStats());
 		this.current = null;
 	}
 
