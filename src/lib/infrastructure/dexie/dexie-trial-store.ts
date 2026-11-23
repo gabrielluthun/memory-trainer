@@ -1,5 +1,5 @@
-import type { TrialRepository } from '../../application/ports';
-import type { CompletedTrial } from '../../domain/trial/trial';
+import type { TrialDetail, TrialRepository, TrialSummary } from '../../application/ports';
+import type { CompletedTrial, TrialId } from '../../domain/trial/trial';
 import type { TrialMapper } from '../trial-mapper';
 import type { MemoryTrainerDatabase } from './database';
 
@@ -19,5 +19,15 @@ export class DexieTrialStore implements TrialRepository {
 			await this.db.trials.put(record);
 			await this.db.outbox.put({ trial_id: record.trial_id });
 		});
+	}
+	/** Start dates are ISO strings in universal time, so their index sorts them in time order. */
+	async list(): Promise<TrialSummary[]> {
+		const records = await this.db.trials.orderBy('started_at').reverse().toArray();
+		return records.map((record) => this.mapper.toSummary(record));
+	}
+
+	async get(id: TrialId): Promise<TrialDetail | null> {
+		const record = await this.db.trials.get(id);
+		return record ? this.mapper.toDetail(record) : null;
 	}
 }
