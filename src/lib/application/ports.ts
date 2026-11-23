@@ -1,6 +1,6 @@
 import type { DisciplineName, ItemResult } from '../domain/disciplines/discipline';
 import type { Settings } from '../domain/settings/settings';
-import type { CompletedTrial, Mode, TrialId } from '../domain/trial/trial';
+import type { ClosedTrial, Mode, TrialId } from '../domain/trial/trial';
 
 /**
  * What the Application layer expects from the outside world (ADR 0013).
@@ -50,8 +50,8 @@ export interface TrialDetail extends TrialSummary {
 
 /** Trials stored on the device (Dexie.js). */
 export interface TrialRepository {
-	/** Stores a closed trial and adds it to the upload queue, in one transaction. */
-	close(trial: CompletedTrial): Promise<void>;
+	/** Stores a closed trial, counted or excluded, and adds it to the upload queue, in one transaction. */
+	close(trial: ClosedTrial): Promise<void>;
 	/** Every stored trial, most recent first (US12 CA1). */
 	list(): Promise<TrialSummary[]>;
 	/** One stored trial with its detail, or null if the device does not have it (US12 CA2). */
