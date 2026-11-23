@@ -14,7 +14,7 @@ Annexe de [regles-de-gestion.md](regles-de-gestion.md), qui contient les règles
 
 | Discipline | Saisie |
 |---|---|
-| Numbers | Cliquer sur une case ou la sélectionner avec les flèches ; taper un chiffre (0–9) pour remplir la case sélectionnée ; Retour arrière efface le chiffre à gauche de la case sélectionnée ; + insère, − supprime. |
+| Numbers | Cliquer sur une case ou la sélectionner avec les flèches ; taper un chiffre (0–9) pour remplir la case sélectionnée ; Retour arrière efface le chiffre à gauche de la case sélectionnée ; + insère, − supprime. Décision (précisions ajoutées pendant le développement de US08) : Retour arrière efface d'abord la case sélectionnée si elle est remplie, sinon celle de gauche, qui devient sélectionnée ; + insère une case vide et **le dernier chiffre sort de la grille** ; − supprime la case et une case vide termine la grille. |
 | Words | Cliquer sur une case ou la sélectionner avec ↑ / ↓ ; taper le mot ; Entrée passe au mot suivant ; + insère, − supprime. |
 | Cards | Cliquer sur une case de rappel vide pour la sélectionner ; cliquer sur une carte de la rangée du bas pour la placer à la position sélectionnée ; cliquer sur une carte des rangées du haut pour la renvoyer en bas ; + (ou clic sur le numéro au-dessus d'une position) insère, − supprime. |
 | Images | Comme Cards, avec des rangées d'images en bas. |
