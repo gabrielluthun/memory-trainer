@@ -45,7 +45,7 @@
 	<span class="badge">{mode === 'standard' ? 'Standard' : 'Personnalisé'}</span>
 
 	<div class="actions">
-		<a class="button button-secondary" href={resolve('/')}>Accueil</a>
+		<a class="button button-secondary" href={resolve('/history')}>Historique</a>
 		<a class="button button-primary" href={resolve('/train/numbers')}>
 			<span aria-hidden="true">▶</span> Rejouer
 		</a>
