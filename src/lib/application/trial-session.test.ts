@@ -159,6 +159,29 @@ describe('TrialSession — US01, a standard Numbers trial', () => {
 		expect(repository.closed[0].recallMs).toBe(30_000);
 	});
 
+	it('CU03, ENF07 — the result shows only once the trial is stored; finishing twice stores it once', async () => {
+		let stored!: () => void;
+		repository.close = (trial) => {
+			repository.closed.push(trial);
+			return new Promise<void>((resolve) => (stored = resolve));
+		};
+		session.start();
+		scheduler.advance(0);
+		session.finishMemorization();
+		scheduler.advance(0);
+
+		const finishing = session.finishRecall();
+		void session.finishRecall();
+
+		expect(session.current?.phase).toBe('recalling');
+		expect(repository.closed).toHaveLength(1);
+
+		stored();
+		await finishing;
+
+		expect(session.current?.phase).toBe('completed');
+	});
+
 	it('RG19 — the stored trial is dated by the device clock', async () => {
 		session.start();
 		scheduler.advance(0);
