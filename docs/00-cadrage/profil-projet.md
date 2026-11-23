@@ -26,4 +26,6 @@ Les quatre critères de la version Solo sont remplis : développé seul, utilis�
 
 ## Bascule vers la version Complète
 
+> Décision : la plateforme devient **polyvalente** (épreuves IAM, exercices autour des systèmes). D'**autres utilisateurs sont envisagés plus tard**, sans échéance. Le profil reste **Solo** tant que personne d'autre n'utilise l'application.
+
 À proposer si l'un de ces événements survient : un deuxième utilisateur (ami, club, ouverture au public), un client ou un commanditaire, ou des données personnelles de tiers. Éléments à rattraper dans ce cas : parties prenantes, personas multiples, méthode, AIPD et conformité RGPD/CNIL, RBAC complet, contrat d'API si une API maison apparaît, observabilité, documentation utilisateur.

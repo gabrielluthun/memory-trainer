@@ -45,6 +45,25 @@ Notation : National / International / World.
 | Words | 5-min Words / 15-min Words / 15-min Words | identique |
 | Names, International Names | 5-min Names & Faces / 15-min Names & Faces / 15-min Names & Faces | identique |
 
+## RG26 — durées des épreuves IAM
+
+Officiel [S4] (§ 2 et § 9.d), règlement de novembre 2019 consulté le 2026-11-23. Format : mémorisation / rappel.
+
+| Épreuve | National | International | World |
+|---|---|---|---|
+| Numbers (rapide) | 5 / 15 min | 5 / 15 min | 5 / 15 min |
+| Numbers (longue) | 15 / 30 min | 30 / 60 min | 60 / 120 min |
+| Binary Digits | 5 / 15 min | 30 / 60 min | 30 / 60 min |
+| Cards | 10 / 30 min | 30 / 60 min | 60 / 120 min |
+| Speed Cards | 5 / 5 min | 5 / 5 min | 5 / 5 min |
+| Words | 5 / 15 min | 15 / 40 min | 15 / 40 min |
+| Names and Faces | 5 / 15 min | 15 / 30 min | 15 / 30 min |
+| Images | 5 / 15 min | 5 / 15 min | 5 / 15 min |
+| Dates | 5 / 15 min | 5 / 15 min | 5 / 15 min |
+| Spoken Numbers | tentatives de 100, 200, 300 ou 550 chiffres, rappel de 5, 10, 15 ou 25 min | idem | idem |
+
+Le règlement ne précise pas quelles tentatives de Spoken Numbers chaque niveau impose : les quatre longueurs sont proposées à tous les niveaux (décision).
+
 ## Points reportés
 
 - **À définir en partie 4** (maquettes S12, S13) :
@@ -60,5 +79,5 @@ Le format doit être **identique à Memory League** (contrainte forte). Les règ
 - [S1] B. Wiederhold, *An introduction to memory competitions, records and techniques*, arXiv 2504.06747v2 (2025) : https://arxiv.org/html/2504.06747v2 (section 1, tableau 2, annexe B). Source secondaire, utilisée pour les quantités.
 - [S2] Art of Memory, *Memory League Numbers Game* : https://artofmemory.com/memory-league/numbers-game/. Page non consultable (accès refusé) : seul l'extrait affiché par un moteur de recherche a pu être lu. Remplacée par [S0].
 - [S3] Art of Memory, *Memory League* : https://artofmemory.com/memory-league/. Même situation que S2. Remplacée par [S0].
-- [S4] IAM, *The IAM Rulebook*, novembre 2019 : https://www.iam-memory.org/wp-content/uploads/2019/11/IAM_Rulebook_Nov2019.pdf (§ 8 « Scoring »). Ses constantes Speed Cards (8030 et 111,4) sont remplacées par celles de [S5].
+- [S4] IAM, *The IAM Rulebook*, novembre 2019 : https://www.iam-memory.org/wp-content/uploads/2019/11/IAM_Rulebook_Nov2019.pdf (§ 8 « Scoring »). Ses constantes Speed Cards (8030 et 111,4) sont remplacées par celles de [S5]. Relu en entier le 2026-11-23 pour les règles du format IAM (RG26 à RG38) : aucune version plus récente trouvée. **Source de référence du format IAM.**
 - [S5] IAM Stats, *Score Calculator* : https://iam-stats.org/calculator.php, relevé le 2026-11-20 dans le code de la page (formules et standards actuels, onglets World, International, National).
