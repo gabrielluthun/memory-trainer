@@ -47,6 +47,15 @@
 			mode={detail.mode}
 		/>
 		<CorrectedCopy results={detail.results} pattern={[...pattern]} />
+	{:else if detail}
+		<!-- Kept out of the statistics: never scored, so there is no corrected copy (RG23). -->
+		<div class="missing">
+			<p>
+				{detail.status === 'abandoned' ? 'Essai abandonné' : 'Essai interrompu'}, gardé hors
+				statistiques : il n'a pas été corrigé.
+			</p>
+			<a class="button button-secondary" href={resolve('/history')}>Historique</a>
+		</div>
 	{/if}
 </main>
 
