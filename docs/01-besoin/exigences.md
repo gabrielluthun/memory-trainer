@@ -16,6 +16,19 @@ Amont : [besoins](besoins.md), [contraintes](contraintes.md). Les règles détai
 | EF06 | Proposer la discipline **International Names**, avec des visages générés par IA. | RG01, RG07 |
 | EF07 | Proposer, en plus du format standard, un **mode personnalisé** où l'on règle la durée et le nombre d'éléments. | RG15 |
 
+### Format IAM
+
+Exigences ajoutées pendant le développement du lot 1 (plateforme polyvalente). Les exigences du déroulé d'un essai (EF07 à EF12, EF23) s'appliquent aussi au format IAM, sauf précision d'une règle.
+
+| ID | Exigence | RG liées |
+|---|---|---|
+| EF24 | Proposer **Numbers, Cards, Images, Words et Names** au **format IAM**, en plus du format Memory League, aux niveaux **National, International et World**, avec leurs durées. | RG26 à RG31, RG35, RG37, RG38 |
+| EF25 | Proposer **Binary Digits** au format IAM. | RG26, RG27, RG28 |
+| EF26 | Proposer **Speed Cards** au format IAM. | RG26, RG34 |
+| EF27 | Proposer **Dates** (événements fictifs) au format IAM, en français ou en anglais. | RG26, RG27, RG32 |
+| EF28 | Proposer **Spoken Numbers** au format IAM : des chiffres dictés par une voix. | RG26, RG33 |
+| EF29 | Calculer les **points IAM réels** des essais au format IAM. | RG17, RG36 |
+
 ### Déroulé d'un essai
 
 | ID | Exigence | RG liées |
@@ -42,7 +55,15 @@ Amont : [besoins](besoins.md), [contraintes](contraintes.md). Les règles détai
 |---|---|---|
 | EF17 | **Gérer ses systèmes d'images** : images associées aux chiffres et aux cartes, avec la taille de groupe propre à chaque système (création, consultation, modification). | RG20 |
 | EF18 | **Réviser ses systèmes** par un exercice élément → image. | RG20 |
-| EF19 | **Rattacher chaque erreur** d'exercice à l'image du système concernée, et afficher ces erreurs depuis le système. | RG20 |
+| EF19 | **Rattacher chaque erreur** d'exercice à l'image du système concernée, et afficher ces erreurs depuis le système. | RG20, RG38 |
+| EF30 | **Proposer des images** pour un système de chiffres avec le **système majeur**, et les ajouter au système (ajoutée pendant le lot 1). | RG39 |
+| EF31 | Proposer une **révision rapide** des systèmes : chronométrée, adaptative, avec **répétition espacée**. Elle complète la révision d'EF18 (ajoutée pendant le lot 1). | RG40, RG42 |
+
+### Exercices
+
+| ID | Exigence | RG liées |
+|---|---|---|
+| EF32 | Proposer l'exercice de la **carte manquante** : retrouver la seule carte d'un jeu qui n'a pas été montrée (ajoutée pendant le lot 1). | RG41, RG42 |
 
 ### Transverses
 
