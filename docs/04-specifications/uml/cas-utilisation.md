@@ -201,7 +201,7 @@ Décision : les dernières durées de pause utilisées pour chaque épreuve sont
 
 **Scénario nominal**
 1. Le chronomètre de rappel démarre (4 minutes).
-2. Le pratiquant sélectionne une case et tape un chiffre. Retour arrière efface le chiffre à gauche. **+** insère une case vide et décale la suite ; **−** supprime la case et ramène la suite (RG10).
+2. Le pratiquant sélectionne une case et tape un chiffre. Retour arrière efface la case sélectionnée si elle est remplie, sinon le chiffre à gauche. **+** insère une case vide et décale la suite (le dernier chiffre sort de la grille) ; **−** supprime la case et ramène la suite (RG10).
 3. Le pratiquant valide son rappel avec le bouton **Finished**.
 4. L'application corrige : 1 point par chiffre juste à la bonne position, sans pénalité (RG12).
 5. L'essai est enregistré et ajouté à la file d'envoi, puis le résultat s'affiche : CU04.
