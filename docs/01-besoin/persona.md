@@ -4,7 +4,7 @@ Amont : [contexte](contexte.md), [besoins](besoins.md).
 
 ## Le pratiquant
 
-- **Profil** : pratique la mémorisation et a ses systèmes en place (images pour les chiffres et les cartes, palais mentaux). S'entraîne au format Memory League, sans compétition.
+- **Profil** : pratique la mémorisation et a ses systèmes en place (images pour les chiffres et les cartes, palais mentaux). S'entraîne au format Memory League et aux épreuves IAM, sans compétition.
 - **Objectifs** : progresser de façon mesurable, comprendre ses erreurs, faire vivre ses systèmes.
 - **Frustrations** : des données dispersées ou captives d'un service tiers ; aucun lien entre une erreur et l'image du système en cause ; une reprise difficile après une pause (qu'est-ce que je maîtrisais encore ?).
 - **Appareils** : ordinateur (clavier et souris), téléphone et tablette (tactile).
@@ -19,3 +19,6 @@ Il enchaîne quelques essais dans une ou plusieurs disciplines, au format standa
 
 ### C-C — Séance tactile, éventuellement hors connexion
 Sur téléphone ou tablette, parfois sans réseau, il fait un essai ou une révision de ses systèmes. Ses résultats sont synchronisés plus tard, sans perte ni doublon.
+
+### C-D — Épreuve longue au format IAM
+Il bloque un créneau pour une épreuve IAM complète, par exemple une heure de mémorisation puis deux heures de rappel. Il ne veut rien perdre en cours de route : ni ses réponses, ni son temps (contexte ajouté pendant le lot 1).
