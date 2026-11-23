@@ -1,6 +1,6 @@
 import type { TrialDetail, TrialSummary } from '../application/ports';
 import type { DisciplineName } from '../domain/disciplines/discipline';
-import type { CompletedTrial, Mode } from '../domain/trial/trial';
+import type { ClosedTrial, Mode } from '../domain/trial/trial';
 
 /** One item of a stored trial, as in `trial_items` and `trial_items_numbers` (data dictionary). */
 export interface TrialItemRecord {
@@ -31,7 +31,8 @@ export interface TrialRecord {
 
 /** Converts domain trials into stored records, and stored records into what the history reads. */
 export class TrialMapper {
-	toRecord(trial: CompletedTrial): TrialRecord {
+	/** A completed trial carries its score and its correction; an excluded one has neither (RG23). */
+	toRecord(trial: ClosedTrial): TrialRecord {
 		return {
 			trial_id: trial.id,
 			discipline: trial.disciplineName,
@@ -43,13 +44,21 @@ export class TrialMapper {
 			recall_limit_ms: trial.format.recallMs,
 			memorization_ms: trial.memorizationMs,
 			recall_ms: trial.recallMs,
-			score: trial.score,
-			items: trial.results.map((result) => ({
-				position: result.position,
-				expected_digit: result.expected,
-				answered_digit: result.answer,
-				is_correct: result.correct
-			}))
+			score: trial.phase === 'completed' ? trial.score : null,
+			items:
+				trial.phase === 'completed'
+					? trial.results.map((result) => ({
+							position: result.position,
+							expected_digit: result.expected,
+							answered_digit: result.answer,
+							is_correct: result.correct
+						}))
+					: trial.items.map((expected, index) => ({
+							position: index + 1,
+							expected_digit: expected,
+							answered_digit: trial.answers[index] ?? null,
+							is_correct: null
+						}))
 		};
 	}
 	/** What the history lists (US12): no item, the list stays light. */
