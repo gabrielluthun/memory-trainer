@@ -2,7 +2,8 @@
 	/**
 	 * Recall grid (mock-up 05): one cell per digit, rows cut on whole groups, the selected cell
 	 * in blue pen. Digits come from the keyboard or, on touch screens, from the system numeric
-	 * keyboard through a hidden field (wireframes).
+	 * keyboard through a hidden field (wireframes). The field also carries Backspace, + and −
+	 * once a cell has been clicked (RG10, US08).
 	 */
 	import {
 		isSubgroupStart,
@@ -15,14 +16,26 @@
 		selected,
 		pattern,
 		onselect,
-		ontype
+		ontype,
+		onbackspace,
+		oninsert,
+		onremove
 	}: {
 		answers: (number | null)[];
 		selected: number;
 		pattern: DisplayPattern;
 		onselect: (index: number) => void;
 		ontype: (digit: number) => void;
+		onbackspace: () => void;
+		oninsert: () => void;
+		onremove: () => void;
 	} = $props();
+
+	/**
+	 * The hidden field always holds this invisible character: a touch keyboard sends nothing for
+	 * its delete key on an empty field, so its disappearance is how Backspace is seen.
+	 */
+	const SENTINEL = '\u200b';
 
 	let width = $state(1200);
 	let field: HTMLInputElement | undefined = $state();
@@ -46,12 +59,20 @@
 		field?.focus();
 	}
 
+	function reset(input: HTMLInputElement) {
+		input.value = SENTINEL;
+		input.setSelectionRange(SENTINEL.length, SENTINEL.length);
+	}
+
 	function oninput(event: Event) {
 		const input = event.currentTarget as HTMLInputElement;
+		if (!input.value.includes(SENTINEL)) onbackspace();
 		for (const char of input.value) {
 			if (char >= '0' && char <= '9') ontype(Number(char));
+			else if (char === '+') oninsert();
+			else if (char === '-' || char === '−') onremove();
 		}
-		input.value = '';
+		reset(input);
 	}
 </script>
 
@@ -87,6 +108,8 @@
 	autocomplete="off"
 	aria-label="Saisir un chiffre"
 	data-recall-field
+	value={SENTINEL}
+	onfocus={(event) => reset(event.currentTarget)}
 	{oninput}
 />
 
