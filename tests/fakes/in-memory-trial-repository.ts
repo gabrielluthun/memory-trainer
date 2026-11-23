@@ -1,5 +1,5 @@
 import type { TrialDetail, TrialRepository, TrialSummary } from '../../src/lib/application/ports';
-import type { CompletedTrial, TrialId } from '../../src/lib/domain/trial/trial';
+import type { ClosedTrial, TrialId } from '../../src/lib/domain/trial/trial';
 import { TrialMapper } from '../../src/lib/infrastructure/trial-mapper';
 
 /**
@@ -7,10 +7,10 @@ import { TrialMapper } from '../../src/lib/infrastructure/trial-mapper';
  * through the real mapper, as on the device.
  */
 export class InMemoryTrialRepository implements TrialRepository {
-	readonly closed: CompletedTrial[] = [];
+	readonly closed: ClosedTrial[] = [];
 	readonly #mapper = new TrialMapper();
 
-	close(trial: CompletedTrial): Promise<void> {
+	close(trial: ClosedTrial): Promise<void> {
 		this.closed.push(trial);
 		return Promise.resolve();
 	}

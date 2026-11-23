@@ -32,8 +32,12 @@
 		});
 	});
 
-	// Abandoned and interrupted trials come with US10.
-	const statusLabels: Record<string, string> = { completed: 'Compté' };
+	// Excluded trials: labels of mock-up 08; their score and time show as "—" (RG23, RG24).
+	const statusLabels: Record<string, string> = {
+		completed: 'Compté',
+		abandoned: 'Abandonné',
+		external_error: 'Erreur externe'
+	};
 </script>
 
 <svelte:head>
@@ -97,7 +101,9 @@
 									{/if}
 								</span>
 								<span class="memorization">
-									{trial.memorizationMs === null ? '—' : formatDuration(trial.memorizationMs)}
+									{trial.score === null || trial.memorizationMs === null
+										? '—'
+										: formatDuration(trial.memorizationMs)}
 								</span>
 								<span class="status status-{trial.status}">
 									{statusLabels[trial.status] ?? trial.status}
@@ -231,9 +237,26 @@
 		color: var(--ink-muted);
 		font-family: var(--font-digits);
 	}
+	.status {
+		justify-self: start;
+		font-weight: 700;
+	}
 	.status-completed {
 		color: var(--right);
-		font-weight: 700;
+	}
+	.status-abandoned,
+	.status-external_error {
+		padding: 0.15rem 0.6rem;
+		border-radius: 0.4rem;
+		font-size: 0.95rem;
+	}
+	.status-abandoned {
+		border: 1.5px dashed var(--line);
+		color: var(--ink-muted);
+	}
+	.status-external_error {
+		background: color-mix(in srgb, var(--waiting) 14%, transparent);
+		color: var(--waiting);
 	}
 	.chevron {
 		color: var(--ink-muted);

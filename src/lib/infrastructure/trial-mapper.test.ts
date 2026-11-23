@@ -26,6 +26,29 @@ const completedTrial = () => {
 	return recalling.finishRecall();
 };
 
+/** The same trial, abandoned during recall and kept out of the statistics (RG23). */
+const abandonedTrial = () => {
+	const clock = new FakeMonotonicClock();
+	const memorizing = PausedBeforeMemorization.begin(
+		{
+			id: '5d1c2b7e-8f4a-4c3d-9e2b-1a0f6c7d8e9f',
+			discipline: new NumbersDiscipline(),
+			mode: 'standard',
+			format: { itemCount: 2, memorizationMs: 60_000, recallMs: 240_000 },
+			pauses: { beforeMemorizationMs: 0, beforeRecallMs: 0 },
+			displayPattern: [2],
+			items: [7, 0],
+			startedAt: new Date('2026-11-22T10:00:00Z')
+		},
+		clock
+	).startMemorization();
+	clock.advance(40_000);
+	const recalling = memorizing.finishMemorization().startRecall();
+	recalling.recall.type(7);
+	clock.advance(10_000);
+	return recalling.abandon().keepOutOfStats();
+};
+
 describe('TrialMapper', () => {
 	it('ADR 0010 — turns a completed trial into the document submit_trial expects', () => {
 		expect(new TrialMapper().toRecord(completedTrial())).toEqual({
@@ -84,5 +107,18 @@ describe('TrialMapper', () => {
 		const mapper = new TrialMapper();
 
 		expect(mapper.toSummary(mapper.toRecord(completedTrial()))).not.toHaveProperty('results');
+	});
+
+	it('RG23, data dictionary — an abandoned trial is stored without a score nor any "juste"', () => {
+		expect(new TrialMapper().toRecord(abandonedTrial())).toMatchObject({
+			status: 'abandoned',
+			memorization_ms: 40_000,
+			recall_ms: 10_000,
+			score: null,
+			items: [
+				{ position: 1, expected_digit: 7, answered_digit: 7, is_correct: null },
+				{ position: 2, expected_digit: 0, answered_digit: null, is_correct: null }
+			]
+		});
 	});
 });
