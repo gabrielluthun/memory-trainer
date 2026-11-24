@@ -129,3 +129,16 @@ describe('DexieSettingsStore — mark "to send" (SEQ05)', () => {
 		expect(await store.isDirty()).toBe(true);
 	});
 });
+
+describe('DexieSettingsStore — settings received (ADR 0012)', () => {
+	it('ADR 0012 — settings received from the database are stored, not to send back', async () => {
+		db = new MemoryTrainerDatabase(`test-${crypto.randomUUID()}`);
+		const store = new DexieSettingsStore(db);
+		const received = Settings.defaults().withLanguage('en', new Date('2026-11-24T08:00:00Z'));
+
+		await store.saveReceived(received);
+
+		expect((await store.load())?.interfaceLanguage).toBe('en');
+		expect(await store.isDirty()).toBe(false);
+	});
+});
