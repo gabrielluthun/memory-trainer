@@ -35,6 +35,9 @@
 		{ value: 'en', short: 'EN', name: 'English' }
 	];
 
+	// Account (mock-up 10, CU16): sign out, or sign in when not signed in.
+	const connection = app.connection;
+
 	// Synchronisation between devices comes with US21.
 	async function save(change: () => Promise<void>) {
 		saved = false;
@@ -121,6 +124,30 @@
 		</div>
 	</div>
 
+	<div class="card">
+		<div class="row">
+			<div>
+				<span class="title">{m.settings_account()}</span>
+				<p class="hint">
+					{connection.status === 'signed-in'
+						? m.settings_signed_in()
+						: connection.status === 'signed-out'
+							? m.settings_signed_out()
+							: m.settings_connection_unknown()}
+				</p>
+			</div>
+			{#if connection.status === 'signed-in'}
+				<button class="button button-secondary" type="button" onclick={() => connection.signOut()}>
+					{m.settings_sign_out()}
+				</button>
+			{:else if connection.status === 'signed-out'}
+				<button class="button button-secondary" type="button" onclick={() => connection.ask()}>
+					{m.sign_in_title()}
+				</button>
+			{/if}
+		</div>
+	</div>
+
 	<p class="status" role="status">{saved ? m.settings_saved() : ''}</p>
 </main>
 
@@ -138,6 +165,9 @@
 		background: var(--sheet);
 		border: 1px solid var(--line);
 		border-radius: 1.25rem;
+	}
+	.card + .card {
+		margin-top: 1.5rem;
 	}
 	.row {
 		display: flex;
