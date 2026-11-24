@@ -113,7 +113,8 @@ export default defineConfig({
 						'src/lib/domain/**/*.test.ts',
 						'src/lib/application/**/*.test.ts',
 						'src/lib/presentation/**/*.test.ts',
-						'tests/fakes/**/*.test.ts'
+						'tests/fakes/**/*.test.ts',
+						'scripts/**/*.test.ts'
 					]
 				}
 			},
