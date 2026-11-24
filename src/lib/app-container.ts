@@ -7,6 +7,10 @@ import { BrowserScheduler } from './infrastructure/browser/browser-scheduler';
 import { BrowserMonotonicClock, BrowserWallClock } from './infrastructure/browser/clocks';
 import { CryptoIdGenerator } from './infrastructure/browser/crypto-id-generator';
 import { CryptoRandomSource } from './infrastructure/browser/crypto-random-source';
+import {
+	deviceStorage,
+	ParaglideInterfaceLanguage
+} from './infrastructure/browser/paraglide-interface-language.svelte';
 import { MemoryTrainerDatabase } from './infrastructure/dexie/database';
 import { DexieSettingsStore } from './infrastructure/dexie/dexie-settings-store';
 import { DexieTrialStore } from './infrastructure/dexie/dexie-trial-store';
@@ -36,7 +40,9 @@ export function getApp(): App {
 function build(): App {
 	const db = new MemoryTrainerDatabase();
 	const wallClock = new BrowserWallClock();
-	const settings = new SettingsService(new DexieSettingsStore(db), wallClock);
+	// Created first: every text reads its language, from the very first screen (ADR 0029).
+	const language = new ParaglideInterfaceLanguage(deviceStorage(), document.documentElement);
+	const settings = new SettingsService(new DexieSettingsStore(db), wallClock, language);
 	const trials = new DexieTrialStore(db, new TrialMapper());
 	const discipline = new NumbersDiscipline();
 	const clock = new BrowserMonotonicClock();
