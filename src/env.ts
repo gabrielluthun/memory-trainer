@@ -18,5 +18,11 @@ export const variables = defineEnvVars({
 		static: true,
 		schema: httpsUrl,
 		description: 'API address of the Hanko project (ADR 0030)'
+	},
+	PUBLIC_DATA_API_URL: {
+		public: true,
+		static: true,
+		schema: httpsUrl,
+		description: 'Neon Data API address, ending in /rest/v1 (ADR 0031)'
 	}
 });
