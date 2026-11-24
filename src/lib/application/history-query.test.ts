@@ -15,6 +15,9 @@ const summary = (id: string, mode: 'standard' | 'custom'): TrialSummary => ({
 
 /** A repository already holding these trials, most recent first. */
 const repositoryWith = (...trials: TrialSummary[]): TrialRepository => ({
+	saveSnapshot: () => Promise.resolve(),
+	loadSnapshot: () => Promise.resolve(null),
+	deleteSnapshot: () => Promise.resolve(),
 	close: () => Promise.resolve(),
 	list: () => Promise.resolve(trials),
 	get: (id) =>
