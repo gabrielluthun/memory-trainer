@@ -1,4 +1,5 @@
-import { expect, test, type BrowserContext, type Page } from './fixtures';
+import type { BrowserContext } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 
 // US20, update part (deployment, section 5; ADR 0023): before each synchronisation, the app reads
 // version.json, simulated here. The card and the installation of a new version need a real
