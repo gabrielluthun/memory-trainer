@@ -74,7 +74,7 @@ Aucun chiffrement supplémentaire dans l'application : les données sont de faib
 
 | Sauvegarde | Quand | Contenu | Où | Conservée |
 |---|---|---|---|---|
-| **Export quotidien** | Chaque jour à heure fixe, par le Worker, lancé par une tâche cron | Les essais reçus depuis la veille (par numéro d'ordre) et les paramètres, en JSON | R2, espace privé | Toujours : les exports étant incrémentaux, chaque fichier est nécessaire pour reconstruire la base |
+| **Export quotidien** | Chaque jour à heure fixe, par le Worker, lancé par une tâche cron | Les essais reçus depuis la veille (par numéro d'ordre, au plus 100) et les paramètres, en JSON : lignes brutes de chaque table ([ADR 0032](../04-specifications/adr/0032-worker-de-sauvegarde.md)) | R2, espace privé | Toujours : les exports étant incrémentaux, chaque fichier est nécessaire pour reconstruire la base |
 | **Export avant migration** | Juste avant chaque migration en production, par la CI | Toute la base (`pg_dump`) | R2, espace privé | Toujours, comme les exports quotidiens |
 | **Historique de Neon** | En continu | Toute la base | Neon | 6 heures (offre gratuite) |
 | **Base de l'appareil** | En continu | Tous les essais et les paramètres | Chaque appareil (Dexie.js) | Tant que l'appareil garde ses données |
@@ -89,7 +89,7 @@ Décision : **pas de copie complète planifiée** en plus du cron quotidien. Une
 
 1. Télécharger depuis la console Cloudflare tous les fichiers de sauvegarde de R2.
 2. Créer une base PostgreSQL locale avec le script `bdd/schema.sql`.
-3. Rejouer les fichiers dans l'ordre : les essais passent par la même logique que `submit_trial`, les doublons sont ignorés.
+3. Rejouer les fichiers dans l'ordre : les lignes sont insérées telles quelles, **numéro d'ordre compris** ([ADR 0011](../04-specifications/adr/0011-repere-numero-ordre-verrou.md)), les essais déjà présents sont ignorés.
 4. Comparer : nombre d'essais, dernier numéro d'ordre, quelques essais au hasard.
 
 **Reprise en production** (perte ou corruption de la base) : une tâche de la CI, lancée à la main, restaure le dernier export avant migration, puis rejoue les exports quotidiens qui le suivent. Le poste du développeur n'a jamais d'accès direct à la production. Le détail de cette tâche est fixé avec le [déploiement](../06-qualite-deploiement/deploiement.md) et la [maintenance](../06-qualite-deploiement/maintenance.md).
