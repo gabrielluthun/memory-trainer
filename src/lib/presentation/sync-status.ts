@@ -39,6 +39,8 @@ export function syncStatus(input: SyncStatusInput): SyncStatus | null {
 		return { label: m.sync_running({}, locale), tone: 'neutral', signIn: false };
 	}
 	if (input.state === 'failed') return waiting(m.sync_pending({}, locale));
+	// Before the last time: the trials no longer leave the device until the update (ADR 0023).
+	if (input.state === 'awaiting-update') return waiting(m.sync_awaiting_update({}, locale));
 	if (!input.lastSyncedAt) return null;
 	const minutes = Math.floor((input.now.getTime() - input.lastSyncedAt.getTime()) / 60_000);
 	const label =
