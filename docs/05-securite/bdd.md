@@ -44,7 +44,7 @@ Amont : [MPD](../04-specifications/bdd/mpd.md), [accès aux données](../04-spec
 | Secret                                     | Utilisé par | Rangé dans                                  | Accès donné                                                                                         |
 | ------------------------------------------ | ----------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | **Mot de passe du rôle de migration**      | CI          | Secrets GitHub, environnement de production | Structure de la base                                                                                |
-| **Mot de passe de** `backup_reader`        | Worker      | Secrets du Worker                           | Lecture de toutes les tables                                                                        |
+| **Mot de passe de** `backup_reader`        | Worker      | Secret `BACKUP_DATABASE_URL` de GitHub, envoyé au Worker par la CI | Lecture de toutes les tables                                                                        |
 | **Jeton d'écriture R2 du Worker**          | Worker      | Secrets du Worker                           | Écriture des sauvegardes quotidiennes                                                               |
 | **Jeton d'écriture R2 de la CI**           | CI          | Secrets GitHub, environnement de production | Écriture des exports avant migration                                                                |
 | **Identifiant du compte autorisé**         | CI          | Secrets GitHub                              | Création de la ligne `accounts` (pas un secret au sens strict, mais une donnée réelle hors du repo) |

@@ -123,4 +123,10 @@ jobs:
             fs.writeFileSync(file, JSON.stringify(config, null, "\t"));
           '
           npx wrangler deploy --config workers/backup/wrangler.json
+          # First release only: backup_reader is created by its migrations (step 3), so its secret
+          # can only exist afterwards. Never send an empty address; say so, and run the job again.
+          if [ -z "$BACKUP_DATABASE_URL" ]; then
+            echo "::warning::BACKUP_DATABASE_URL is missing: the backup Worker has no database address. Create the secret, then re-run this job."
+            exit 0
+          fi
           printf '%s' "$BACKUP_DATABASE_URL" | npx wrangler secret put BACKUP_DATABASE_URL --config workers/backup/wrangler.json

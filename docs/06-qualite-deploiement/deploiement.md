@@ -75,7 +75,7 @@ Déclenchée par la fusion d'une pull request `release/X.Y.Z` ou `hotfix/X.Y.Z` 
 | **3. Migrations** | `dbmate up` : applique les migrations pas encore appliquées, chacune dans une transaction, sous un verrou qui fait attendre une autre exécution | Rôle de migration |
 | **4. Compte autorisé** | Enregistre le compte unique dans `accounts`, s'il n'y est pas déjà ([modèle physique](../04-specifications/bdd/mpd.md)) | Rôle de migration, identifiant du compte |
 | **5. Publication** | Envoie le build à Cloudflare Pages | Jeton Cloudflare limité à Pages et Workers |
-| **6. Worker de sauvegarde** | `wrangler deploy` : code et tâche planifiée du Worker ; puis `wrangler secret put` de l'adresse de la base ([ADR 0032](../04-specifications/adr/0032-worker-de-sauvegarde.md)) | Jeton Cloudflare limité à Pages et Workers, adresse de la base avec `backup_reader` |
+| **6. Worker de sauvegarde** | `wrangler deploy` : code et tâche planifiée du Worker ; puis `wrangler secret put` de l'adresse de la base ([ADR 0032](../04-specifications/adr/0032-worker-de-sauvegarde.md)). Sans ce secret (première release, avant que `backup_reader` existe), un avertissement le signale : créer le secret, puis relancer la tâche | Jeton Cloudflare limité à Pages et Workers, adresse de la base avec `backup_reader` |
 
 Les connexions à PostgreSQL sont chiffrées (TLS obligatoire). `pg_dump` doit avoir la même version majeure que le serveur Neon.
 
