@@ -2,12 +2,17 @@ import { PUBLIC_DATA_API_URL, PUBLIC_HANKO_API_URL } from '$app/env/public';
 import { ConnectionService } from './application/connection-service.svelte';
 import { HistoryQuery } from './application/history-query';
 import { notifyOnClose } from './application/notify-on-close';
+import { InstallService } from './application/install-service.svelte';
 import { InterruptedTrialRecovery } from './application/interrupted-trial-recovery';
 import { SettingsService } from './application/settings-service.svelte';
 import { SyncService } from './application/sync-service.svelte';
 import { TrialSession } from './application/trial-session.svelte';
 import { UpdateService } from './application/update-service.svelte';
 import { NumbersDiscipline } from './domain/disciplines/numbers';
+import {
+	BrowserInstallContext,
+	currentDevice
+} from './infrastructure/browser/browser-install-context';
 import { BrowserScheduler } from './infrastructure/browser/browser-scheduler';
 import { BrowserMonotonicClock, BrowserWallClock } from './infrastructure/browser/clocks';
 import { CryptoIdGenerator } from './infrastructure/browser/crypto-id-generator';
@@ -41,6 +46,8 @@ export interface App {
 	sync: SyncService;
 	/** A new version (deployment, section 5): compared before each sync, offered outside a trial. */
 	update: UpdateService;
+	/** At opening: the installation reminder on iPhone and iPad, the persistent storage (CU18). */
+	install: InstallService;
 	/** Resolves once the settings of the device are loaded. */
 	ready: Promise<void>;
 }
@@ -99,6 +106,7 @@ function build(): App {
 		connection: new ConnectionService(auth, network),
 		sync,
 		update,
+		install: new InstallService(new BrowserInstallContext(currentDevice())),
 		ready: settings.load()
 	};
 }
