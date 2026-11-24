@@ -1,10 +1,44 @@
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import adapter from '@sveltejs/adapter-static';
 import { withPwa } from '@vite-pwa/sveltekit';
+import { readFileSync } from 'node:fs';
+import type { Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
 
+/** The version of the app, from package.json (ADR 0023). */
+const { version } = JSON.parse(
+	readFileSync(new URL('./package.json', import.meta.url), 'utf8')
+) as {
+	version: string;
+};
+
+/**
+ * Publishes version.json with the site (deployment, section 5): before each synchronisation, the
+ * app compares it to its own version. Never kept by the service worker (its patterns leave JSON
+ * out) nor by the browser (read with `cache: 'no-store'`).
+ */
+function publishedVersion(): Plugin {
+	const body = JSON.stringify({ version });
+	return {
+		name: 'memory-trainer:published-version',
+		configureServer(server) {
+			server.middlewares.use('/version.json', (_request, response) => {
+				response.setHeader('content-type', 'application/json');
+				response.setHeader('cache-control', 'no-store');
+				response.end(body);
+			});
+		},
+		generateBundle() {
+			this.emitFile({ type: 'asset', fileName: 'version.json', source: body });
+		}
+	};
+}
+
 export default defineConfig({
+	// The version of this device, compared to version.json (FetchAppVersion).
+	define: { __APP_VERSION__: JSON.stringify(version) },
 	plugins: [
+		publishedVersion(),
 		// Interface texts (ADR 0026), resolved from the settings without reloading (ADR 0029).
 		// Same options as the "i18n" script, which compiles before lint and type checks.
 		paraglideVitePlugin({
