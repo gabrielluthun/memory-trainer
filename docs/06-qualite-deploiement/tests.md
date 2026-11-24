@@ -28,13 +28,15 @@ Amont : [objectifs](../02-projet/objectifs.md) (O3), [règles de gestion](../01-
 | **Unitaires : domaine** | Règles RG01 à RG25 : formats, pauses, tirage, navigation, saisie, correction, score, classement, transitions de l'essai | Vitest ; fausses horloges et faux hasard à graine fixe | Poste et CI |
 | **Intégration : application** | Cas d'usage : essai complet, abandon, interruption, file d'envoi, synchronisation, paramètres | Vitest ; fausses implémentations en mémoire des dépôts, du serveur, de la session et du planificateur | Poste et CI |
 | **Intégration : infrastructure** | `TrialMapper` (aller-retour sans perte), transactions Dexie.js, conversion de la file d'envoi entre deux versions ([déploiement](deploiement.md)) | Vitest | Poste et CI |
-| **Intégration : Data API** | `DataApiClient` face à la vraie Data API : envoi, doublon, réception par pages | Vitest ; branche Neon de dev | **Poste seulement** (aucun secret Neon dans la CI) |
+| **Intégration : Data API** | `DataApiClient` : requêtes envoyées (fonction, filtres, tri, page, jeton) et lecture des réponses (envoi, doublon, refus, réception par pages, jeton refusé) | Vitest ; réponses HTTP simulées | Poste et CI |
 | **Base de données** | Les 14 cas d'intégrité et les 17 cas d'accès déjà menés, aucune table sans RLS, aucune fonction exécutable par tous, chaque table lisible par `backup_reader` | Vitest ; PGlite ; `auth.user_id()` simulée ; base construite **depuis les fichiers de migration** | Poste et CI |
 | **Bout en bout** | Parcours du lot 1 : essai Numbers standard et personnalisé, pauses, abandon, interruption puis réouverture, hors ligne puis retour du réseau, historique, paramètres | Playwright : Chromium, Firefox, WebKit, plus iPhone, iPad et Android émulés (tactile compris) | Poste et CI |
 
 Les tests de la base sont construits à partir des migrations : ils vérifient donc aussi que chaque migration s'applique sur une base vide (ES19).
 
 > Décision : dans les tests de bout en bout, la **Data API et Hanko sont simulés** en interceptant les requêtes du navigateur (fonction `page.route` de Playwright). La CI n'a ainsi aucun secret. La vraie connexion et la vraie synchronisation sont vérifiées à la recette en production.
+
+> Décision : le seul projet Hanko est celui de production, qui n'accepte que l'adresse du site. Sur le poste, aucun jeton réel n'est donc disponible, et un jeton de production y serait un identifiant de production ([surface d'attaque](../05-securite/surface-attaque.md)). `DataApiClient` est donc testé avec des **réponses simulées**, partout ; la vraie Data API est vérifiée à la recette (TR10).
 
 ### Exigences vérifiées par les tests
 
@@ -111,7 +113,7 @@ Les règles de l'objectif O3 (RG12 à RG17) sont toutes en tests unitaires du do
 | Moment | Ce qui tourne |
 |---|---|
 | **Pendant le développement** | Vitest en mode surveillance : unitaires et intégration à chaque enregistrement |
-| **Avant une fusion dans `develop`** | Toute la suite en local, plus les tests du client de la Data API face à la branche Neon de dev |
+| **Avant une fusion dans `develop`** | Toute la suite en local |
 | **Dans la CI** | Lint, unitaires, intégration, base, bout en bout, couverture ([déploiement](deploiement.md)) |
 | **Après une mise en production** | Les tests de recette, à la main, sur l'ordinateur, le téléphone et la tablette ([recette](recette.md)) |
 
