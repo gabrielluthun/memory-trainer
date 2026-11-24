@@ -23,7 +23,9 @@
 	const now = new Date();
 
 	// Both lists arrive together: an empty device and empty filters say different things (CU07 1a).
+	// And again after each synchronisation: trials of the other devices may have arrived (US21).
 	$effect(() => {
+		void app.sync.lastSyncedAt;
 		const filter: HistoryFilter = { discipline, mode };
 		void Promise.all([
 			app.history.list(filter),
