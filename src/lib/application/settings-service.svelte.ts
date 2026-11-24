@@ -24,6 +24,12 @@ export class SettingsService {
 		this.language.apply(this.current.interfaceLanguage);
 	}
 
+	/** More recent settings received from another device, already stored (ADR 0012). */
+	adopt(settings: Settings): void {
+		this.current = settings;
+		this.language.apply(settings.interfaceLanguage);
+	}
+
 	/** US19: applied to the interface once saved, so the choice is kept. */
 	async setLanguage(language: Language): Promise<void> {
 		const updated = this.current.withLanguage(language, this.wallClock.now());
