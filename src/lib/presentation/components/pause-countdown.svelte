@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { m } from '../../paraglide/messages';
+
 	/**
 	 * Preparation pause (mock-up 03, US23): only the countdown is shown, the digits stay hidden.
 	 * "Commencer maintenant" (or Enter) cuts the pause short.
@@ -22,10 +24,10 @@
 
 <section class="pause" aria-labelledby="pause-title">
 	<h1 id="pause-title">
-		{next === 'memorization' ? 'La mémorisation commence dans' : 'Le rappel commence dans'}
+		{next === 'memorization' ? m.pause_memorization_starts_in() : m.pause_recall_starts_in()}
 	</h1>
 
-	<div class="ring" role="timer" aria-live="polite" aria-label="{seconds} secondes">
+	<div class="ring" role="timer" aria-live="polite" aria-label={m.pause_seconds({ seconds })}>
 		<svg viewBox="0 0 200 200" aria-hidden="true">
 			<circle class="ring-background" cx="100" cy="100" r="90" />
 			<circle
@@ -41,13 +43,11 @@
 	</div>
 
 	<p class="hint">
-		{next === 'memorization'
-			? 'Les chiffres sont cachés jusqu’au départ du chronomètre.'
-			: 'Le rappel commence au départ du chronomètre.'}
+		{next === 'memorization' ? m.pause_digits_hidden() : m.pause_recall_hint()}
 	</p>
 
 	<button class="button button-secondary skip" type="button" onclick={onskip}>
-		Commencer maintenant
+		{m.pause_start_now()}
 	</button>
 </section>
 

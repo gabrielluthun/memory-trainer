@@ -14,7 +14,8 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
-		"prepare": "svelte-kit sync || echo ''; git config core.hooksPath .githooks 2>/dev/null || true",
+		"prepare": "npm run i18n; svelte-kit sync || echo ''; git config core.hooksPath .githooks 2>/dev/null || true",
+		"i18n": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide --strategy custom-settings baseLocale",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check . && eslint .",
@@ -32,6 +33,8 @@
 	"devDependencies": {
 		"@electric-sql/pglite": "^0.5.17",
 		"@eslint/js": "^10.0.1",
+		"@inlang/paraglide-js": "^3.2.2",
+		"@inlang/plugin-message-format": "^4.6.1",
 		"@playwright/test": "^1.65.1",
 		"@sveltejs/adapter-static": "^4.0.1",
 		"@sveltejs/kit": "^3.2.0",

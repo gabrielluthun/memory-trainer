@@ -9,6 +9,8 @@
 	import type { PendingDecision } from '#lib/domain/trial/trial.ts';
 	import FateDialog from '#lib/presentation/components/fate-dialog.svelte';
 	import { describeInterruptedTrial } from '#lib/presentation/interrupted-trial-text.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
@@ -17,7 +19,9 @@
 
 	/** A trial interrupted by an outside incident, found at opening (SEQ01, CU06). */
 	let interrupted = $state<PendingDecision | null>(null);
-	const text = $derived(interrupted && describeInterruptedTrial(interrupted, new Date()));
+	const text = $derived(
+		interrupted && describeInterruptedTrial(interrupted, new Date(), getLocale())
+	);
 
 	onMount(() => {
 		// A damaged save must not block the app: the next trial replaces it.
@@ -45,11 +49,11 @@
 	<FateDialog
 		title={text.title}
 		intro={text.intro}
-		countAsIsHint="Corrigé avec les réponses enregistrées avant l'arrêt."
+		countAsIsHint={m.interrupted_count_hint()}
 		onchoose={choose}
 	>
 		{#snippet badge()}
-			<span class="badge">Essai interrompu</span>
+			<span class="badge">{m.interrupted_badge()}</span>
 		{/snippet}
 	</FateDialog>
 {/if}

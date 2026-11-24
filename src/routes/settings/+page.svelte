@@ -3,6 +3,8 @@
 	import AppHeader from '#lib/presentation/components/app-header.svelte';
 	import PausePicker from '#lib/presentation/components/pause-picker.svelte';
 	import { patternSize, splitGroup } from '#lib/domain/navigation/display-pattern.ts';
+	import type { Language } from '#lib/domain/settings/settings.ts';
+	import { m } from '#lib/paraglide/messages.js';
 
 	const app = getApp();
 	const sizes = [1, 2, 3, 4, 5];
@@ -26,7 +28,14 @@
 
 	const pauses = $derived(app.settings.current.pausesFor('numbers'));
 
-	// Interface language comes with US19; synchronisation between devices with US21.
+	// Interface language (US19, mock-up 10): each name in its own language, for screen readers.
+	const language = $derived(app.settings.current.interfaceLanguage);
+	const languages: { value: Language; short: string; name: string }[] = [
+		{ value: 'fr', short: 'FR', name: 'Français' },
+		{ value: 'en', short: 'EN', name: 'English' }
+	];
+
+	// Synchronisation between devices comes with US21.
 	async function save(change: () => Promise<void>) {
 		saved = false;
 		await app.ready;
@@ -36,24 +45,46 @@
 </script>
 
 <svelte:head>
-	<title>Paramètres — memory-trainer</title>
+	<title>{m.settings_title()} — memory-trainer</title>
 </svelte:head>
 
 <AppHeader />
 
 <main class="settings">
-	<h1>Paramètres</h1>
+	<h1>{m.settings_title()}</h1>
 
-	<section class="card" aria-label="Numbers">
+	<div class="card">
 		<div class="row">
 			<div>
-				<span id="pattern-title" class="title">Motif d'affichage, Numbers</span>
-				<p class="hint">1 à 3 groupes de 1 à 5 chiffres, montrés ensemble à chaque appui sur →</p>
+				<span id="language-title" class="title">{m.settings_language()}</span>
+				<p class="hint">{m.settings_language_hint()}</p>
+			</div>
+			<div class="languages" role="radiogroup" aria-labelledby="language-title">
+				{#each languages as option (option.value)}
+					<button
+						type="button"
+						role="radio"
+						lang={option.value}
+						aria-label={option.name}
+						aria-checked={language === option.value}
+						class:selected={language === option.value}
+						onclick={() => save(() => app.settings.setLanguage(option.value))}
+					>
+						{option.short}
+					</button>
+				{/each}
+			</div>
+		</div>
+
+		<div class="row">
+			<div>
+				<span id="pattern-title" class="title">{m.settings_pattern()}</span>
+				<p class="hint">{m.settings_pattern_hint()}</p>
 			</div>
 			<div class="pattern" role="group" aria-labelledby="pattern-title">
 				{#each [0, 1, 2] as index (index)}
 					<select
-						aria-label="Groupe {index + 1}"
+						aria-label={m.settings_pattern_group({ number: index + 1 })}
 						value={pattern[index] ?? ''}
 						disabled={index > pattern.length}
 						onchange={(event) => changePattern(index, event.currentTarget.value)}
@@ -64,35 +95,33 @@
 						{/each}
 					</select>
 				{/each}
-				<output class="preview" aria-label="Aperçu">{preview}</output>
+				<output class="preview" aria-label={m.settings_preview()}>{preview}</output>
 			</div>
 		</div>
 
 		<div class="row pauses">
 			<div>
-				<span class="title">Pauses de préparation, Numbers</span>
-				<p class="hint">
-					Proposées au lancement ; changer les pauses au lancement les met à jour ici.
-				</p>
+				<span class="title">{m.settings_pauses()}</span>
+				<p class="hint">{m.settings_pauses_hint()}</p>
 			</div>
 			<div class="pickers">
 				<PausePicker
-					label="Avant la mémorisation"
+					label={m.settings_pause_before_memorization()}
 					valueMs={pauses.beforeMemorizationMs}
 					onchange={(ms: number) =>
 						save(() => app.settings.setPauses('numbers', { ...pauses, beforeMemorizationMs: ms }))}
 				/>
 				<PausePicker
-					label="Avant le rappel"
+					label={m.settings_pause_before_recall()}
 					valueMs={pauses.beforeRecallMs}
 					onchange={(ms: number) =>
 						save(() => app.settings.setPauses('numbers', { ...pauses, beforeRecallMs: ms }))}
 				/>
 			</div>
 		</div>
-	</section>
+	</div>
 
-	<p class="status" role="status">{saved ? 'Enregistré sur cet appareil.' : ''}</p>
+	<p class="status" role="status">{saved ? m.settings_saved() : ''}</p>
 </main>
 
 <style>
@@ -136,6 +165,31 @@
 	.hint {
 		margin: 0.25rem 0 0;
 		color: var(--ink-muted);
+	}
+	.languages {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		min-width: 14rem;
+		padding: 0.35rem;
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+		background: var(--paper);
+	}
+	.languages button {
+		min-height: 3.25rem;
+		border: 0;
+		border-radius: var(--radius-small);
+		background: transparent;
+		color: var(--ink-muted);
+		font: inherit;
+		font-weight: 700;
+		font-size: 1.15rem;
+		cursor: pointer;
+	}
+	.languages button.selected {
+		background: var(--sheet);
+		color: var(--ink);
+		box-shadow: var(--shadow);
 	}
 	.pattern {
 		display: flex;

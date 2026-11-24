@@ -6,6 +6,7 @@
 	import AppHeader from '#lib/presentation/components/app-header.svelte';
 	import CorrectedCopy from '#lib/presentation/components/corrected-copy.svelte';
 	import TrialResult from '#lib/presentation/components/trial-result.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 
 	/**
 	 * A trial opened from the history (US12 CA2): the same result screen as at the end of a
@@ -27,7 +28,7 @@
 </script>
 
 <svelte:head>
-	<title>Essai de Numbers — memory-trainer</title>
+	<title>{m.numbers_trial()} — memory-trainer</title>
 </svelte:head>
 
 <AppHeader />
@@ -35,8 +36,8 @@
 <main class="result">
 	{#if detail === null}
 		<div class="missing">
-			<p>Cet essai n'est pas sur cet appareil.</p>
-			<a class="button button-secondary" href={resolve('/history')}>Historique</a>
+			<p>{m.detail_missing()}</p>
+			<a class="button button-secondary" href={resolve('/history')}>{m.history()}</a>
 		</div>
 	{:else if detail && detail.score !== null}
 		<TrialResult
@@ -51,10 +52,9 @@
 		<!-- Kept out of the statistics: never scored, so there is no corrected copy (RG23). -->
 		<div class="missing">
 			<p>
-				{detail.status === 'abandoned' ? 'Essai abandonné' : 'Essai interrompu'}, gardé hors
-				statistiques : il n'a pas été corrigé.
+				{detail.status === 'abandoned' ? m.detail_abandoned() : m.detail_interrupted()}
 			</p>
-			<a class="button button-secondary" href={resolve('/history')}>Historique</a>
+			<a class="button button-secondary" href={resolve('/history')}>{m.history()}</a>
 		</div>
 	{/if}
 </main>

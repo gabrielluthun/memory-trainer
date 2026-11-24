@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import { m } from '../../paraglide/messages';
 	import Logo from './logo.svelte';
 
 	// The sync status (US21) joins the header with its user story.
+	// Labels are messages, read in the template so they follow the language (ADR 0029).
 	const links = [
-		{ href: resolve('/'), label: 'Accueil', icon: 'home' },
-		{ href: resolve('/history'), label: 'Historique', icon: 'list' },
-		{ href: resolve('/settings'), label: 'Paramètres', icon: 'gear' }
+		{ href: resolve('/'), label: m.home, icon: 'home' },
+		{ href: resolve('/history'), label: m.history, icon: 'list' },
+		{ href: resolve('/settings'), label: m.settings_title, icon: 'gear' }
 	] as const;
 
 	const home = resolve('/');
@@ -25,7 +27,7 @@
 		<span>memory-trainer</span>
 	</a>
 	<!-- On a computer, links in the top bar; on a phone, a tab bar at the bottom (wireframes). -->
-	<nav aria-label="Navigation principale">
+	<nav aria-label={m.main_navigation()}>
 		{#each links as link (link.href)}
 			<a
 				href={link.href}
@@ -44,7 +46,7 @@
 						/>
 					{/if}
 				</svg>
-				<span>{link.label}</span>
+				<span>{link.label()}</span>
 			</a>
 		{/each}
 	</nav>

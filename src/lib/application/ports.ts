@@ -1,5 +1,5 @@
 import type { DisciplineName, ItemResult } from '../domain/disciplines/discipline';
-import type { Settings } from '../domain/settings/settings';
+import type { Language, Settings } from '../domain/settings/settings';
 import type { ClosedTrial, Mode, TrialId, TrialSnapshot } from '../domain/trial/trial';
 
 /**
@@ -75,4 +75,12 @@ export interface SettingsRepository {
 	/** The stored settings, or null on a device that never saved any. */
 	load(): Promise<Settings | null>;
 	save(settings: Settings): Promise<void>;
+}
+
+/**
+ * The language of the screens (US19, ADR 0029): every text follows it without reloading, and the
+ * device keeps a copy to open in the right language. The settings stay the reference.
+ */
+export interface InterfaceLanguage {
+	apply(language: Language): void;
 }

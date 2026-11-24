@@ -5,6 +5,8 @@
 	import type { TrialSummary } from '#lib/application/ports.ts';
 	import AppHeader from '#lib/presentation/components/app-header.svelte';
 	import { formatDuration, formatTrialDate } from '#lib/presentation/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
 
 	/**
 	 * History (mock-up 08, US12, CU07): every trial, most recent first, read on the device.
@@ -33,31 +35,31 @@
 	});
 
 	// Excluded trials: labels of mock-up 08; their score and time show as "—" (RG23, RG24).
-	const statusLabels: Record<string, string> = {
-		completed: 'Compté',
-		abandoned: 'Abandonné',
-		external_error: 'Erreur externe'
+	const statusLabels: Record<string, () => string> = {
+		completed: m.status_completed,
+		abandoned: m.status_abandoned,
+		external_error: m.status_external_error
 	};
 </script>
 
 <svelte:head>
-	<title>Historique — memory-trainer</title>
+	<title>{m.history()} — memory-trainer</title>
 </svelte:head>
 
 <AppHeader />
 
 <main class="history">
 	<div class="head">
-		<h1>Historique</h1>
+		<h1>{m.history()}</h1>
 		<div class="filters">
-			<select aria-label="Discipline" bind:value={discipline}>
-				<option value="all">Toutes les disciplines</option>
+			<select aria-label={m.history_discipline()} bind:value={discipline}>
+				<option value="all">{m.history_all_disciplines()}</option>
 				<option value="numbers">Numbers</option>
 			</select>
-			<select aria-label="Mode" bind:value={mode}>
-				<option value="all">Tous les modes</option>
-				<option value="standard">Standard</option>
-				<option value="custom">Personnalisé</option>
+			<select aria-label={m.history_mode()} bind:value={mode}>
+				<option value="all">{m.history_all_modes()}</option>
+				<option value="standard">{m.mode_standard()}</option>
+				<option value="custom">{m.mode_custom()}</option>
 			</select>
 		</div>
 	</div>
@@ -65,29 +67,32 @@
 	{#if trials !== null}
 		{#if !hasAny}
 			<div class="empty">
-				<p>Aucun essai pour le moment.</p>
+				<p>{m.history_empty()}</p>
 				<a class="button button-primary" href={resolve('/train/numbers')}>
-					<span aria-hidden="true">▶</span> Lancer un essai
+					<span aria-hidden="true">▶</span>
+					{m.launch_trial()}
 				</a>
 			</div>
 		{:else if trials.length === 0}
-			<p class="empty">Aucun essai pour ces filtres.</p>
+			<p class="empty">{m.history_no_match()}</p>
 		{:else}
 			<section class="sheet">
 				<div class="columns" aria-hidden="true">
-					<span>Date</span><span>Mode</span><span>Score</span><span>Mémorisation</span><span>
-						Statut
-					</span>
+					<span>{m.history_date()}</span><span>{m.history_mode()}</span><span>
+						{m.history_score()}
+					</span><span>{m.step_memorization()}</span><span>{m.history_status()}</span>
 				</div>
-				<ol class="trials" aria-label="Essais">
+				<ol class="trials" aria-label={m.history_trials()}>
 					{#each trials as trial (trial.id)}
-						{@const date = formatTrialDate(trial.startedAt, now)}
+						{@const date = formatTrialDate(trial.startedAt, now, getLocale())}
 						<li>
 							<a class="trial" href={resolve('/history/[id]', { id: trial.id })}>
 								<span class="date"><strong>{date.day}</strong> {date.time}</span>
 								<span class="mode">
 									<span class="badge" class:custom={trial.mode === 'custom'}>
-										{trial.mode === 'custom' ? `Personnalisé, ${trial.itemCount}` : 'Standard'}
+										{trial.mode === 'custom'
+											? m.history_custom({ count: trial.itemCount })
+											: m.mode_standard()}
 									</span>
 								</span>
 								<span class="score">
@@ -103,10 +108,10 @@
 								<span class="memorization">
 									{trial.score === null || trial.memorizationMs === null
 										? '—'
-										: formatDuration(trial.memorizationMs)}
+										: formatDuration(trial.memorizationMs, getLocale())}
 								</span>
 								<span class="status status-{trial.status}">
-									{statusLabels[trial.status] ?? trial.status}
+									{statusLabels[trial.status]?.() ?? trial.status}
 								</span>
 								<span class="chevron" aria-hidden="true">›</span>
 							</a>

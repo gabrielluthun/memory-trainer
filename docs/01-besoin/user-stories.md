@@ -246,6 +246,7 @@ Couvre : EF31 · RG40, RG42
 Je veux utiliser l'interface en français ou en anglais.
 Couvre : EF20 · ENF05
 - CA1 : changer la langue traduit toute l'interface sans recharger mes données ; le choix est conservé.
+- CA2 : les temps et les dates suivent la langue : « 48,52 s » et « Aujourd'hui » en français, « 48.52 s » et « Today » en anglais.
 
 ### US20 — M'entraîner hors connexion
 Je veux faire un essai ou une révision sans réseau, afin de m'entraîner n'importe où.

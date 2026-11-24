@@ -7,6 +7,7 @@ docs/04-specifications/bdd/schema.sql
 node_modules
 
 # Output
+/project.inlang/cache
 .output
 .wrangler
 /.svelte-kit

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { m } from '../../paraglide/messages';
+	import { getLocale } from '../../paraglide/runtime';
 	import { formatDuration } from '../format.ts';
 
 	/**
@@ -28,26 +30,27 @@
 			/>
 		</svg>
 		<span class="points">{score}</span>
-		<span class="out-of">sur {itemCount}</span>
+		<span class="out-of">{m.result_out_of({ count: itemCount })}</span>
 	</h1>
 
 	<dl class="times">
 		<div>
-			<dt>Mémorisation</dt>
-			<dd>{formatDuration(memorizationMs)}</dd>
+			<dt>{m.step_memorization()}</dt>
+			<dd>{formatDuration(memorizationMs, getLocale())}</dd>
 		</div>
 		<div>
-			<dt>Rappel</dt>
-			<dd>{formatDuration(recallMs)}</dd>
+			<dt>{m.step_recall()}</dt>
+			<dd>{formatDuration(recallMs, getLocale())}</dd>
 		</div>
 	</dl>
 
-	<span class="badge">{mode === 'standard' ? 'Standard' : 'Personnalisé'}</span>
+	<span class="badge">{mode === 'standard' ? m.mode_standard() : m.mode_custom()}</span>
 
 	<div class="actions">
-		<a class="button button-secondary" href={resolve('/history')}>Historique</a>
+		<a class="button button-secondary" href={resolve('/history')}>{m.history()}</a>
 		<a class="button button-primary" href={resolve('/train/numbers')}>
-			<span aria-hidden="true">▶</span> Rejouer
+			<span aria-hidden="true">▶</span>
+			{m.result_replay()}
 		</a>
 	</div>
 </section>

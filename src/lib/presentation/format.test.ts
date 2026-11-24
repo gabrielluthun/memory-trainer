@@ -3,26 +3,39 @@ import { formatClock, formatCountdown, formatDuration, formatTrialDate } from '.
 
 describe('formatDuration — times shown on the result', () => {
 	it('US01 CA4 — under a minute: seconds to the hundredth', () => {
-		expect(formatDuration(48_520)).toBe('48,52 s');
-		expect(formatDuration(5_000)).toBe('5,00 s');
+		expect(formatDuration(48_520, 'fr')).toBe('48,52 s');
+		expect(formatDuration(5_000, 'fr')).toBe('5,00 s');
 	});
 
 	it('US01 CA4 — from a minute: minutes, seconds and hundredths', () => {
-		expect(formatDuration(201_070)).toBe('3:21,07');
-		expect(formatDuration(60_000)).toBe('1:00,00');
+		expect(formatDuration(201_070, 'fr')).toBe('3:21,07');
+		expect(formatDuration(60_000, 'fr')).toBe('1:00,00');
 	});
 
 	it('ENF01 — truncates like a stopwatch, never rounds up', () => {
-		expect(formatDuration(48_529)).toBe('48,52 s');
-		expect(formatDuration(59_999)).toBe('59,99 s');
+		expect(formatDuration(48_529, 'fr')).toBe('48,52 s');
+		expect(formatDuration(59_999, 'fr')).toBe('59,99 s');
+	});
+});
+
+describe('formatDuration — in English (US19 CA2)', () => {
+	it('US19 CA2 — a decimal point instead of a comma', () => {
+		expect(formatDuration(48_520, 'en')).toBe('48.52 s');
+		expect(formatDuration(201_070, 'en')).toBe('3:21.07');
 	});
 });
 
 describe('formatClock — running stopwatch in the trial header', () => {
 	it('always shows minutes, seconds and hundredths', () => {
-		expect(formatClock(41_230)).toBe('0:41,23');
-		expect(formatClock(0)).toBe('0:00,00');
-		expect(formatClock(60_000)).toBe('1:00,00');
+		expect(formatClock(41_230, 'fr')).toBe('0:41,23');
+		expect(formatClock(0, 'fr')).toBe('0:00,00');
+		expect(formatClock(60_000, 'fr')).toBe('1:00,00');
+	});
+});
+
+describe('formatClock — in English (US19 CA2)', () => {
+	it('US19 CA2 — a decimal point instead of a comma', () => {
+		expect(formatClock(41_230, 'en')).toBe('0:41.23');
 	});
 });
 
@@ -41,27 +54,46 @@ describe('formatTrialDate — date of a trial in the history (mock-up 08)', () =
 	const now = new Date(2026, 10, 23, 22, 0);
 
 	it('US12 — today and yesterday by name, with the time', () => {
-		expect(formatTrialDate(new Date(2026, 10, 23, 21, 14), now)).toEqual({
+		expect(formatTrialDate(new Date(2026, 10, 23, 21, 14), now, 'fr')).toEqual({
 			day: "Aujourd'hui",
 			time: '21:14'
 		});
-		expect(formatTrialDate(new Date(2026, 10, 22, 8, 2), now)).toEqual({
+		expect(formatTrialDate(new Date(2026, 10, 22, 8, 2), now, 'fr')).toEqual({
 			day: 'Hier',
 			time: '08:02'
 		});
 	});
 
 	it('US12 — earlier this year: day and short month', () => {
-		expect(formatTrialDate(new Date(2026, 10, 19, 21, 30), now).day).toBe('19 nov.');
+		expect(formatTrialDate(new Date(2026, 10, 19, 21, 30), now, 'fr').day).toBe('19 nov.');
 	});
 
 	it('US12 — an earlier year shows the year', () => {
-		expect(formatTrialDate(new Date(2025, 10, 19, 21, 30), now).day).toBe('19 nov. 2025');
+		expect(formatTrialDate(new Date(2025, 10, 19, 21, 30), now, 'fr').day).toBe('19 nov. 2025');
 	});
 
 	it('US12 — yesterday is the previous calendar day, even less than 24 hours ago', () => {
 		const justAfterMidnight = new Date(2026, 10, 23, 0, 5);
 
-		expect(formatTrialDate(new Date(2026, 10, 22, 23, 55), justAfterMidnight).day).toBe('Hier');
+		expect(formatTrialDate(new Date(2026, 10, 22, 23, 55), justAfterMidnight, 'fr').day).toBe(
+			'Hier'
+		);
+	});
+});
+
+describe('formatTrialDate — in English (US19 CA2)', () => {
+	const now = new Date(2026, 10, 23, 22, 0);
+
+	it('US19 CA2 — today and yesterday in English, the time unchanged', () => {
+		expect(formatTrialDate(new Date(2026, 10, 23, 21, 14), now, 'en')).toEqual({
+			day: 'Today',
+			time: '21:14'
+		});
+		expect(formatTrialDate(new Date(2026, 10, 22, 8, 2), now, 'en').day).toBe('Yesterday');
+	});
+
+	it('US19 CA2 — day and short month in English, with the year when earlier', () => {
+		expect(formatTrialDate(new Date(2026, 10, 19, 21, 30), now, 'en').day).toBe('19 Nov');
+		expect(formatTrialDate(new Date(2025, 10, 19, 21, 30), now, 'en').day).toBe('19 Nov 2025');
 	});
 });

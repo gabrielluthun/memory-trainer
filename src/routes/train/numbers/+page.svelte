@@ -14,6 +14,7 @@
 		stepUp
 	} from '#lib/presentation/custom-duration.ts';
 	import { formatCountdown } from '#lib/presentation/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
 
 	const app = getApp();
 	const standard = app.session.standardFormat;
@@ -82,26 +83,27 @@
 			: standard
 	);
 
-	const pauseHint = (ms: number, hidden: string) => (ms === 0 ? 'Aucune' : hidden);
+	// Derived: the texts are messages, so the plan follows the language too (ADR 0029).
+	const pauseHint = (ms: number) => (ms === 0 ? m.launch_no_pause() : m.launch_digits_hidden());
 	const steps = $derived([
 		{
-			name: 'Pause',
-			hint: pauseHint(pauses.beforeMemorizationMs, 'Les chiffres sont cachés'),
+			name: m.step_pause(),
+			hint: pauseHint(pauses.beforeMemorizationMs),
 			value: `${pauses.beforeMemorizationMs / 1_000} s`
 		},
 		{
-			name: 'Mémorisation',
-			hint: 'Arrêtez quand vous voulez',
+			name: m.step_memorization(),
+			hint: m.launch_stop_anytime(),
 			value: formatCountdown(format.memorizationMs)
 		},
 		{
-			name: 'Pause',
-			hint: pauseHint(pauses.beforeRecallMs, 'Les chiffres sont cachés'),
+			name: m.step_pause(),
+			hint: pauseHint(pauses.beforeRecallMs),
 			value: `${pauses.beforeRecallMs / 1_000} s`
 		},
 		{
-			name: 'Rappel',
-			hint: 'Saisissez les chiffres dans l’ordre',
+			name: m.step_recall(),
+			hint: m.launch_recall_in_order(),
 			value: formatCountdown(format.recallMs)
 		}
 	]);
@@ -128,7 +130,7 @@
 </script>
 
 <svelte:head>
-	<title>Lancer un essai de Numbers — memory-trainer</title>
+	<title>{m.launch_title()} — memory-trainer</title>
 </svelte:head>
 
 <svelte:window {onkeydown} />
@@ -136,14 +138,14 @@
 <AppHeader />
 
 <main class="launch">
-	<a class="back" href={resolve('/')}><span aria-hidden="true">‹</span> Accueil</a>
-	<h1>Lancer un essai de Numbers</h1>
+	<a class="back" href={resolve('/')}><span aria-hidden="true">‹</span> {m.home()}</a>
+	<h1>{m.launch_title()}</h1>
 
 	<div class="columns">
 		<section aria-labelledby="mode-title">
-			<h2 id="mode-title" class="label">Mode</h2>
+			<h2 id="mode-title" class="label">{m.launch_mode()}</h2>
 			<div class="mode" role="radiogroup" aria-labelledby="mode-title">
-				{#each [['standard', 'Standard'], ['custom', 'Personnalisé']] as const as [value, label] (value)}
+				{#each [['standard', m.mode_standard], ['custom', m.mode_custom]] as const as [value, label] (value)}
 					<button
 						type="button"
 						role="radio"
@@ -151,26 +153,25 @@
 						class:selected={mode === value}
 						onclick={() => chooseMode(value)}
 					>
-						{label}
+						{label()}
 					</button>
 				{/each}
 			</div>
 			<p class="hint">
 				{#if mode === 'standard'}
-					{standard.itemCount} chiffres, {standard.memorizationMs / 60_000} min de mémorisation, {standard.recallMs /
-						60_000} min de rappel. Comme sur Memory League.
+					{m.launch_standard_hint({
+						count: standard.itemCount,
+						memorization: standard.memorizationMs / 60_000,
+						recall: standard.recallMs / 60_000
+					})}
 				{:else}
-					Le nombre de chiffres et la durée de mémorisation de votre choix.
+					{m.launch_custom_hint()}
 				{/if}
 			</p>
 
-			<fieldset
-				class="custom"
-				disabled={mode !== 'custom'}
-				aria-label="Réglages du mode personnalisé"
-			>
+			<fieldset class="custom" disabled={mode !== 'custom'} aria-label={m.launch_custom_settings()}>
 				<div class="field">
-					<label for="item-count">Nombre de chiffres</label>
+					<label for="item-count">{m.launch_item_count()}</label>
 					<input
 						id="item-count"
 						type="text"
@@ -183,15 +184,15 @@
 					/>
 				</div>
 				{#if mode === 'custom' && itemCount === null}
-					<p class="error" id="item-count-error">De 1 à 500 chiffres.</p>
+					<p class="error" id="item-count-error">{m.launch_item_count_error()}</p>
 				{/if}
 				<div class="field">
-					<label for="duration">Durée de mémorisation</label>
+					<label for="duration">{m.launch_duration()}</label>
 					<div class="stepper">
 						<button
 							type="button"
 							class="step"
-							aria-label="Diminuer la durée"
+							aria-label={m.launch_duration_down()}
 							onclick={() => stepDuration(stepDown)}
 						>
 							−
@@ -209,7 +210,7 @@
 						<button
 							type="button"
 							class="step"
-							aria-label="Augmenter la durée"
+							aria-label={m.launch_duration_up()}
 							onclick={() => stepDuration(stepUp)}
 						>
 							+
@@ -217,29 +218,29 @@
 					</div>
 				</div>
 				{#if mode === 'custom' && durationS === null}
-					<p class="error" id="duration-error">De 0:01 à 60:00, en minutes et secondes.</p>
+					<p class="error" id="duration-error">{m.launch_duration_error()}</p>
 				{/if}
-				<p class="note">En mode personnalisé, le rappel dure toujours 4 minutes.</p>
+				<p class="note">{m.launch_custom_recall_note()}</p>
 			</fieldset>
 
 			<div class="pauses">
 				<PausePicker
-					label="Pause avant la mémorisation"
+					label={m.launch_pause_before_memorization()}
 					valueMs={pauses.beforeMemorizationMs}
 					onchange={(ms: number) => choosePauses({ beforeMemorizationMs: ms })}
 				/>
 				<PausePicker
-					label="Pause avant le rappel"
+					label={m.launch_pause_before_recall()}
 					valueMs={pauses.beforeRecallMs}
 					onchange={(ms: number) => choosePauses({ beforeRecallMs: ms })}
 				/>
-				<p class="hint">Reprend vos derniers réglages pour Numbers.</p>
+				<p class="hint">{m.launch_last_settings_hint()}</p>
 			</div>
 		</section>
 
 		<section class="plan" aria-labelledby="plan-title">
 			<div class="sheet">
-				<h2 id="plan-title">Déroulé</h2>
+				<h2 id="plan-title">{m.launch_plan()}</h2>
 				<ol>
 					{#each steps as step, index (index)}
 						<li>
@@ -258,9 +259,10 @@
 				onclick={start}
 				disabled={starting || !canStart}
 			>
-				<span aria-hidden="true">▶</span> Commencer
+				<span aria-hidden="true">▶</span>
+				{m.launch_start()}
 			</button>
-			<p class="hint centered">Entrée pour commencer</p>
+			<p class="hint centered">{m.launch_enter_to_start()}</p>
 		</section>
 	</div>
 </main>

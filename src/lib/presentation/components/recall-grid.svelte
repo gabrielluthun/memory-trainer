@@ -6,6 +6,7 @@
 	 * once a cell has been clicked (RG10, US08).
 	 */
 	import { isSubgroupStart, type DisplayPattern } from '../../domain/navigation/display-pattern';
+	import { m } from '../../paraglide/messages';
 	import { rowSizeFor, rowsOf } from '../grid-rows';
 
 	let {
@@ -73,7 +74,10 @@
 					class="cell"
 					class:selected={index === selected}
 					class:group-start={isSubgroupStart(index, pattern) && index % rowSize !== 0}
-					aria-label="Case {index + 1}, {answers[index] ?? 'vide'}"
+					aria-label={m.recall_cell({
+						number: index + 1,
+						value: answers[index] ?? m.recall_cell_empty()
+					})}
 					aria-pressed={index === selected}
 					onclick={() => choose(index)}
 				>
@@ -92,7 +96,7 @@
 	type="text"
 	inputmode="numeric"
 	autocomplete="off"
-	aria-label="Saisir un chiffre"
+	aria-label={m.recall_type_digit()}
 	data-recall-field
 	value={SENTINEL}
 	onfocus={(event) => reset(event.currentTarget)}
