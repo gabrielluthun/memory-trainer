@@ -173,5 +173,17 @@
 	"settings_signed_out": "Not signed in: your trials stay on this device.",
 	"settings_connection_unknown": "Checked when the network is back.",
 	"settings_sign_out": "Sign out",
-	"status_rejected": "Refused by the database"
+	"status_rejected": "Refused by the database",
+
+	"sync_offline": "Offline",
+	"sync_running": "Synchronising…",
+	"sync_pending": "Synchronisation pending",
+	"sync_just_now": "Synchronised just now",
+	"sync_minutes": "Synchronised {minutes} min ago",
+	"sync_hours": "Synchronised {hours} h ago",
+	"settings_sync": "Synchronisation",
+	"settings_sync_today": "Last: today at {time}",
+	"settings_sync_on": "Last: {day} at {time}",
+	"settings_sync_never": "Not synchronised since the app was opened.",
+	"settings_sync_now": "Synchronise"
 }
