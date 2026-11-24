@@ -28,6 +28,12 @@ export class InMemorySettingsRepository implements SettingsRepository {
 		return Promise.resolve(this.dirty);
 	}
 
+	saveReceived(settings: Settings): Promise<void> {
+		this.stored = settings;
+		this.dirty = false;
+		return Promise.resolve();
+	}
+
 	markSynced(modifiedAt: Date): Promise<void> {
 		if (this.stored?.modifiedAt.getTime() === modifiedAt.getTime()) this.dirty = false;
 		return Promise.resolve();

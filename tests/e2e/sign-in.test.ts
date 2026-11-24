@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures';
+import { expect, SESSION_TOKEN, test } from './fixtures';
 
 // CU16 (Se connecter), mock-up 11, ADR 0030. Hanko is simulated (fixtures.ts); its own sign-in
 // flow is checked at acceptance, in production (TR09).
@@ -41,12 +41,13 @@ test.describe('without a session', () => {
 		await expect(signInTitle(page)).toBeVisible();
 	});
 
-	test('CU16 — a session created by Hanko closes the screen', async ({ page, hanko }) => {
+	test('CU16 — a session created by Hanko closes the screen', async ({ page, hanko, baseURL }) => {
 		await page.goto('/');
 		await expect(signInTitle(page)).toBeVisible();
 
-		// What Hanko's element announces once the passkey is accepted.
+		// What Hanko does once the passkey is accepted: its cookie, then its event.
 		hanko.valid = true;
+		await page.context().addCookies([{ name: 'hanko', value: SESSION_TOKEN, url: baseURL ?? '' }]);
 		await page.evaluate(() => {
 			const expiration = Math.floor(Date.now() / 1000) + 12 * 3600;
 			document.dispatchEvent(

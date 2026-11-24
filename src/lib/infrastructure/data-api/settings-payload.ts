@@ -1,5 +1,6 @@
 import type { Discipline } from '../../domain/disciplines/discipline';
-import type { Settings } from '../../domain/settings/settings';
+import { Settings, type Language, type SettingsData } from '../../domain/settings/settings';
+import type { Mode } from '../../domain/trial/trial';
 
 /** What the settings need to know of a discipline: its name and its standard format (RG15). */
 export type DisciplineDefaults = Pick<Discipline<unknown, unknown>, 'name' | 'standardFormat'>;
@@ -41,4 +42,46 @@ export function settingsPayload(
 			};
 		})
 	};
+}
+
+/** The account row read from the Data API, with the settings of each discipline embedded. */
+export interface ApiSettingsRow {
+	interface_language: string;
+	settings_modified_at: string;
+	discipline_settings: SettingsPayload['disciplines'];
+}
+
+/**
+ * Settings read from the Data API, or null when no device ever sent any ('-infinity', ADR 0012).
+ * A discipline without a row keeps its defaults.
+ */
+export function settingsFromApi(row: ApiSettingsRow): Settings | null {
+	const modifiedAt = new Date(row.settings_modified_at);
+	if (Number.isNaN(modifiedAt.getTime())) return null;
+	const numbers = row.discipline_settings.find((entry) => entry.discipline === 'numbers');
+	const data: SettingsData = {
+		interfaceLanguage: row.interface_language as Language,
+		groupPatterns: { numbers: numbers?.group_pattern ?? [2] },
+		pauses: {},
+		launches: {},
+		modifiedAt
+	};
+	if (numbers) {
+		data.pauses = {
+			numbers: {
+				beforeMemorizationMs: numbers.pause_before_memorization_s * 1_000,
+				beforeRecallMs: numbers.pause_before_recall_s * 1_000
+			}
+		};
+		data.launches = {
+			numbers: {
+				mode: numbers.launch_mode as Mode,
+				custom: {
+					itemCount: numbers.custom_item_count,
+					memorizationMs: numbers.custom_memorization_s * 1_000
+				}
+			}
+		};
+	}
+	return Settings.restore(data);
 }

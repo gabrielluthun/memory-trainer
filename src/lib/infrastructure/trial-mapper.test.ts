@@ -123,3 +123,65 @@ describe('TrialMapper', () => {
 		});
 	});
 });
+
+describe('TrialMapper — trials received from the Data API (SEQ05)', () => {
+	/** A row as the Data API returns it, items embedded, in no particular order. */
+	const apiRow = {
+		trial_id: 'remote-a',
+		sequence_number: 12,
+		discipline: 'numbers',
+		mode: 'standard',
+		status: 'completed',
+		started_at: '2026-11-21T10:00:00+00:00',
+		item_count: 2,
+		memorization_limit_ms: 60_000,
+		recall_limit_ms: 240_000,
+		memorization_ms: 41_000,
+		recall_ms: 90_000,
+		score: 1,
+		trial_items: [
+			{
+				position: 2,
+				is_correct: false,
+				trial_items_numbers: { expected_digit: 7, answered_digit: null }
+			},
+			{
+				position: 1,
+				is_correct: true,
+				trial_items_numbers: [{ expected_digit: 4, answered_digit: 4 }]
+			}
+		]
+	};
+
+	it('RG19, RG22 — gives back the stored form, items in order, dates of the device kept', () => {
+		expect(new TrialMapper().fromApi(apiRow)).toEqual({
+			trial_id: 'remote-a',
+			discipline: 'numbers',
+			mode: 'standard',
+			status: 'completed',
+			started_at: '2026-11-21T10:00:00.000Z',
+			item_count: 2,
+			memorization_limit_ms: 60_000,
+			recall_limit_ms: 240_000,
+			memorization_ms: 41_000,
+			recall_ms: 90_000,
+			score: 1,
+			items: [
+				{ position: 1, expected_digit: 4, answered_digit: 4, is_correct: true },
+				{ position: 2, expected_digit: 7, answered_digit: null, is_correct: false }
+			]
+		});
+	});
+
+	it('US11 — a received trial shows its detail like a trial made here', () => {
+		const mapper = new TrialMapper();
+
+		const detail = mapper.toDetail(mapper.fromApi(apiRow));
+
+		expect(detail.results).toEqual([
+			{ position: 1, expected: 4, answer: 4, correct: true },
+			{ position: 2, expected: 7, answer: null, correct: false }
+		]);
+		expect(detail.startedAt).toEqual(new Date('2026-11-21T10:00:00Z'));
+	});
+});

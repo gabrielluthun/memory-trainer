@@ -125,3 +125,76 @@ describe('DataApiClient — sending the settings (ADR 0012)', () => {
 		expect(await client(api.fetchFn).sendSettings(Settings.defaults())).toBe('ignored');
 	});
 });
+
+describe('DataApiClient — receiving (SEQ05, ADR 0011)', () => {
+	const row = {
+		trial_id: 'remote-a',
+		sequence_number: 8,
+		discipline: 'numbers',
+		mode: 'standard',
+		status: 'completed',
+		started_at: '2026-11-21T10:00:00+00:00',
+		item_count: 1,
+		memorization_limit_ms: 60_000,
+		recall_limit_ms: 240_000,
+		memorization_ms: 1_000,
+		recall_ms: 2_000,
+		score: 1,
+		trial_items: [
+			{
+				position: 1,
+				is_correct: true,
+				trial_items_numbers: { expected_digit: 3, answered_digit: 3 }
+			}
+		]
+	};
+
+	it('ADR 0011 — asks for the trials after the cursor, in order, by pages, with their items', async () => {
+		const api = simulatedApi(() => json(200, [row]));
+
+		const received = await client(api.fetchFn).fetchTrials(7, 50);
+
+		const url = new URL(api.requests[0].url);
+		expect(url.pathname).toBe('/neondb/rest/v1/trials');
+		expect(url.searchParams.get('sequence_number')).toBe('gt.7');
+		expect(url.searchParams.get('order')).toBe('sequence_number.asc');
+		expect(url.searchParams.get('limit')).toBe('50');
+		expect(url.searchParams.get('select')).toContain('trial_items(');
+		expect(api.requests[0].headers.get('authorization')).toBe('Bearer fake.jwt.token');
+		expect(received).toHaveLength(1);
+		expect(received[0]).toMatchObject({ id: 'remote-a', sequenceNumber: 8 });
+		expect(received[0].record).toMatchObject({
+			trial_id: 'remote-a',
+			started_at: '2026-11-21T10:00:00.000Z'
+		});
+	});
+
+	it('SEQ05 — an expired token while receiving asks to sign in again', async () => {
+		const api = simulatedApi(() => json(401, { code: 'PGRST303', message: 'JWT expired' }));
+
+		await expect(client(api.fetchFn).fetchTrials(0, 50)).rejects.toBeInstanceOf(SessionRejected);
+	});
+
+	it('ADR 0012 — reads the settings of the account with those of each discipline', async () => {
+		const api = simulatedApi(() =>
+			json(200, [
+				{
+					interface_language: 'en',
+					settings_modified_at: '2026-11-24T08:00:00+00:00',
+					discipline_settings: []
+				}
+			])
+		);
+
+		const settings = await client(api.fetchFn).fetchSettings();
+
+		expect(new URL(api.requests[0].url).pathname).toBe('/neondb/rest/v1/accounts');
+		expect(settings?.interfaceLanguage).toBe('en');
+	});
+
+	it('ES04 — no account row readable: no settings to take', async () => {
+		const api = simulatedApi(() => json(200, []));
+
+		expect(await client(api.fetchFn).fetchSettings()).toBeNull();
+	});
+});

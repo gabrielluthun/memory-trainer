@@ -70,6 +70,20 @@ export interface TrialRepository {
 	list(): Promise<TrialSummary[]>;
 	/** One stored trial with its detail, or null if the device does not have it (US12 CA2). */
 	get(id: TrialId): Promise<TrialDetail | null>;
+	/**
+	 * Trials received from the database (SEQ05): the unknown ones are added, and the cursor moves
+	 * to `cursor`, in one transaction. A trial already on the device is left as it is.
+	 */
+	addReceived(trials: ReceivedTrial[], cursor: number): Promise<void>;
+	/** The last sequence number received, 0 before the first reception (ADR 0011). */
+	readCursor(): Promise<number>;
+}
+
+/** A trial read from the database, with its sequence number (ADR 0011); opaque record as sent. */
+export interface ReceivedTrial {
+	id: TrialId;
+	sequenceNumber: number;
+	record: unknown;
 }
 
 /** Settings stored on the device (Dexie.js), with a mark "to send" (SEQ05). */
@@ -82,6 +96,8 @@ export interface SettingsRepository {
 	isDirty(): Promise<boolean>;
 	/** Sent: unmarked, unless they changed again since that version (`modifiedAt`). */
 	markSynced(modifiedAt: Date): Promise<void>;
+	/** More recent settings received from the database (ADR 0012): stored, not to send. */
+	saveReceived(settings: Settings): Promise<void>;
 }
 
 /**
@@ -122,6 +138,10 @@ export interface RemoteStore {
 	sendTrial(trial: QueuedTrial): Promise<'inserted' | 'duplicate'>;
 	/** Sends the settings; "ignored" if the database has a more recent change (ADR 0012). */
 	sendSettings(settings: Settings): Promise<'saved' | 'ignored'>;
+	/** Trials numbered after `after`, in order, at most `limit` (SEQ05, ADR 0011). */
+	fetchTrials(after: number, limit: number): Promise<ReceivedTrial[]>;
+	/** The settings of the database, or null if no device ever sent any. */
+	fetchSettings(): Promise<Settings | null>;
 }
 
 /**
@@ -147,7 +167,9 @@ export interface AuthSession {
 	onChange(listener: (signedIn: boolean) => void): Cancel;
 }
 
-/** Whether the device is online. `navigator.onLine` in the browser. */
+/** Whether the device is online. `navigator.onLine` and its events in the browser. */
 export interface Network {
 	isOnline(): boolean;
+	/** Called each time the network comes back (CU17). */
+	onOnline(listener: () => void): Cancel;
 }

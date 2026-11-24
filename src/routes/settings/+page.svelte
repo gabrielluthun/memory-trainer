@@ -5,6 +5,8 @@
 	import { patternSize, splitGroup } from '#lib/domain/navigation/display-pattern.ts';
 	import type { Language } from '#lib/domain/settings/settings.ts';
 	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { daysBetween, formatTrialDate } from '#lib/presentation/format.ts';
 
 	const app = getApp();
 	const sizes = [1, 2, 3, 4, 5];
@@ -37,6 +39,17 @@
 
 	// Account (mock-up 10, CU16): sign out, or sign in when not signed in.
 	const connection = app.connection;
+
+	// Synchronisation (mock-up 10, CU17): the last one since the app was opened, and a button.
+	const lastSync = $derived.by(() => {
+		const last = app.sync.lastSyncedAt;
+		if (!last) return m.settings_sync_never();
+		const now = new Date();
+		const { day, time } = formatTrialDate(last, now, getLocale());
+		return daysBetween(last, now) === 0
+			? m.settings_sync_today({ time })
+			: m.settings_sync_on({ day, time });
+	});
 
 	// Synchronisation between devices comes with US21.
 	async function save(change: () => Promise<void>) {
@@ -145,6 +158,21 @@
 					{m.sign_in_title()}
 				</button>
 			{/if}
+		</div>
+
+		<div class="row">
+			<div>
+				<span class="title">{m.settings_sync()}</span>
+				<p class="hint">{lastSync}</p>
+			</div>
+			<button
+				class="button button-secondary"
+				type="button"
+				disabled={connection.status !== 'signed-in' || app.sync.state === 'running'}
+				onclick={() => app.sync.sync()}
+			>
+				{m.settings_sync_now()}
+			</button>
 		</div>
 	</div>
 

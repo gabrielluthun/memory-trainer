@@ -3,13 +3,32 @@
 	import { page } from '$app/state';
 	import { getApp } from '../../app-container';
 	import { m } from '../../paraglide/messages';
+	import { getLocale } from '../../paraglide/runtime';
+	import { syncStatus } from '../sync-status';
 	import Logo from './logo.svelte';
 
 	/** Minimal: the brand only, as on the sign-in screen (mock-up 11). */
 	let { minimal = false }: { minimal?: boolean } = $props();
 
-	// Not signed in: a status that opens the sign-in screen (CU16). The sync status joins it later.
-	const connection = getApp().connection;
+	// Synchronisation status (mock-up 10, CU17); "Non connecté" opens the sign-in screen (CU16).
+	const app = getApp();
+	let online = $state(navigator.onLine);
+	let now = $state(new Date());
+	$effect(() => {
+		// "il y a 2 min" moves on while the screen stays open.
+		const timer = setInterval(() => (now = new Date()), 30_000);
+		return () => clearInterval(timer);
+	});
+	const status = $derived(
+		syncStatus({
+			online,
+			connection: app.connection.status,
+			state: app.sync.state,
+			lastSyncedAt: app.sync.lastSyncedAt,
+			now,
+			language: getLocale()
+		})
+	);
 	// Labels are messages, read in the template so they follow the language (ADR 0029).
 	const links = [
 		{ href: resolve('/'), label: m.home, icon: 'home' },
@@ -25,6 +44,8 @@
 		return href === home ? path === home : path === href || path.startsWith(`${href}/`);
 	}
 </script>
+
+<svelte:window ononline={() => (online = true)} onoffline={() => (online = false)} />
 
 <header class="app-header">
 	<a class="brand" href={home}>
@@ -56,11 +77,16 @@
 				</a>
 			{/each}
 		</nav>
-		{#if connection.status === 'signed-out'}
-			<button class="status" type="button" onclick={() => connection.ask()}>
+		{#if status?.signIn}
+			<button class="status waiting" type="button" onclick={() => app.connection.ask()}>
 				<span class="dot" aria-hidden="true"></span>
-				{m.status_signed_out()}
+				{status.label}
 			</button>
+		{:else if status}
+			<span class="status {status.tone}" role="status">
+				<span class="dot" aria-hidden="true"></span>
+				{status.label}
+			</span>
 		{/if}
 	{/if}
 </header>
@@ -94,11 +120,23 @@
 		padding: 0.45rem 1rem;
 		border: 0;
 		border-radius: 999px;
-		background: color-mix(in srgb, var(--waiting) 14%, transparent);
-		color: var(--waiting);
 		font: inherit;
 		font-weight: 500;
+	}
+	button.status {
 		cursor: pointer;
+	}
+	.status.waiting {
+		background: color-mix(in srgb, var(--waiting) 14%, transparent);
+		color: var(--waiting);
+	}
+	.status.right {
+		background: color-mix(in srgb, var(--right) 12%, transparent);
+		color: var(--right);
+	}
+	.status.neutral {
+		background: var(--paper);
+		color: var(--ink-muted);
 	}
 	.dot {
 		width: 0.55rem;

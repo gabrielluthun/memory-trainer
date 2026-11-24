@@ -1,4 +1,9 @@
-import type { TrialDetail, TrialRepository, TrialSummary } from '../../src/lib/application/ports';
+import type {
+	ReceivedTrial,
+	TrialDetail,
+	TrialRepository,
+	TrialSummary
+} from '../../src/lib/application/ports';
 import type { ClosedTrial, TrialId, TrialSnapshot } from '../../src/lib/domain/trial/trial';
 import { TrialMapper } from '../../src/lib/infrastructure/trial-mapper';
 
@@ -8,6 +13,9 @@ import { TrialMapper } from '../../src/lib/infrastructure/trial-mapper';
  */
 export class InMemoryTrialRepository implements TrialRepository {
 	readonly closed: ClosedTrial[] = [];
+	/** Trials received from the other devices, by id (SEQ05), and the reception cursor. */
+	readonly received = new Map<TrialId, ReceivedTrial>();
+	cursor = 0;
 	snapshot: TrialSnapshot | null = null;
 	/** Makes every save of the ongoing trial fail, as a full device would. */
 	failSnapshots = false;
@@ -43,5 +51,18 @@ export class InMemoryTrialRepository implements TrialRepository {
 	get(id: TrialId): Promise<TrialDetail | null> {
 		const trial = this.closed.find((closed) => closed.id === id);
 		return Promise.resolve(trial ? this.#mapper.toDetail(this.#mapper.toRecord(trial)) : null);
+	}
+
+	addReceived(trials: ReceivedTrial[], cursor: number): Promise<void> {
+		for (const trial of trials) {
+			const known = this.received.has(trial.id) || this.closed.some((c) => c.id === trial.id);
+			if (!known) this.received.set(trial.id, trial);
+		}
+		this.cursor = cursor;
+		return Promise.resolve();
+	}
+
+	readCursor(): Promise<number> {
+		return Promise.resolve(this.cursor);
 	}
 }

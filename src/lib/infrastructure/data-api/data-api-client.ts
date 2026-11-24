@@ -4,10 +4,29 @@ import {
 	TrialRejected,
 	type AuthSession,
 	type QueuedTrial,
+	type ReceivedTrial,
 	type RemoteStore
 } from '../../application/ports';
 import type { Settings } from '../../domain/settings/settings';
-import { settingsPayload, type DisciplineDefaults } from './settings-payload';
+import { TrialMapper, type ApiTrialRow } from '../trial-mapper';
+import {
+	settingsFromApi,
+	settingsPayload,
+	type ApiSettingsRow,
+	type DisciplineDefaults
+} from './settings-payload';
+
+/** A trial with its items and their digits, in one request (SEQ05). */
+const TRIAL_COLUMNS =
+	'trial_id,sequence_number,discipline,mode,status,started_at,item_count,' +
+	'memorization_limit_ms,recall_limit_ms,memorization_ms,recall_ms,score,' +
+	'trial_items(position,is_correct,trial_items_numbers(expected_digit,answered_digit))';
+
+/** The settings of the account, with those of each discipline (ADR 0012). */
+const SETTINGS_COLUMNS =
+	'interface_language,settings_modified_at,discipline_settings(discipline,group_pattern,' +
+	'pause_before_memorization_s,pause_before_recall_s,launch_mode,custom_item_count,' +
+	'custom_memorization_s)';
 
 /** What a database function answers through PostgREST: its value, or an error and a status. */
 interface RpcResult {
@@ -33,6 +52,7 @@ function isRefusedValue(code = ''): boolean {
  */
 export class DataApiClient implements RemoteStore {
 	private readonly client: NeonPostgrestClient;
+	private readonly mapper = new TrialMapper();
 
 	constructor(
 		url: string,
@@ -69,9 +89,40 @@ export class DataApiClient implements RemoteStore {
 		return this.valueOf(result, 'save_settings') as 'saved' | 'ignored';
 	}
 
+	/** Read under the RLS rules: only the trials of the account (ES04), numbered after `after`. */
+	async fetchTrials(after: number, limit: number): Promise<ReceivedTrial[]> {
+		this.requireSession();
+		const result = (await this.client
+			.from('trials')
+			.select(TRIAL_COLUMNS)
+			.gt('sequence_number', after)
+			.order('sequence_number', { ascending: true })
+			.limit(limit)) as RpcResult;
+		const rows = this.valueOf(result, 'trials') as ApiTrialRow[];
+		return rows.map((row) => ({
+			id: row.trial_id,
+			sequenceNumber: row.sequence_number,
+			record: this.mapper.fromApi(row)
+		}));
+	}
+
+	async fetchSettings(): Promise<Settings | null> {
+		this.requireSession();
+		const result = (await this.client
+			.from('accounts')
+			.select(SETTINGS_COLUMNS)
+			.limit(1)) as RpcResult;
+		const [row] = this.valueOf(result, 'accounts') as ApiSettingsRow[];
+		return row ? settingsFromApi(row) : null;
+	}
+
+	private requireSession(): void {
+		if (!this.auth.token()) throw new SessionRejected('No session');
+	}
+
 	/** No session: nothing is sent, the practitioner signs in first (CU16). */
 	private async call(name: string, args: Record<string, unknown>): Promise<RpcResult> {
-		if (!this.auth.token()) throw new SessionRejected('No session');
+		this.requireSession();
 		return (await this.client.rpc(name, args)) as RpcResult;
 	}
 

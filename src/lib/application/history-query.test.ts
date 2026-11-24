@@ -20,6 +20,8 @@ const repositoryWith = (...trials: TrialSummary[]): TrialRepository => ({
 	loadSnapshot: () => Promise.resolve(null),
 	deleteSnapshot: () => Promise.resolve(),
 	close: () => Promise.resolve(),
+	addReceived: () => Promise.resolve(),
+	readCursor: () => Promise.resolve(0),
 	list: () => Promise.resolve(trials),
 	get: (id) =>
 		Promise.resolve(

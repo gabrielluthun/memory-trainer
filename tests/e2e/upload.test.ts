@@ -21,24 +21,34 @@ async function playTrial(page: Page, { reopen = true } = {}) {
 const trialCalls = (dataApi: DataApiState) =>
 	dataApi.calls.filter((call) => call.fn === 'submit_trial');
 
-test('CU17 — at the next opening, a finished trial is sent once, with the session token', async ({
+/** Waits for a synchronisation of this opening to finish: it always ends by receiving. */
+async function synchronised(page: Page, dataApi: DataApiState, receptionsBefore: number) {
+	await expect
+		.poll(() => dataApi.calls.filter((call) => call.fn === 'trials').length)
+		.toBeGreaterThan(receptionsBefore);
+	await expect(page.getByRole('status').filter({ hasText: 'Synchronisé' })).toBeVisible();
+}
+
+const receptions = (dataApi: DataApiState) =>
+	dataApi.calls.filter((call) => call.fn === 'trials').length;
+
+test('CU17 — a finished trial is sent once, with the session token, and never again', async ({
 	page,
 	dataApi
 }) => {
 	await playTrial(page);
-
-	await page.goto('/');
 	await expect.poll(() => trialCalls(dataApi).length).toBe(1);
+	await synchronised(page, dataApi, 1);
 
 	const [call] = trialCalls(dataApi);
 	expect(call.authorization).toBe(`Bearer ${SESSION_TOKEN}`);
 	expect(call.body.trial).toMatchObject({ discipline: 'numbers', status: 'completed', score: 0 });
 
-	// Received: out of the queue, never sent again (RG22).
-	await page.goto('/history');
-	await page.reload();
-	await expect(page.getByRole('heading', { name: 'Historique', level: 1 })).toBeVisible();
-	await expect.poll(() => trialCalls(dataApi).length).toBe(1);
+	// Received: out of the queue, never sent again at the next opening (RG22).
+	const before = receptions(dataApi);
+	await page.goto('/');
+	await synchronised(page, dataApi, before);
+	expect(trialCalls(dataApi)).toHaveLength(1);
 });
 
 test('ES07 — a trial refused by the database is shown as refused, and not sent again', async ({
@@ -47,17 +57,17 @@ test('ES07 — a trial refused by the database is shown as refused, and not sent
 }) => {
 	dataApi.trialAnswer = { status: 400, body: { code: '23514', message: 'check violation' } };
 	await playTrial(page);
-	await page.goto('/history');
-	await expect.poll(() => trialCalls(dataApi).length).toBe(1);
 
-	await page.reload();
-
+	// Same open app: the history refreshes once the synchronisation is over.
+	await page.getByRole('link', { name: 'Historique' }).first().click();
 	await expect(
 		page.getByRole('list', { name: 'Essais' }).getByText('Refusé par la base')
 	).toBeVisible();
+
+	const before = receptions(dataApi);
 	await page.reload();
-	await expect(page.getByRole('heading', { name: 'Historique', level: 1 })).toBeVisible();
-	await expect.poll(() => trialCalls(dataApi).length).toBe(1);
+	await synchronised(page, dataApi, before);
+	expect(trialCalls(dataApi)).toHaveLength(1);
 });
 
 test.describe('without a session', () => {

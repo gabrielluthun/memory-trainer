@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { FakeAuthSession } from '../../../tests/fakes/fake-auth-session';
+import { FakeNetwork } from '../../../tests/fakes/fake-network';
 import { ConnectionService } from './connection-service.svelte';
 
-const online = { isOnline: () => true };
-const offline = { isOnline: () => false };
+const online = new FakeNetwork(true);
+const offline = new FakeNetwork(false);
 
 describe('ConnectionService — at opening (CU16)', () => {
 	it('CU16 — online without a session: asks to sign in', async () => {

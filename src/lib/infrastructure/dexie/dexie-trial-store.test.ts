@@ -241,3 +241,78 @@ describe('DexieTrialStore — upload queue (SEQ05)', () => {
 		expect(listed.find((trial) => trial.id === 'trial-b')?.rejected).toBe(false);
 	});
 });
+
+describe('DexieTrialStore — reception (SEQ05, ADR 0011)', () => {
+	const remoteRecord = (id: string, startedAt: string) => ({
+		...new TrialMapper().toRecord(completedTrial(id, startedAt))
+	});
+
+	it('ADR 0011 — the cursor is 0 before the first reception', async () => {
+		db = new MemoryTrainerDatabase(`test-${crypto.randomUUID()}`);
+
+		expect(await new DexieTrialStore(db, new TrialMapper()).readCursor()).toBe(0);
+	});
+
+	it('US21 CA1 — received trials join the history, and the cursor moves on', async () => {
+		db = new MemoryTrainerDatabase(`test-${crypto.randomUUID()}`);
+		const store = new DexieTrialStore(db, new TrialMapper());
+
+		await store.addReceived(
+			[
+				{
+					id: 'remote-a',
+					sequenceNumber: 3,
+					record: remoteRecord('remote-a', '2026-11-20T10:00:00Z')
+				},
+				{
+					id: 'remote-b',
+					sequenceNumber: 5,
+					record: remoteRecord('remote-b', '2026-11-21T10:00:00Z')
+				}
+			],
+			5
+		);
+
+		expect((await store.list()).map((trial) => trial.id)).toEqual(['remote-b', 'remote-a']);
+		expect(await store.readCursor()).toBe(5);
+		// Already in the database: never queued again (RG22).
+		expect(await store.pending()).toEqual([]);
+	});
+
+	it('RG18 — a trial already on the device is left as it is', async () => {
+		db = new MemoryTrainerDatabase(`test-${crypto.randomUUID()}`);
+		const store = new DexieTrialStore(db, new TrialMapper());
+		await store.close(completedTrial('trial-a'));
+		await store.markRejected('trial-a');
+
+		await store.addReceived(
+			[
+				{
+					id: 'trial-a',
+					sequenceNumber: 1,
+					record: { ...remoteRecord('trial-a', '2026-11-22T10:00:00Z'), score: 3 }
+				}
+			],
+			1
+		);
+
+		const [stored] = await store.list();
+		expect(stored).toMatchObject({ id: 'trial-a', score: 1, rejected: true });
+	});
+});
+
+describe('MemoryTrainerDatabase — version 3', () => {
+	it('keeps the trials and the queue of a version 2 device, and starts the cursor at 0', async () => {
+		const name = `test-${crypto.randomUUID()}`;
+		const v2 = new Dexie(name);
+		v2.version(1).stores({ trials: 'trial_id, started_at', outbox: 'trial_id', settings: 'id' });
+		v2.version(2).stores({ ongoing: 'slot' });
+		await v2.table('outbox').put({ trial_id: 'trial-a' });
+		v2.close();
+
+		db = new MemoryTrainerDatabase(name);
+
+		expect(await db.outbox.toArray()).toEqual([{ trial_id: 'trial-a' }]);
+		expect(await new DexieTrialStore(db, new TrialMapper()).readCursor()).toBe(0);
+	});
+});

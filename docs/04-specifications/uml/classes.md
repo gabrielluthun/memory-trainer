@@ -242,6 +242,7 @@ classDiagram
     class SettingsService {
         +load()
         +update()
+        +adopt()
     }
     class ConnectionService {
         +status [1] : ConnectionStatus
@@ -281,6 +282,7 @@ classDiagram
         +save()
         +isDirty()
         +markSynced()
+        +saveReceived()
     }
     class InterfaceLanguage {
         <<interface>>
@@ -303,10 +305,10 @@ classDiagram
     class Network {
         <<interface>>
         +isOnline()
+        +onOnline()
     }
     class Scheduler {
         <<interface>>
-        +every()
         +after()
     }
 
@@ -333,7 +335,7 @@ classDiagram
 | **InterruptedTrialRecovery** | À l'ouverture, cherche un essai en cours et propose les trois choix | CU06 | SEQ01, SEQ03 |
 | **HistoryQuery** | Liste et détail des essais, lus sur l'appareil | CU04, CU07 | — |
 | **SettingsService** | Lit et modifie les paramètres, les marque à envoyer | CU15 | — |
-| **SyncService** | Envoi, réception, paramètres. Une seule synchronisation à la fois : un second déclenchement rejoint celle en cours. Son état (`state`, `lastSyncedAt`) est lu par les écrans. Déclencheurs : ouverture, session créée, retour du réseau, fin d'essai, toutes les 5 minutes | CU16, CU17 | SEQ04, SEQ05 |
+| **SyncService** | Envoi, réception, paramètres. Une seule synchronisation à la fois : un second déclenchement rejoint celle en cours. Son état (`state`, `lastSyncedAt`) est lu par les écrans. Déclencheurs : ouverture, session créée, retour du réseau, fin d'essai, toutes les 5 minutes (`startTriggers()`). La fin d'essai passe par le dépôt d'essais, qui prévient après chaque clôture (`notifyOnClose`) : les cas d'usage n'en savent rien. Reçoit les essais par pages de 50 après le repère, puis les paramètres s'ils sont plus récents, transmis à `SettingsService.adopt()` | CU16, CU17 | SEQ04, SEQ05 |
 | **TrialRepository** | Essai en cours, essais clos, repère de réception. `close()` écrit l'essai et l'ajoute à la file d'envoi **en une transaction** | — | SEQ02 |
 | **Outbox** | File d'envoi : essais à envoyer, retrait après confirmation, marque « refusé » | — | SEQ05 |
 | **SettingsRepository** | Paramètres de l'appareil et indicateur « à envoyer » | — | SEQ05 |
@@ -342,7 +344,7 @@ classDiagram
 | **ConnectionService** | À l'ouverture, en ligne et sans session, affiche l'écran de connexion ; « Continuer hors connexion » le ferme jusqu'à la prochaine ouverture ; suit la session et la déconnexion | CU16 | SEQ04 |
 | **AuthSession** | Session et jeton, sans savoir que c'est Hanko. La connexion elle-même se fait dans l'écran de Hanko ([ADR 0030](../adr/0030-connexion-hanko-elements.md)) : l'application lit la session et suit ses changements | — | SEQ04 |
 | **Network** | En ligne ou non. Simulable dans les tests | CU16 | SEQ01 |
-| **Scheduler** | Comptes à rebours, enregistrement régulier, relance de la synchronisation. Simulable dans les tests | — | SEQ02, SEQ05 |
+| **Scheduler** | Comptes à rebours, enregistrement régulier, relance de la synchronisation. Une tâche régulière se reprogramme elle-même. Simulable dans les tests | — | SEQ02, SEQ05 |
 
 ## 3. Couche Infrastructure
 
@@ -451,7 +453,7 @@ classDiagram
 | **BrowserNetwork** | Implémente `Network` | `navigator.onLine` |
 | **MonotonicClock** et **WallClock** | La monotone mesure les durées, insensible aux changements d'heure. La murale date les essais et les paramètres | `performance.now()`, `Date` |
 | **RandomSource**, **IdGenerator** | Hasard du tirage et identifiants créés sur l'appareil | `crypto.getRandomValues()`, `crypto.randomUUID()` |
-| **BrowserScheduler** | Implémente `Scheduler` | `setTimeout`, `setInterval` |
+| **BrowserScheduler** | Implémente `Scheduler` | `setTimeout` |
 | **ParaglideInterfaceLanguage** | Implémente `InterfaceLanguage` : la langue courante est une rune lue par Paraglide à chaque texte, recopiée sur l'appareil et dans l'attribut `lang` de la page ([ADR 0029](../adr/0029-langue-reactive.md)) | Paraglide JS, `localStorage` |
 | **AppContainer** | Crée tous les objets au démarrage et les relie : c'est le seul endroit qui connaît les classes concrètes | — |
 
