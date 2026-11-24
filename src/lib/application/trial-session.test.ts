@@ -5,6 +5,7 @@ import { InMemoryTrialRepository } from '../../../tests/fakes/in-memory-trial-re
 import { SeededRandomSource } from '../../../tests/fakes/seeded-random-source';
 import { NumbersDiscipline, type Digit } from '../domain/disciplines/numbers';
 import { Settings } from '../domain/settings/settings';
+import type { LaunchSettings } from '../domain/settings/settings';
 import type { PreparationPauses } from '../domain/trial/trial';
 import { TrialSession } from './trial-session.svelte';
 
@@ -14,7 +15,11 @@ let repository: InMemoryTrialRepository;
 let session: TrialSession;
 let settings: {
 	current: Settings;
-	setPauses: (discipline: 'numbers', pauses: PreparationPauses) => Promise<void>;
+	setLaunch: (
+		discipline: 'numbers',
+		pauses: PreparationPauses,
+		launch: LaunchSettings
+	) => Promise<void>;
 };
 
 beforeEach(() => {
@@ -23,8 +28,11 @@ beforeEach(() => {
 	repository = new InMemoryTrialRepository();
 	settings = {
 		current: Settings.defaults(),
-		setPauses(discipline, pauses) {
-			this.current = this.current.withPauses(discipline, pauses, new Date('2026-11-22T12:00:00Z'));
+		setLaunch(discipline, pauses, launch) {
+			const at = new Date('2026-11-22T12:00:00Z');
+			this.current = this.current
+				.withPauses(discipline, pauses, at)
+				.withLaunch(discipline, launch, at);
 			return Promise.resolve();
 		}
 	};
@@ -648,5 +656,83 @@ describe('TrialSession — US10, saving the ongoing trial (SEQ02, RG24)', () => 
 		await session.finishRecall();
 
 		expect(repository.closed).toHaveLength(1);
+	});
+});
+
+describe('TrialSession — US09, custom mode', () => {
+	const standard = { itemCount: 80, memorizationMs: 60_000, recallMs: 240_000 };
+	const custom = (itemCount: number, memorizationMs: number): LaunchSettings => ({
+		mode: 'custom',
+		custom: { itemCount, memorizationMs }
+	});
+
+	it('US09 CA1, CA2 — a custom trial draws the number of digits chosen, timed as chosen', () => {
+		session.start({ launch: custom(10, 30_000) });
+		scheduler.advance(0);
+
+		expect(session.current?.mode).toBe('custom');
+		expect(session.current?.items).toHaveLength(10);
+		expect(session.current?.format).toEqual({
+			itemCount: 10,
+			memorizationMs: 30_000,
+			recallMs: 240_000
+		});
+
+		scheduler.advance(30_000);
+		expect(session.current?.phase).toBe('recalling');
+	});
+
+	it('CU01 — the recall of a custom trial lasts 4 minutes', async () => {
+		session.start({ launch: custom(10, 30_000) });
+		scheduler.advance(0);
+		scheduler.advance(30_000);
+
+		scheduler.advance(240_000);
+		await new Promise((resolve) => setTimeout(resolve, 0));
+
+		expect(repository.closed[0]).toMatchObject({ mode: 'custom', recallMs: 240_000 });
+	});
+
+	it('US09 CA3 — a custom trial is stored as custom', async () => {
+		session.start({ launch: custom(10, 30_000) });
+		scheduler.advance(0);
+		session.finishMemorization();
+		scheduler.advance(0);
+
+		await session.finishRecall();
+
+		expect(repository.closed[0].mode).toBe('custom');
+		expect(repository.closed[0].items).toHaveLength(10);
+	});
+
+	it('US09 CA4 — the mode and custom settings chosen are kept for the next launch', () => {
+		session.start({ launch: custom(12, 45_000) });
+
+		expect(settings.current.launchFor('numbers', standard)).toEqual(custom(12, 45_000));
+	});
+
+	it('US09 CA4 — without a choice, uses the last launch settings', () => {
+		settings.current = Settings.defaults().withLaunch('numbers', custom(5, 10_000), new Date(0));
+
+		session.start();
+		scheduler.advance(0);
+
+		expect(session.current?.mode).toBe('custom');
+		expect(session.current?.items).toHaveLength(5);
+	});
+
+	it('US09 — the standard mode keeps the standard format, whatever the custom settings', () => {
+		session.start({
+			launch: { mode: 'standard', custom: { itemCount: 5, memorizationMs: 10_000 } }
+		});
+		scheduler.advance(0);
+
+		expect(session.current?.mode).toBe('standard');
+		expect(session.current?.format).toEqual(standard);
+	});
+
+	it('RG15 — refuses custom settings out of bounds, before anything starts', () => {
+		expect(() => session.start({ launch: custom(0, 30_000) })).toThrow(RangeError);
+		expect(session.current).toBeNull();
 	});
 });
