@@ -85,6 +85,9 @@ Les réglages de chaque discipline. Clé primaire : `owner_id` et `discipline`. 
 | **group_pattern** : Motif d'affichage | Tableau d'entiers, 2 octets chacun | `smallint[]` | Non | — | Élémentaire | 1 à 3 valeurs, chacune de 1 à 5 (ex. `{2,3}`) | RG11 |
 | **pause_before_memorization_s** : Pause avant la mémorisation | Entier (secondes), 2 octets | `smallint` | Non | — | Élémentaire | 0, 5, 10 ou 20 | RG25 |
 | **pause_before_recall_s** : Pause avant le rappel | Entier (secondes), 2 octets | `smallint` | Non | — | Élémentaire | 0, 5, 10 ou 20 | RG25 |
+| **launch_mode** : Dernier mode choisi | Liste de valeurs | `trial_mode` (section 7) | Non | — | Élémentaire | `standard` ou `custom` | RG15 |
+| **custom_item_count** : Nombre d'éléments du mode personnalisé | Entier, 2 octets | `smallint` | Non | — | Élémentaire | 1 à 500 | RG15 |
+| **custom_memorization_s** : Durée de mémorisation du mode personnalisé | Entier (secondes), 2 octets | `smallint` | Non | — | Élémentaire | 1 à 3 600 | RG15 |
 
 Clés étrangères : `owner_id` (section 1) et `discipline` (section 2).
 
@@ -92,7 +95,7 @@ Clés étrangères : `owner_id` (section 1) et `discipline` (section 2).
 
 | Type PostgreSQL | Valeurs | Utilisé par | Règles |
 |---|---|---|---|
-| **trial_mode** | `standard`, `custom` | `trials.mode` | RG15 |
+| **trial_mode** | `standard`, `custom` | `trials.mode`, `discipline_settings.launch_mode` | RG15 |
 | **trial_status** | `completed`, `abandoned`, `external_error` | `trials.status` | RG18, RG23, RG24 |
 | **interface_language** | `fr`, `en` | `accounts.interface_language` | EF20 |
 
@@ -114,6 +117,8 @@ Les listes sont des types ENUM ([ADR 0017](../adr/0017-integrite-base-donnees.md
 > Décision : en mode personnalisé, le **nombre d'éléments** va de **1 à 500**. RG15 dit « de très peu d'éléments jusqu'au format standard et au-delà », sans plafond.
 
 > Décision : en mode personnalisé, la **durée de mémorisation** va de **1 seconde à 1 heure** (3 600 000 ms). RG15 ne fixe pas de bornes.
+
+> Décision : le dernier mode et les derniers réglages du mode personnalisé sont gardés **par discipline**, avec les pauses ([ADR 0028](../adr/0028-derniers-reglages-de-lancement.md)). La durée y est en **secondes entières** : le champ de l'écran de lancement se règle à la seconde.
 
 > Décision : la taille des groupes est remplacée par un **motif d'affichage** de **1 à 3 sous-groupes de 1 à 5 éléments**, stocké en **tableau d'entiers** ([ADR 0027](../adr/0027-motif-affichage.md)). « 2 » par défaut pour Numbers.
 
