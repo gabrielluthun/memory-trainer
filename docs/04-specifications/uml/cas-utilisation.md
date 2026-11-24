@@ -315,6 +315,7 @@ Décision : les paramètres sont **synchronisés entre les appareils**, comme le
 
 **Scénarios alternatifs**
 - **Hors ligne** : l'application reste utilisable avec les données de l'appareil. La connexion est reportée au retour du réseau (S3).
+- **Continuer hors connexion** (maquette 11) : l'écran se ferme et ne revient qu'à la prochaine ouverture de l'application. D'ici là, l'état « Non connecté » de l'en-tête permet de se connecter à tout moment. Les essais attendent dans la file d'envoi.
 - **Nouvel appareil sans passkey** : la passkey est partagée par le gestionnaire de mots de passe du système, ou utilisée depuis un autre appareil en scannant un QR code.
 - **Échec** : l'application affiche l'erreur. Les données locales restent intactes.
 
