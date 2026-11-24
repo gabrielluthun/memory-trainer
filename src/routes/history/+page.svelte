@@ -110,9 +110,14 @@
 										? '—'
 										: formatDuration(trial.memorizationMs, getLocale())}
 								</span>
-								<span class="status status-{trial.status}">
-									{statusLabels[trial.status]?.() ?? trial.status}
-								</span>
+								<!-- Refused by the database (ES07): never sent, shown instead of its status (SEQ05). -->
+								{#if trial.rejected}
+									<span class="status status-rejected">{m.status_rejected()}</span>
+								{:else}
+									<span class="status status-{trial.status}">
+										{statusLabels[trial.status]?.() ?? trial.status}
+									</span>
+								{/if}
 								<span class="chevron" aria-hidden="true">›</span>
 							</a>
 						</li>
@@ -250,7 +255,8 @@
 		color: var(--right);
 	}
 	.status-abandoned,
-	.status-external_error {
+	.status-external_error,
+	.status-rejected {
 		padding: 0.15rem 0.6rem;
 		border-radius: 0.4rem;
 		font-size: 0.95rem;
@@ -262,6 +268,10 @@
 	.status-external_error {
 		background: color-mix(in srgb, var(--waiting) 14%, transparent);
 		color: var(--waiting);
+	}
+	.status-rejected {
+		background: var(--correction-wash);
+		color: var(--correction);
 	}
 	.chevron {
 		color: var(--ink-muted);
