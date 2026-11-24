@@ -48,7 +48,7 @@ L'application est publiée sur un sous-domaine `pages.dev`, gratuit (ENF06). Le 
 | `form-action` | `'self'` | Aucun formulaire ne peut envoyer vers un autre site |
 | `frame-ancestors` | `'none'` | L'application ne peut pas être affichée dans un cadre d'un autre site (faux boutons superposés) |
 
-Les adresses exactes de la Data API et de Hanko sont connues au sprint 0.
+**Production du fichier** : `_headers` est écrit juste après `vite build` ([`scripts/write-security-headers.ts`](../../scripts/write-security-headers.ts)). L'empreinte du script de démarrage change à chaque build ; elle est calculée sur `build/index.html`, la page que publie Cloudflare. Les adresses de `connect-src` sont les **origines** des variables `PUBLIC_DATA_API_URL` et `PUBLIC_HANKO_API_URL` du build : une seule source pour l'application et sa CSP.
 
 ## 3. Affichage sans injection (XSS)
 

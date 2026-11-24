@@ -12,7 +12,7 @@
 	},
 	"scripts": {
 		"dev": "vite dev",
-		"build": "vite build",
+		"build": "vite build && node scripts/write-security-headers.ts",
 		"preview": "vite preview",
 		"prepare": "npm run i18n; svelte-kit sync || echo ''; git config core.hooksPath .githooks 2>/dev/null || true",
 		"i18n": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide --strategy custom-settings baseLocale",

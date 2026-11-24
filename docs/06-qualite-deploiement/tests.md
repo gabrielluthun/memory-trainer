@@ -56,7 +56,7 @@ Les tests de la base sont construits à partir des migrations : ils vérifient d
 | **ES07** : Validation par la base | Valeur hors bornes refusée, essai marqué « refusé » sur l'appareil | Base, application |
 | **ES09** : Secrets hors du repo | Un faux secret est bloqué par le scan, en local et dans la CI | Contrôle du sprint 0 ([déploiement](deploiement.md)) |
 | **ES12** : Aucun HTML brut | Un texte contenant `<script>` s'affiche tel quel | Bout en bout, dès le lot 2 (première saisie de texte libre : Words) |
-| **ES13** : En-têtes de sécurité | Analyse des en-têtes du site publié | [Recette](recette.md), en production |
+| **ES13** : En-têtes de sécurité | Contenu de `_headers` ; un essai, l'historique, les paramètres et l'écran de Hanko sans aucune violation de la CSP, avec `build/index.html` servi comme le fait Cloudflare. Puis analyse des en-têtes du site publié | Unitaire, bout en bout ; [recette](recette.md), en production |
 | **ES14** : Dépendances maîtrisées | `npm audit` | CI ([déploiement](deploiement.md)) |
 
 > Décision : la mesure de latence (ENF08) est **non bloquante** dans la CI, car les machines partagées de GitHub donnent des temps variables. Elle signale une régression ; la vraie mesure est faite à la recette, sur les appareils.
