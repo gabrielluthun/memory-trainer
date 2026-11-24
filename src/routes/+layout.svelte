@@ -9,6 +9,7 @@
 	import type { AbandonChoice } from '#lib/application/trial-session.svelte.ts';
 	import type { PendingDecision } from '#lib/domain/trial/trial.ts';
 	import FateDialog from '#lib/presentation/components/fate-dialog.svelte';
+	import InstallReminder from '#lib/presentation/components/install-reminder.svelte';
 	import SignInScreen from '#lib/presentation/components/sign-in-screen.svelte';
 	import UpdateCard from '#lib/presentation/components/update-card.svelte';
 	import { describeInterruptedTrial } from '#lib/presentation/interrupted-trial-text.ts';
@@ -30,8 +31,12 @@
 	// A new version (deployment, section 5): offered outside a trial, and once installed (here or in
 	// another window), the page reloads as soon as no trial runs, never during one.
 	const phase = $derived(app.session.current?.phase);
+	const outsideTrial = $derived(showsUpdateCard({ routeId: page.route.id, phase }));
+	// On iPhone and iPad without installation, at every opening (CU18), never during a trial nor
+	// over the choice for an interrupted trial. The update card waits for it to close.
+	const remindsInstall = $derived(app.install.reminding && outsideTrial && !interrupted);
 	const offersUpdate = $derived(
-		app.update.ready && !app.update.dismissed && showsUpdateCard({ routeId: page.route.id, phase })
+		app.update.ready && !app.update.dismissed && outsideTrial && !remindsInstall
 	);
 	$effect(() => {
 		if (app.update.replaced && canReload(phase)) location.reload();
@@ -40,6 +45,8 @@
 	onMount(() => {
 		// The app is kept on the device and opens without network (US20, ENF02); new versions wait.
 		app.update.start();
+		// Installation reminder, or persistent storage once installed (CU18).
+		void app.install.open();
 		// Online without a session: the sign-in screen, until "Continuer hors connexion" (CU16).
 		// Then the trials and settings waiting on the device are sent, those of the other devices
 		// received; and again when the network comes back, and every 5 minutes (CU17).
@@ -69,6 +76,9 @@
 	<SignInScreen ondismiss={() => app.connection.dismiss()} />
 {:else}
 	{@render children()}
+	{#if remindsInstall}
+		<InstallReminder onlater={() => app.install.later()} />
+	{/if}
 	{#if offersUpdate}
 		<UpdateCard
 			syncWaits={app.update.stale}
