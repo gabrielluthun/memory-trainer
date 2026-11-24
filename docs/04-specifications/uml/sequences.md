@@ -402,11 +402,10 @@ sequenceDiagram
     T->>W: Déclenche la sauvegarde, chaque jour à heure fixe
     W->>R: Lit le repère (dernier numéro sauvegardé)
     R-->>W: Repère
-    W->>PG: Essais et éléments de numéro supérieur au repère, au plus 500, rôle en lecture seule
-    PG-->>W: Essais
-    W->>PG: Lit les paramètres
-    PG-->>W: Paramètres
-    W->>R: Écrit le fichier JSON daté, dans l'espace privé
+    W->>PG: Demande le document du jour, rôle en lecture seule
+    PG->>PG: Construit le JSON : essais et éléments de numéro supérieur au repère (au plus 100), paramètres
+    PG-->>W: Document JSON et dernier numéro
+    W->>R: Écrit le fichier JSON daté, tel quel, dans l'espace privé
     W->>R: Écrit le nouveau repère
     alt Échec à une étape
         W->>W: S'arrête, repère inchangé
@@ -420,6 +419,8 @@ sequenceDiagram
 | **Fichier avant repère** | Le repère n'avance qu'après l'écriture du fichier. En cas d'échec, rien n'est perdu : la sauvegarde suivante reprend au dernier repère. |
 | **Doublons possibles entre fichiers** | Si le fichier est écrit mais pas le repère, les mêmes essais seront dans deux fichiers. La restauration ignore les identifiants déjà vus (ES17). |
 | **Instantané des paramètres** | Les paramètres sont recopiés chaque jour en entier. Les systèmes s'y ajouteront au lot 5. |
+| **Document construit par la base** | Le Worker ne dispose que de 10 ms de calcul : il transmet le JSON sans le parcourir ([ADR 0032](../adr/0032-worker-de-sauvegarde.md)). |
+| **Lignes brutes** | Chaque table telle quelle, numéro d'ordre compris : une restauration garde les numéros ([ADR 0011](../adr/0011-repere-numero-ordre-verrou.md)). |
 
 ## 7. SEQ07 — Déploiement
 
