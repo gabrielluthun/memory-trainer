@@ -38,6 +38,8 @@ Les tests de la base sont construits à partir des migrations : ils vérifient d
 
 > Décision : dans les tests de bout en bout, le **service worker est bloqué**, sauf dans les tests du hors ligne (US20). Ceux-ci ne tournent que sous Chromium : ailleurs, Playwright ne peut pas simuler les services pour une page contrôlée par un service worker. Le hors ligne sur iPhone et iPad est vérifié sur les vrais appareils à la recette (TR10, mode avion).
 
+> Décision : la **mise à jour et l'installation** (US20) sont testées ainsi. `UpdateService` et `InstallService` sont développés en TDD, avec de fausses implémentations de leurs interfaces. En bout en bout, `version.json` est simulé : une autre version que celle de l'appareil met la synchronisation en attente, sans aucun envoi. Le rappel d'installation est vérifié sur l'iPhone et l'iPad émulés. Un vrai service worker ne peut pas être remplacé dans ces tests : l'encart et l'installation de la nouvelle version sont vérifiés à la recette (TR14, dès la 0.2).
+
 > Décision : le seul projet Hanko est celui de production, qui n'accepte que l'adresse du site. Sur le poste, aucun jeton réel n'est donc disponible, et un jeton de production y serait un identifiant de production ([surface d'attaque](../05-securite/surface-attaque.md)). `DataApiClient` est donc testé avec des **réponses simulées**, partout ; la vraie Data API est vérifiée à la recette (TR10).
 
 ### Exigences vérifiées par les tests
