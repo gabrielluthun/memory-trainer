@@ -26,13 +26,16 @@
 
 	onMount(() => {
 		// Online without a session: the sign-in screen, until "Continuer hors connexion" (CU16).
-		// Then the trials and settings waiting on the device are sent (CU17).
+		// Then the trials and settings waiting on the device are sent, those of the other devices
+		// received; and again when the network comes back, and every 5 minutes (CU17).
 		void app.connection.open().then(() => app.sync.sync());
+		const stopTriggers = app.sync.startTriggers();
 		// A damaged save must not block the app: the next trial replaces it.
 		app.recovery
 			.check()
 			.then((pending) => (interrupted = pending))
 			.catch(() => {});
+		return stopTriggers;
 	});
 
 	/** "Compter tel quel" shows the result (CU04); the two other choices stay where we are (RG23). */
