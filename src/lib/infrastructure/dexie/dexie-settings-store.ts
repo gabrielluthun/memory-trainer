@@ -20,6 +20,10 @@ export class DexieSettingsStore implements SettingsRepository {
 		await this.db.settings.put({ id: 'device', ...settings.toData(), dirty: true });
 	}
 
+	async saveReceived(settings: Settings): Promise<void> {
+		await this.db.settings.put({ id: 'device', ...settings.toData(), dirty: false });
+	}
+
 	async isDirty(): Promise<boolean> {
 		const record = await this.db.settings.get('device');
 		return record !== undefined && record.dirty !== false;
