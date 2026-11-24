@@ -162,3 +162,32 @@ describe('Settings — last launch settings (US09, ADR 0028)', () => {
 		expect(Settings.restore(old).launchFor('numbers', standard).mode).toBe('standard');
 	});
 });
+
+describe('Settings — interface language (US19)', () => {
+	const at = new Date('2026-11-24T09:00:00Z');
+
+	it('EF20 — changing the language gives new settings, dated by the device', () => {
+		const before = Settings.defaults();
+
+		const after = before.withLanguage('en', at);
+
+		expect(after.interfaceLanguage).toBe('en');
+		expect(after.modifiedAt).toEqual(at);
+		expect(before.interfaceLanguage).toBe('fr');
+	});
+
+	it('US19 CA1 — changing the language keeps every other setting', () => {
+		const before = Settings.defaults()
+			.withGroupPattern('numbers', [3, 3], at)
+			.withPauses('numbers', { beforeMemorizationMs: 5_000, beforeRecallMs: 10_000 }, at);
+
+		const after = before.withLanguage('en', at);
+
+		expect(after.groupPatternFor('numbers')).toEqual([3, 3]);
+		expect(after.pausesFor('numbers')).toEqual(before.pausesFor('numbers'));
+	});
+
+	it('EF20 — refuses a language other than French or English', () => {
+		expect(() => Settings.defaults().withLanguage('de' as 'fr', at)).toThrow(RangeError);
+	});
+});
