@@ -160,5 +160,17 @@
 	"settings_pauses_hint": "Proposées au lancement ; changer les pauses au lancement les met à jour ici.",
 	"settings_pause_before_memorization": "Avant la mémorisation",
 	"settings_pause_before_recall": "Avant le rappel",
-	"settings_saved": "Enregistré sur cet appareil."
+	"settings_saved": "Enregistré sur cet appareil.",
+
+	"sign_in_title": "Se connecter",
+	"sign_in_lead": "Pour retrouver vos essais sur l'ordinateur, le téléphone et la tablette.",
+	"sign_in_devices": "Face ID, Touch ID, Windows Hello ou le code de l'appareil.",
+	"sign_in_offline": "Continuer hors connexion",
+	"sign_in_offline_note": "Vos essais restent sur cet appareil et seront envoyés après la connexion.",
+	"status_signed_out": "Non connecté",
+	"settings_account": "Compte",
+	"settings_signed_in": "Connecté avec une passkey",
+	"settings_signed_out": "Non connecté : vos essais restent sur cet appareil.",
+	"settings_connection_unknown": "Connexion vérifiée au retour du réseau.",
+	"settings_sign_out": "Se déconnecter"
 }
