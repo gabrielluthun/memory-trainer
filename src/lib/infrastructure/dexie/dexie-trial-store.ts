@@ -1,12 +1,13 @@
 import type {
 	Outbox,
 	QueuedTrial,
+	ReceivedTrial,
 	TrialDetail,
 	TrialRepository,
 	TrialSummary
 } from '../../application/ports';
 import type { ClosedTrial, TrialId, TrialSnapshot } from '../../domain/trial/trial';
-import type { TrialMapper } from '../trial-mapper';
+import type { TrialMapper, TrialRecord } from '../trial-mapper';
 import type { MemoryTrainerDatabase, OngoingRecord } from './database';
 
 /**
@@ -62,6 +63,23 @@ export class DexieTrialStore implements TrialRepository, Outbox {
 	async get(id: TrialId): Promise<TrialDetail | null> {
 		const record = await this.db.trials.get(id);
 		return record ? this.mapper.toDetail(record) : null;
+	}
+
+	/**
+	 * Received trials are stored as they came (RG19); one already on the device is never
+	 * rewritten (RG18). The cursor moves in the same transaction: a cut never skips a trial.
+	 */
+	async addReceived(trials: ReceivedTrial[], cursor: number): Promise<void> {
+		await this.db.transaction('rw', this.db.trials, this.db.meta, async () => {
+			const known = await this.db.trials.bulkGet(trials.map((trial) => trial.id));
+			const unknown = trials.filter((_, index) => known[index] === undefined);
+			await this.db.trials.bulkAdd(unknown.map((trial) => trial.record as TrialRecord));
+			await this.db.meta.put({ key: 'reception-cursor', value: cursor });
+		});
+	}
+
+	async readCursor(): Promise<number> {
+		return (await this.db.meta.get('reception-cursor'))?.value ?? 0;
 	}
 
 	/** The stored record is what the database receives (ADR 0010), the device-only mark aside. */
