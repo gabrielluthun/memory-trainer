@@ -51,9 +51,16 @@
 			.then((lock) => (wakeLock = lock))
 			.catch(() => {});
 
+		// Tab hidden (another app, screen locked, tab closing): save now, not in 2 s (SEQ02).
+		const saveWhenHidden = () => {
+			if (document.visibilityState === 'hidden') session.saveNow();
+		};
+		document.addEventListener('visibilitychange', saveWhenHidden);
+
 		return () => {
 			cancelAnimationFrame(frame);
 			void wakeLock?.release();
+			document.removeEventListener('visibilitychange', saveWhenHidden);
 		};
 	});
 
