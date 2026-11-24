@@ -19,6 +19,8 @@ export interface OngoingRecord extends TrialSnapshot {
 /** The settings of the device: one record, under a fixed key. */
 export interface SettingsRecord extends SettingsData {
 	id: 'device';
+	/** Changed on this device and not sent yet (SEQ05); missing before US21, so to send. */
+	dirty?: boolean;
 }
 
 /** The local database of the device (ADR 0004). Each schema change is a new version. */
