@@ -43,3 +43,16 @@ Les deux choix se tiennent : tant que le bandeau est ignoré, la synchronisation
 | Aucun essai valide n'est refusé à cause de sa version : un ancien format n'atteint jamais la base. | Tant que la mise à jour n'est pas faite, les essais ne sont pas synchronisés (ils restent sur l'appareil, sans perte). |
 | Jamais de rechargement pendant un essai. | Un appareil ne se met à jour que si le pratiquant clique sur le bandeau. |
 | La migration de la base et la nouvelle version partent ensemble, dans la même mise en production. | Le fichier de version doit être exclu du cache du service worker. |
+
+## Mise en œuvre (US20)
+
+Choix du développeur, au moment de coder la mise à jour :
+
+| Réglage | Valeur | Pourquoi |
+|---|---|---|
+| **Version comparée** | Celle de `package.json` (0.1.0, 0.2.0…), injectée au build et publiée dans `version.json` | Lisible, suit les releases et les tags. La synchronisation attend aussi après une release qui ne change pas le format : c'est accepté. |
+| **Version publiée illisible** | La synchronisation s'arrête avant tout envoi | Un essai n'est jamais envoyé sans savoir si l'appareil est à jour. |
+| **Message** | Un **encart** en bas de l'écran, hors essai, avec « Mettre à jour » | Ne décale pas le contenu. Pendant l'attente, la pastille de synchronisation l'indique aussi. |
+| **Fermeture** | Une croix ferme l'encart jusqu'à la prochaine ouverture | Le pratiquant choisit son moment ; la pastille rappelle que la synchronisation attend. |
+
+Limite connue : si l'application est ouverte dans deux onglets, la mise à jour lancée dans l'un ne recharge pas l'autre. Elle est déjà notée pour les essais en cours (piste : Web Locks).
