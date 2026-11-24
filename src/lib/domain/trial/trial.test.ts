@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { FakeMonotonicClock } from '../../../../tests/fakes/fake-monotonic-clock';
 import { NumbersDiscipline } from '../disciplines/numbers';
-import { PausedBeforeMemorization, type TrialSetup } from './trial';
+import {
+	PausedBeforeMemorization,
+	PendingDecision,
+	type TrialSetup,
+	type TrialSnapshot
+} from './trial';
 
 const numbers = new NumbersDiscipline();
 
@@ -287,5 +292,156 @@ describe('Abandon — US10, CU05', () => {
 		expect(excluded.answers).toEqual([null, null]);
 		expect(excluded.memorizationMs).toBe(12_000);
 		expect(excluded.recallMs).toBe(0);
+	});
+});
+
+describe('Snapshot of an ongoing trial — US10, SEQ02', () => {
+	it('RG24 — during memorization: the time used so far, no answer', () => {
+		const clock = new FakeMonotonicClock();
+		const memorizing = PausedBeforeMemorization.begin(setup([1, 2, 3]), clock).startMemorization();
+		clock.advance(12_000);
+
+		expect(memorizing.snapshot()).toEqual({
+			id: '0b9f4c52-1b0e-4a51-9a3e-2f3c8a1d7e90',
+			discipline: 'numbers',
+			mode: 'standard',
+			format: { itemCount: 3, memorizationMs: 60_000, recallMs: 240_000 },
+			displayPattern: [2],
+			items: [1, 2, 3],
+			startedAt: new Date('2026-11-22T10:00:00Z'),
+			phase: 'memorizing',
+			answers: [null, null, null],
+			memorizationMs: 12_000,
+			recallMs: 0
+		});
+	});
+
+	it('RG24 — during the pause before recall: the memorization time, frozen', () => {
+		const clock = new FakeMonotonicClock();
+		const memorizing = PausedBeforeMemorization.begin(setup([1, 2]), clock).startMemorization();
+		clock.advance(30_000);
+		const paused = memorizing.finishMemorization();
+		clock.advance(5_000);
+
+		expect(paused.snapshot()).toMatchObject({
+			phase: 'paused-before-recall',
+			answers: [null, null],
+			memorizationMs: 30_000,
+			recallMs: 0
+		});
+	});
+
+	it('RG24 — during recall: the answers typed and the recall time so far', () => {
+		const clock = new FakeMonotonicClock();
+		const memorizing = PausedBeforeMemorization.begin(setup([1, 2, 3]), clock).startMemorization();
+		clock.advance(40_000);
+		const recalling = memorizing.finishMemorization().startRecall();
+		recalling.recall.type(1);
+		recalling.recall.type(5);
+		clock.advance(20_000);
+
+		expect(recalling.snapshot()).toMatchObject({
+			phase: 'recalling',
+			answers: [1, 5, null],
+			memorizationMs: 40_000,
+			recallMs: 20_000
+		});
+	});
+
+	it('RG24 — later typing does not change a snapshot already taken', () => {
+		const clock = new FakeMonotonicClock();
+		const recalling = PausedBeforeMemorization.begin(setup([1, 2]), clock)
+			.startMemorization()
+			.finishMemorization()
+			.startRecall();
+		const snapshot = recalling.snapshot();
+
+		recalling.recall.type(9);
+
+		expect(snapshot.answers).toEqual([null, null]);
+	});
+
+	it('RG01 — a late snapshot never records more than the format allows', () => {
+		const clock = new FakeMonotonicClock();
+		const memorizing = PausedBeforeMemorization.begin(setup([1]), clock).startMemorization();
+		clock.advance(61_000);
+
+		expect(memorizing.snapshot().memorizationMs).toBe(60_000);
+	});
+});
+
+describe('Interrupted trial — US10, CU06', () => {
+	const snapshot = (overrides: Partial<TrialSnapshot> = {}): TrialSnapshot => ({
+		id: '0b9f4c52-1b0e-4a51-9a3e-2f3c8a1d7e90',
+		discipline: 'numbers',
+		mode: 'standard',
+		format: { itemCount: 3, memorizationMs: 60_000, recallMs: 240_000 },
+		displayPattern: [2],
+		items: [1, 2, 3],
+		startedAt: new Date('2026-11-22T10:00:00Z'),
+		phase: 'recalling',
+		answers: [1, 5, null],
+		memorizationMs: 40_000,
+		recallMs: 20_000,
+		...overrides
+	});
+
+	it('RG24 — rebuilt from its last snapshot, waiting for a choice, as an interruption', () => {
+		const pending = PendingDecision.fromSnapshot(snapshot(), numbers, new FakeMonotonicClock());
+
+		expect(pending).toMatchObject({
+			phase: 'pending-decision',
+			reason: 'interrupted',
+			stoppedIn: 'recalling',
+			id: '0b9f4c52-1b0e-4a51-9a3e-2f3c8a1d7e90',
+			mode: 'standard',
+			items: [1, 2, 3],
+			startedAt: new Date('2026-11-22T10:00:00Z'),
+			answers: [1, 5, null],
+			memorizationMs: 40_000,
+			recallMs: 20_000
+		});
+	});
+
+	it('RG24 — "Garder hors statistiques" keeps it as "Erreur externe à l\'application"', () => {
+		const excluded = PendingDecision.fromSnapshot(
+			snapshot(),
+			numbers,
+			new FakeMonotonicClock()
+		).keepOutOfStats();
+
+		expect(excluded.status).toBe('external_error');
+		expect(excluded.answers).toEqual([1, 5, null]);
+		expect(excluded.recallMs).toBe(20_000);
+	});
+
+	it('RG23 — "Compter tel quel" scores the answers saved before the interruption', () => {
+		const completed = PendingDecision.fromSnapshot(
+			snapshot(),
+			numbers,
+			new FakeMonotonicClock()
+		).countAsIs();
+
+		expect(completed.status).toBe('completed');
+		expect(completed.score).toBe(1);
+		expect(completed.memorizationMs).toBe(40_000);
+		expect(completed.recallMs).toBe(20_000);
+	});
+
+	it('refuses a snapshot of another discipline than the one given', () => {
+		const other = snapshot({ discipline: 'cards' as TrialSnapshot['discipline'] });
+
+		expect(() => PendingDecision.fromSnapshot(other, numbers, new FakeMonotonicClock())).toThrow();
+	});
+});
+
+describe('Abandon — where the trial stopped', () => {
+	it('CU05 — an abandon remembers the phase it stopped in', () => {
+		const clock = new FakeMonotonicClock();
+		const paused = PausedBeforeMemorization.begin(setup([1, 2]), clock)
+			.startMemorization()
+			.finishMemorization();
+
+		expect(paused.abandon().stoppedIn).toBe('paused-before-recall');
 	});
 });
