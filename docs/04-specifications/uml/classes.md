@@ -263,6 +263,7 @@ classDiagram
         +stale [1] : boolean
         +ready [1] : boolean
         +dismissed [1] : boolean
+        +replaced [1] : boolean
         +start()
         +checkPublished()
         +dismiss()
@@ -371,10 +372,10 @@ classDiagram
 | **HistoryQuery** | Liste et détail des essais, lus sur l'appareil | CU04, CU07 | — |
 | **SettingsService** | Lit et modifie les paramètres, les marque à envoyer | CU15 | — |
 | **SyncService** | Envoi, réception, paramètres. Une seule synchronisation à la fois : un second déclenchement rejoint celle en cours. Son état (`state`, `lastSyncedAt`) est lu par les écrans. Avant tout envoi, demande à `UpdateService` si l'appareil est à jour : sinon, l'état passe à « en attente de mise à jour » et rien n'est envoyé ni reçu. Déclencheurs : ouverture, session créée, retour du réseau, fin d'essai, toutes les 5 minutes (`startTriggers()`). La fin d'essai passe par le dépôt d'essais, qui prévient après chaque clôture (`notifyOnClose`) : les cas d'usage n'en savent rien. Reçoit les essais par pages de 50 après le repère, puis les paramètres s'ils sont plus récents, transmis à `SettingsService.adopt()` | CU16, CU17 | SEQ04, SEQ05 |
-| **UpdateService** | Nouvelle version de l'application ([déploiement](../../06-qualite-deploiement/deploiement.md), section 5). `checkPublished()`, appelée par `SyncService` avant chaque synchronisation, compare la version de l'appareil à la version publiée : si elles diffèrent, `stale` passe à vrai et le service worker est relancé pour télécharger la nouvelle version. `ready` : nouvelle version téléchargée, proposée dans l'encart. `dismiss()` ferme l'encart jusqu'à la prochaine ouverture. `apply()` installe la nouvelle version et recharge la page | CU17 | SEQ01, SEQ05 |
+| **UpdateService** | Nouvelle version de l'application ([déploiement](../../06-qualite-deploiement/deploiement.md), section 5). `checkPublished()`, appelée par `SyncService` avant chaque synchronisation, compare la version de l'appareil à la version publiée : si elles diffèrent, `stale` passe à vrai et le service worker est relancé pour télécharger la nouvelle version. `ready` : nouvelle version téléchargée, proposée dans l'encart. `dismiss()` ferme l'encart jusqu'à la prochaine ouverture. `apply()` installe la nouvelle version. `replaced` : la nouvelle version, installée depuis cette fenêtre ou une autre, sert désormais l'application ; la page se recharge dès qu'aucun essai n'est en cours | CU17 | SEQ01, SEQ05 |
 | **InstallService** | À l'ouverture : application installée, demande le stockage persistant ; iPhone ou iPad sans installation, `reminding` affiche le rappel (écran 12). `later()` le ferme jusqu'à la prochaine ouverture | CU18 | SEQ01 |
 | **AppVersion** | Version de l'appareil (`local`, fixée au build) et version publiée (`published()`, lue sans cache). Une version illisible est une erreur | — | SEQ05 |
-| **AppUpdater** | Service worker, sans savoir que c'est Workbox : prévient quand une nouvelle version est prête, la cherche, l'installe | — | SEQ01 |
+| **AppUpdater** | Service worker, sans savoir que c'est Workbox : prévient quand une nouvelle version est prête, puis quand elle sert l'application ; la cherche, l'installe. Ne recharge jamais la page lui-même | — | SEQ01 |
 | **InstallContext** | Application installée ou non, iPhone ou iPad, demande de stockage persistant | CU18 | SEQ01 |
 | **TrialRepository** | Essai en cours, essais clos, repère de réception. `close()` écrit l'essai et l'ajoute à la file d'envoi **en une transaction** | — | SEQ02 |
 | **Outbox** | File d'envoi : essais à envoyer, retrait après confirmation, marque « refusé » | — | SEQ05 |
