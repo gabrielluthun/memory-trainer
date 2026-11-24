@@ -2,15 +2,17 @@
 	import '../app.css';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import { onMount } from 'svelte';
-	import { registerSW } from 'virtual:pwa-register';
 	import favicon from '#lib/assets/favicon.svg';
 	import { getApp } from '#lib/app-container.ts';
 	import type { AbandonChoice } from '#lib/application/trial-session.svelte.ts';
 	import type { PendingDecision } from '#lib/domain/trial/trial.ts';
 	import FateDialog from '#lib/presentation/components/fate-dialog.svelte';
 	import SignInScreen from '#lib/presentation/components/sign-in-screen.svelte';
+	import UpdateCard from '#lib/presentation/components/update-card.svelte';
 	import { describeInterruptedTrial } from '#lib/presentation/interrupted-trial-text.ts';
+	import { canReload, showsUpdateCard } from '#lib/presentation/update-offer.ts';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import type { LayoutProps } from './$types';
@@ -25,9 +27,19 @@
 		interrupted && describeInterruptedTrial(interrupted, new Date(), getLocale())
 	);
 
+	// A new version (deployment, section 5): offered outside a trial, and once installed (here or in
+	// another window), the page reloads as soon as no trial runs, never during one.
+	const phase = $derived(app.session.current?.phase);
+	const offersUpdate = $derived(
+		app.update.ready && !app.update.dismissed && showsUpdateCard({ routeId: page.route.id, phase })
+	);
+	$effect(() => {
+		if (app.update.replaced && canReload(phase)) location.reload();
+	});
+
 	onMount(() => {
-		// The app is kept on the device and opens without network (US20, ENF02).
-		registerSW({ immediate: true });
+		// The app is kept on the device and opens without network (US20, ENF02); new versions wait.
+		app.update.start();
 		// Online without a session: the sign-in screen, until "Continuer hors connexion" (CU16).
 		// Then the trials and settings waiting on the device are sent, those of the other devices
 		// received; and again when the network comes back, and every 5 minutes (CU17).
@@ -57,6 +69,13 @@
 	<SignInScreen ondismiss={() => app.connection.dismiss()} />
 {:else}
 	{@render children()}
+	{#if offersUpdate}
+		<UpdateCard
+			syncWaits={app.update.stale}
+			oninstall={() => void app.update.apply()}
+			onclose={() => app.update.dismiss()}
+		/>
+	{/if}
 {/if}
 
 {#if interrupted && text}
