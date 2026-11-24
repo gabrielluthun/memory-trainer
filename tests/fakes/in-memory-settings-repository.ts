@@ -1,8 +1,10 @@
 import type { SettingsRepository } from '../../src/lib/application/ports';
 import type { Settings } from '../../src/lib/domain/settings/settings';
 
-/** Test double for the SettingsRepository: one settings object in memory. */
+/** Test double for the SettingsRepository: one settings object in memory, and a count of saves. */
 export class InMemorySettingsRepository implements SettingsRepository {
+	saves = 0;
+
 	constructor(public stored: Settings | null = null) {}
 
 	load(): Promise<Settings | null> {
@@ -11,6 +13,7 @@ export class InMemorySettingsRepository implements SettingsRepository {
 
 	save(settings: Settings): Promise<void> {
 		this.stored = settings;
+		this.saves++;
 		return Promise.resolve();
 	}
 }
