@@ -49,11 +49,29 @@ async function answer(route: Route, status: number, json?: unknown) {
 
 export const test = base.extend<{
 	session: 'valid' | 'invalid';
+	installed: boolean;
+	installation: void;
 	hanko: HankoState;
 	dataApi: DataApiState;
 }>({
 	/** Signed in by default: the other tests are not about signing in (CU16). */
 	session: ['valid', { option: true }],
+	/**
+	 * Installed by default (CU18): opened from the home screen, as `navigator.standalone` says on
+	 * iPhone and iPad. Otherwise the installation reminder would cover the screens of the others.
+	 */
+	installed: [true, { option: true }],
+	installation: [
+		async ({ context, installed }, use) => {
+			if (installed) {
+				await context.addInitScript(() =>
+					Object.defineProperty(navigator, 'standalone', { value: true })
+				);
+			}
+			await use();
+		},
+		{ auto: true }
+	],
 	hanko: [
 		async ({ context, session, baseURL }, use) => {
 			const state: HankoState = { valid: session === 'valid' };
