@@ -40,6 +40,12 @@ export type TrialPhase =
 	| PendingDecision
 	| CompletedTrial;
 
+/** The phases saved on the device while they run (SEQ02). */
+type OngoingPhase = MemorizingTrial | PausedBeforeRecall | RecallingTrial;
+
+/** The ongoing trial is saved every 2 s: at most 2 s lost after an interruption (SEQ02). */
+const SAVE_INTERVAL_MS = 2_000;
+
 /** The three choices offered after an abandon (RG23). */
 export type AbandonChoice = 'keep-out-of-stats' | 'count-as-is' | 'discard';
 
@@ -61,14 +67,21 @@ export class TrialSession {
 	group = $state<Digit[]>([]);
 
 	#cancelPending: Cancel | null = null;
+	#cancelSaves: Cancel | null = null;
 	/** The storing of the trial being closed, if any. */
 	#closing: Promise<void> | null = null;
+	/**
+	 * Writes to the repository, one after the other: a save started before the trial is closed
+	 * or erased can never land after it and bring it back.
+	 */
+	#writes: Promise<void> = Promise.resolve();
 
 	constructor(private readonly deps: TrialSessionDependencies) {}
 
 	/** US01: a standard trial. */
 	start(options: { pauses?: PreparationPauses } = {}): void {
 		const { discipline, random, ids, wallClock, clock } = this.deps;
+		this.#stopSaving();
 		const format = discipline.standardFormat();
 		this.displayPattern = this.deps.settings.current.groupPatternFor(discipline.name);
 		const pauses = options.pauses ?? this.deps.settings.current.pausesFor(discipline.name);
@@ -123,7 +136,21 @@ export class TrialSession {
 			trial?.phase !== 'recalling'
 		)
 			return;
+		// Saved as it stops: closing the tab before choosing makes it an interrupted trial (RG24).
+		this.#stopSaving();
+		this.#save(trial);
 		this.#show(trial.abandon());
+	}
+
+	/** Saves the ongoing trial now, e.g. when the tab goes to the background (SEQ02). */
+	saveNow(): void {
+		const trial = this.current;
+		if (
+			trial?.phase === 'memorizing' ||
+			trial?.phase === 'paused-before-recall' ||
+			trial?.phase === 'recalling'
+		)
+			this.#save(trial);
 	}
 
 	/**
@@ -133,13 +160,17 @@ export class TrialSession {
 	async decide(choice: AbandonChoice): Promise<void> {
 		const pending = this.current;
 		if (pending?.phase !== 'pending-decision') return;
+		const { repository } = this.deps;
 		if (choice === 'count-as-is') {
 			const completed = pending.countAsIs();
-			await this.deps.repository.close(completed);
+			await this.#enqueue(() => repository.close(completed));
 			this.#show(completed);
 			return;
 		}
-		if (choice === 'keep-out-of-stats') await this.deps.repository.close(pending.keepOutOfStats());
+		if (choice === 'keep-out-of-stats') {
+			const excluded = pending.keepOutOfStats();
+			await this.#enqueue(() => repository.close(excluded));
+		} else await this.#enqueue(() => repository.deleteSnapshot(pending.id));
 		this.current = null;
 	}
 
@@ -172,6 +203,7 @@ export class TrialSession {
 		if (memorizing?.phase !== 'memorizing') return;
 		const paused = memorizing.finishMemorization();
 		this.#show(paused);
+		this.#save(paused);
 		this.memorizationMs = paused.memorizationMs;
 		this.#schedule(paused.countdown.remainingMs(), () => this.#startRecall());
 	}
@@ -224,9 +256,9 @@ export class TrialSession {
 		if (recalling?.phase !== 'recalling') return Promise.resolve();
 		this.#cancelPending?.();
 		this.#cancelPending = null;
+		this.#stopSaving();
 		const completed = recalling.finishRecall();
-		this.#closing = this.deps.repository
-			.close(completed)
+		this.#closing = this.#enqueue(() => this.deps.repository.close(completed))
 			.then(() => this.#show(completed))
 			.finally(() => (this.#closing = null));
 		return this.#closing;
@@ -237,6 +269,9 @@ export class TrialSession {
 		if (paused?.phase !== 'paused-before-memorization') return;
 		const memorizing = paused.startMemorization();
 		this.#show(memorizing);
+		// Saved from the start of memorization (decision CU01), then every 2 s.
+		this.#save(memorizing);
+		this.#startSaving();
 		this.#syncNavigation(memorizing);
 		this.#stopWhenTimeIsUp(
 			() => memorizing.format.memorizationMs - memorizing.elapsedMs(),
@@ -249,6 +284,7 @@ export class TrialSession {
 		if (paused?.phase !== 'paused-before-recall') return;
 		const recalling = paused.startRecall();
 		this.#show(recalling);
+		this.#save(recalling);
 		this.#syncRecall(recalling);
 		this.#stopWhenTimeIsUp(
 			() => recalling.format.recallMs - recalling.elapsedMs(),
@@ -264,6 +300,32 @@ export class TrialSession {
 			else stop();
 		};
 		this.#schedule(remainingMs(), check);
+	}
+
+	/** A failed save is not worth stopping the trial: the next one, 2 s later, may succeed. */
+	#save(trial: OngoingPhase): void {
+		const snapshot = trial.snapshot();
+		void this.#enqueue(() => this.deps.repository.saveSnapshot(snapshot)).catch(() => {});
+	}
+
+	/** Saves whatever ongoing phase the trial is in, every 2 s, until it stops (SEQ02). */
+	#startSaving(): void {
+		const tick = () => {
+			this.saveNow();
+			this.#cancelSaves = this.deps.scheduler.after(SAVE_INTERVAL_MS, tick);
+		};
+		this.#cancelSaves = this.deps.scheduler.after(SAVE_INTERVAL_MS, tick);
+	}
+
+	#stopSaving(): void {
+		this.#cancelSaves?.();
+		this.#cancelSaves = null;
+	}
+
+	#enqueue(write: () => Promise<void>): Promise<void> {
+		const run = this.#writes.then(write);
+		this.#writes = run.catch(() => {});
+		return run;
 	}
 
 	#show(phase: TrialPhase): void {
