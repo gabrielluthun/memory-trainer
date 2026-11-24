@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
+	import { registerSW } from 'virtual:pwa-register';
 	import favicon from '#lib/assets/favicon.svg';
 	import { getApp } from '#lib/app-container.ts';
 	import type { AbandonChoice } from '#lib/application/trial-session.svelte.ts';
@@ -25,6 +26,8 @@
 	);
 
 	onMount(() => {
+		// The app is kept on the device and opens without network (US20, ENF02).
+		registerSW({ immediate: true });
 		// Online without a session: the sign-in screen, until "Continuer hors connexion" (CU16).
 		// Then the trials and settings waiting on the device are sent, those of the other devices
 		// received; and again when the network comes back, and every 5 minutes (CU17).
