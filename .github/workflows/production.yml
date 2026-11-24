@@ -1,5 +1,5 @@
 # Production: after a release or hotfix pull request is merged into main.
-# Order: build, full export to R2, migrations, authorized account, publication.
+# Order: build, full export to R2, migrations, authorized account, publication, backup Worker.
 # Stops at the first failure (ES19, docs/06-qualite-deploiement/deploiement.md).
 name: Production
 
@@ -95,3 +95,22 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npx wrangler pages deploy build --project-name="$PAGES_PROJECT" --branch=main --commit-hash="$GITHUB_SHA"
+
+      - name: 6. Backup Worker (code, daily schedule, then its database secret)
+        # ADR 0032: bound to the private bucket, whose name is a production secret; the database
+        # address with the read-only backup_reader role is sent as a secret of the Worker.
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: |
+          node -e '
+            const fs = require("node:fs");
+            const file = "workers/backup/wrangler.json";
+            const config = JSON.parse(fs.readFileSync(file, "utf8"));
+            config.r2_buckets[0].bucket_name = process.env.R2_BUCKET;
+            fs.writeFileSync(file, JSON.stringify(config, null, "\t"));
+          '
+          npx wrangler deploy --config workers/backup/wrangler.json
+          printf '%s' "$BACKUP_DATABASE_URL" | npx wrangler secret put BACKUP_DATABASE_URL --config workers/backup/wrangler.json
