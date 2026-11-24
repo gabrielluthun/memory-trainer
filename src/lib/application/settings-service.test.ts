@@ -55,4 +55,19 @@ describe('SettingsService', () => {
 			beforeRecallMs: 0
 		});
 	});
+
+	it('US09 CA4 — the pauses and the launch settings of a trial are saved together', async () => {
+		const repository = new InMemorySettingsRepository();
+		const service = new SettingsService(repository, wallClock);
+		await service.load();
+		const launch = { mode: 'custom' as const, custom: { itemCount: 10, memorizationMs: 30_000 } };
+
+		await service.setLaunch('numbers', { beforeMemorizationMs: 5_000, beforeRecallMs: 0 }, launch);
+
+		const standard = { itemCount: 80, memorizationMs: 60_000, recallMs: 240_000 };
+		expect(repository.stored?.launchFor('numbers', standard)).toEqual(launch);
+		expect(repository.stored?.pausesFor('numbers').beforeMemorizationMs).toBe(5_000);
+		expect(service.current.launchFor('numbers', standard)).toEqual(launch);
+		expect(repository.saves).toBe(1);
+	});
 });
