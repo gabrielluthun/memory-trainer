@@ -1,12 +1,13 @@
-import { Settings, type LaunchSettings } from '../domain/settings/settings';
+import { Settings, type Language, type LaunchSettings } from '../domain/settings/settings';
 import type { DisciplineName } from '../domain/disciplines/discipline';
 import type { DisplayPattern } from '../domain/navigation/display-pattern';
 import type { PreparationPauses } from '../domain/trial/trial';
-import type { SettingsRepository, WallClock } from './ports';
+import type { InterfaceLanguage, SettingsRepository, WallClock } from './ports';
 
 /**
  * Reads and changes the settings of the device (CU15). The current settings are exposed as a
- * rune, so the screens and the trial session always see the latest ones (ADR 0025).
+ * rune, so the screens and the trial session always see the latest ones (ADR 0025). The interface
+ * follows their language (ADR 0029).
  * Synchronisation between devices comes with US21.
  */
 export class SettingsService {
@@ -14,11 +15,21 @@ export class SettingsService {
 
 	constructor(
 		private readonly repository: SettingsRepository,
-		private readonly wallClock: WallClock
+		private readonly wallClock: WallClock,
+		private readonly language: InterfaceLanguage
 	) {}
 
 	async load(): Promise<void> {
 		this.current = (await this.repository.load()) ?? Settings.defaults();
+		this.language.apply(this.current.interfaceLanguage);
+	}
+
+	/** US19: applied to the interface once saved, so the choice is kept. */
+	async setLanguage(language: Language): Promise<void> {
+		const updated = this.current.withLanguage(language, this.wallClock.now());
+		await this.repository.save(updated);
+		this.current = updated;
+		this.language.apply(language);
 	}
 
 	/** The pauses of a discipline: its setting, and the last ones used (RG25). */
