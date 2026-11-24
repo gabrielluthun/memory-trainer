@@ -129,6 +129,16 @@ export default defineConfig({
 				}
 			},
 			{
+				// Backup Worker (CU19, ADR 0032): its real query, as backup_reader, on PGlite.
+				extends: true,
+				test: {
+					name: 'worker',
+					environment: 'node',
+					include: ['workers/**/*.test.ts'],
+					testTimeout: 30_000
+				}
+			},
+			{
 				// Database: PostgreSQL in process (PGlite), built from the migrations. No secret, no network.
 				extends: true,
 				test: {
