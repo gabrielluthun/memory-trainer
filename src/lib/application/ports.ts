@@ -40,6 +40,8 @@ export interface TrialSummary {
 	/** Null for a trial kept out of the statistics (US10). */
 	score: number | null;
 	memorizationMs: number | null;
+	/** Refused by the database (ES07): kept on the device, never sent (SEQ05). */
+	rejected: boolean;
 }
 
 /** A stored trial with its detail, item by item (US11, RG19). */
@@ -70,11 +72,56 @@ export interface TrialRepository {
 	get(id: TrialId): Promise<TrialDetail | null>;
 }
 
-/** Settings stored on the device (Dexie.js). Synchronisation comes with US21. */
+/** Settings stored on the device (Dexie.js), with a mark "to send" (SEQ05). */
 export interface SettingsRepository {
 	/** The stored settings, or null on a device that never saved any. */
 	load(): Promise<Settings | null>;
+	/** A change made on this device: marked to send. */
 	save(settings: Settings): Promise<void>;
+	/** Changed on this device since the last time they were sent. */
+	isDirty(): Promise<boolean>;
+	/** Sent: unmarked, unless they changed again since that version (`modifiedAt`). */
+	markSynced(modifiedAt: Date): Promise<void>;
+}
+
+/**
+ * A closed trial waiting in the upload queue. Its record is the stored form of the trial, which
+ * the Infrastructure sends as it is: the Application only moves it along (ADR 0010).
+ */
+export interface QueuedTrial {
+	id: TrialId;
+	record: unknown;
+}
+
+/** The upload queue (SEQ05), kept with the trials in Dexie.js. */
+export interface Outbox {
+	/** Trials waiting to be sent, oldest first. */
+	pending(): Promise<QueuedTrial[]>;
+	/** Received by the database (or already there): out of the queue. */
+	remove(id: TrialId): Promise<void>;
+	/** Refused by the database (ES07): out of the queue, kept on the device and shown as refused. */
+	markRejected(id: TrialId): Promise<void>;
+}
+
+/** The Data API refused the session token: the practitioner signs in again (SEQ05). */
+export class SessionRejected extends Error {
+	override name = 'SessionRejected';
+}
+
+/** The database refused a trial (ES07): a defect of the app, never a reason to block the queue. */
+export class TrialRejected extends Error {
+	override name = 'TrialRejected';
+}
+
+/**
+ * What the app expects from the server, without knowing it is Neon (class diagram). Any other
+ * failure (network, server asleep or down) rejects with an ordinary error: retried later.
+ */
+export interface RemoteStore {
+	/** Sends a closed trial; "duplicate" if the database already has it (RG22, ES06). */
+	sendTrial(trial: QueuedTrial): Promise<'inserted' | 'duplicate'>;
+	/** Sends the settings; "ignored" if the database has a more recent change (ADR 0012). */
+	sendSettings(settings: Settings): Promise<'saved' | 'ignored'>;
 }
 
 /**
