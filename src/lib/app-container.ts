@@ -1,4 +1,5 @@
 import { HistoryQuery } from './application/history-query';
+import { InterruptedTrialRecovery } from './application/interrupted-trial-recovery';
 import { SettingsService } from './application/settings-service.svelte';
 import { TrialSession } from './application/trial-session.svelte';
 import { NumbersDiscipline } from './domain/disciplines/numbers';
@@ -19,6 +20,8 @@ export interface App {
 	settings: SettingsService;
 	session: TrialSession;
 	history: HistoryQuery;
+	/** At opening, the choice for a trial interrupted by an outside incident (CU06). */
+	recovery: InterruptedTrialRecovery;
 	/** Resolves once the settings of the device are loaded. */
 	ready: Promise<void>;
 }
@@ -35,9 +38,11 @@ function build(): App {
 	const wallClock = new BrowserWallClock();
 	const settings = new SettingsService(new DexieSettingsStore(db), wallClock);
 	const trials = new DexieTrialStore(db, new TrialMapper());
+	const discipline = new NumbersDiscipline();
+	const clock = new BrowserMonotonicClock();
 	const session = new TrialSession({
-		discipline: new NumbersDiscipline(),
-		clock: new BrowserMonotonicClock(),
+		discipline,
+		clock,
 		wallClock,
 		random: new CryptoRandomSource(),
 		ids: new CryptoIdGenerator(),
@@ -45,5 +50,11 @@ function build(): App {
 		repository: trials,
 		settings
 	});
-	return { settings, session, history: new HistoryQuery(trials), ready: settings.load() };
+	return {
+		settings,
+		session,
+		history: new HistoryQuery(trials),
+		recovery: new InterruptedTrialRecovery({ discipline, clock, repository: trials }),
+		ready: settings.load()
+	};
 }

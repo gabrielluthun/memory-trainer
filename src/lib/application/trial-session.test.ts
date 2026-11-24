@@ -138,7 +138,8 @@ describe('TrialSession — US01, a standard Numbers trial', () => {
 		session.type((items[1] + 1) % 10);
 
 		scheduler.advance(240_000);
-		await Promise.resolve();
+		// The trial is stored after the saves of the ongoing trial already queued (SEQ02).
+		await new Promise((resolve) => setTimeout(resolve, 0));
 
 		expect(session.current?.phase).toBe('completed');
 		expect(repository.closed).toHaveLength(1);
@@ -171,6 +172,8 @@ describe('TrialSession — US01, a standard Numbers trial', () => {
 
 		const finishing = session.finishRecall();
 		void session.finishRecall();
+		// Stored after the saves of the ongoing trial already queued (SEQ02).
+		await new Promise((resolve) => setTimeout(resolve, 0));
 
 		expect(session.current?.phase).toBe('recalling');
 		expect(repository.closed).toHaveLength(1);
@@ -504,5 +507,146 @@ describe('TrialSession — US10, abandoning a trial (CU05)', () => {
 		await session.decide('discard');
 
 		expect(session.current?.phase).toBe('recalling');
+	});
+});
+
+describe('TrialSession — US10, saving the ongoing trial (SEQ02, RG24)', () => {
+	/** Lets the queued writes to the repository run. */
+	const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+	const recalling = () => {
+		session.start();
+		scheduler.advance(0);
+		scheduler.advance(20_000);
+		session.finishMemorization();
+		scheduler.advance(0);
+	};
+
+	it('RG25 — nothing is saved during the pause before memorization', async () => {
+		settings.current = settings.current.withPauses(
+			'numbers',
+			{ beforeMemorizationMs: 10_000, beforeRecallMs: 0 },
+			new Date('2026-11-22T12:00:00Z')
+		);
+		session.start();
+		scheduler.advance(5_000);
+		await flush();
+
+		expect(repository.snapshot).toBeNull();
+	});
+
+	it('CU01 — saves the trial as soon as memorization starts', async () => {
+		session.start();
+		scheduler.advance(0);
+		await flush();
+
+		expect(repository.snapshot).toMatchObject({
+			id: 'trial-1',
+			phase: 'memorizing',
+			memorizationMs: 0
+		});
+		expect(repository.snapshot?.items).toHaveLength(80);
+	});
+
+	it('SEQ02 — saves it again every 2 seconds', async () => {
+		session.start();
+		scheduler.advance(0);
+
+		scheduler.advance(2_000);
+		await flush();
+		expect(repository.snapshot?.memorizationMs).toBe(2_000);
+
+		scheduler.advance(2_000);
+		await flush();
+		expect(repository.snapshot?.memorizationMs).toBe(4_000);
+	});
+
+	it('SEQ02 — saves it at each phase change', async () => {
+		settings.current = settings.current.withPauses(
+			'numbers',
+			{ beforeMemorizationMs: 0, beforeRecallMs: 10_000 },
+			new Date('2026-11-22T12:00:00Z')
+		);
+		session.start();
+		scheduler.advance(0);
+		scheduler.advance(15_500);
+
+		session.finishMemorization();
+		await flush();
+		expect(repository.snapshot).toMatchObject({
+			phase: 'paused-before-recall',
+			memorizationMs: 15_500
+		});
+
+		session.skipPause();
+		await flush();
+		expect(repository.snapshot?.phase).toBe('recalling');
+	});
+
+	it('SEQ02 — saves the answers typed when asked, e.g. when the tab goes to the background', async () => {
+		recalling();
+		session.type(4);
+		session.type(2);
+
+		session.saveNow();
+		await flush();
+
+		expect(repository.snapshot?.answers.slice(0, 3)).toEqual([4, 2, null]);
+	});
+
+	it('ENF07 — a finished trial is closed, and no ongoing trial is left behind', async () => {
+		recalling();
+
+		await session.finishRecall();
+		scheduler.advance(10_000);
+		await flush();
+
+		expect(repository.closed).toHaveLength(1);
+		expect(repository.snapshot).toBeNull();
+	});
+
+	it('RG24 — after an abandon, the trial stays saved as it stopped, until the choice', async () => {
+		recalling();
+		session.type(4);
+		scheduler.advance(3_000);
+
+		session.abandon();
+		scheduler.advance(10_000);
+		await flush();
+
+		expect(repository.snapshot).toMatchObject({ phase: 'recalling', recallMs: 3_000 });
+		expect(repository.snapshot?.answers[0]).toBe(4);
+	});
+
+	it('RG23 — "Ne pas garder" erases the ongoing trial from the device', async () => {
+		recalling();
+		session.abandon();
+
+		await session.decide('discard');
+
+		expect(repository.snapshot).toBeNull();
+	});
+
+	it('RG23 — "Garder hors statistiques" and "Compter tel quel" leave no ongoing trial', async () => {
+		recalling();
+		session.abandon();
+		await session.decide('keep-out-of-stats');
+		expect(repository.snapshot).toBeNull();
+
+		recalling();
+		session.abandon();
+		await session.decide('count-as-is');
+		expect(repository.snapshot).toBeNull();
+	});
+
+	it('ENF07 — a save that fails does not stop the trial', async () => {
+		repository.failSnapshots = true;
+		recalling();
+		scheduler.advance(4_000);
+		await flush();
+
+		await session.finishRecall();
+
+		expect(repository.closed).toHaveLength(1);
 	});
 });

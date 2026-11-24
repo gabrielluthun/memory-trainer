@@ -48,6 +48,7 @@ classDiagram
     }
     class PendingDecision {
         +reason [1] : DecisionReason
+        +stoppedIn [1] : OngoingPhase
         +answers [0..*] : Answer
         +memorizationMs [1] : number
         +recallMs [1] : number
@@ -74,11 +75,16 @@ classDiagram
         +correct [1] : boolean
     }
     class TrialSnapshot {
+        +id [1] : TrialId
+        +discipline [1] : DisciplineName
+        +mode [1] : Mode
+        +items [1..*] : Item
+        +startedAt [1] : Date
+        +displayPattern [1..3] : number
         +phase [1] : OngoingPhase
-        +answers [0..*] : Answer
-        +memorizationMs [0..1] : number
-        +recallElapsedMs [0..1] : number
-        +savedAt [1] : Date
+        +answers [1..*] : Answer
+        +memorizationMs [1] : number
+        +recallMs [1] : number
     }
     class Format {
         +itemCount [1] : number
@@ -156,6 +162,7 @@ classDiagram
 
     Trial "0..*" --> "1" Discipline : follows rules of
     Trial "1" *-- "1" Format : has format
+    TrialSnapshot "1" *-- "1" Format : keeps format
     Trial "1" *-- "1" PreparationPauses : plans
     PausedBeforeMemorization "1" *-- "1" Countdown : counts down with
     PausedBeforeRecall "1" *-- "1" Countdown : counts down with
@@ -180,12 +187,12 @@ classDiagram
 | **MemorizingTrial** | Chronomètre et navigation par groupes. `finishMemorization()` plafonne le temps à la durée du format | RG01, RG08, RG09, RG11 |
 | **PausedBeforeRecall** | Compte à rebours avant le rappel. Le temps de mémorisation est figé | RG25 |
 | **RecallingTrial** | Chronomètre de rappel et saisie. `finishRecall()` fait corriger l'essai par la discipline | RG10, RG12 |
-| **PendingDecision** | Attente des trois choix, après un abandon ou une interruption. `fromSnapshot()` reconstruit un essai interrompu | RG23, RG24 |
+| **PendingDecision** | Attente des trois choix, après un abandon ou une interruption. `stoppedIn` garde la phase de l'arrêt, affichée dans la fenêtre de l'essai interrompu. `fromSnapshot()` reconstruit un essai interrompu | RG23, RG24 |
 | **ClosedTrial** | Essai clos, sans aucune méthode de modification | RG18 |
 | **CompletedTrial** | Essai compté. `isBetterThan()` compare d'abord le score, puis le temps de mémorisation | RG12, RG13 |
 | **ExcludedTrial** | Essai hors statistiques : statut « abandonné » ou « Erreur externe à l'application » | RG23, RG24 |
 | **ItemResult** | Un élément attendu face à la réponse donnée | RG12, RG19 |
-| **TrialSnapshot** | Valeur simple enregistrée dans Dexie.js pendant l'essai | RG24 |
+| **TrialSnapshot** | Valeur simple enregistrée dans Dexie.js pendant l'essai : tout ce qu'il faut pour reconstruire l'essai (éléments, format, motif d'affichage), sa phase, les réponses et les temps du moment. Sans les pauses, jamais enregistrées (RG25) | RG24, RG25 |
 | **Format** | Nombre d'éléments et durées. `custom()` garde 4 minutes de rappel | RG01, RG15 |
 | **PreparationPauses** | Les deux pauses : 0, 5, 10 ou 20 s | RG25 |
 | **Discipline** | Ce qui change d'une discipline à l'autre : format standard, tirage, saisie, correction | EF01 à EF06 |

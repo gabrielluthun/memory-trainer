@@ -1,6 +1,6 @@
 import type { DisciplineName, ItemResult } from '../domain/disciplines/discipline';
 import type { Settings } from '../domain/settings/settings';
-import type { ClosedTrial, Mode, TrialId } from '../domain/trial/trial';
+import type { ClosedTrial, Mode, TrialId, TrialSnapshot } from '../domain/trial/trial';
 
 /**
  * What the Application layer expects from the outside world (ADR 0013).
@@ -33,7 +33,7 @@ export interface TrialSummary {
 	id: TrialId;
 	discipline: DisciplineName;
 	mode: Mode;
-	/** "completed" for now; abandoned and interrupted trials come with US10. */
+	/** "completed", "abandoned" or "external_error" (RG23, RG24). */
 	status: string;
 	startedAt: Date;
 	itemCount: number;
@@ -50,7 +50,19 @@ export interface TrialDetail extends TrialSummary {
 
 /** Trials stored on the device (Dexie.js). */
 export interface TrialRepository {
-	/** Stores a closed trial, counted or excluded, and adds it to the upload queue, in one transaction. */
+	/**
+	 * Keeps the ongoing trial on the device, replacing the previous save (SEQ02). Never sent: it
+	 * only joins the upload queue once closed (CU06). Ignored if that trial is already closed.
+	 */
+	saveSnapshot(snapshot: TrialSnapshot): Promise<void>;
+	/** The ongoing trial left on the device, if any: an interrupted trial at reopening (RG24). */
+	loadSnapshot(): Promise<TrialSnapshot | null>;
+	/** Erases the ongoing trial with this id, if it is the one on the device ("Ne pas garder"). */
+	deleteSnapshot(id: TrialId): Promise<void>;
+	/**
+	 * Stores a closed trial, counted or excluded, adds it to the upload queue and erases its
+	 * ongoing save, in one transaction.
+	 */
 	close(trial: ClosedTrial): Promise<void>;
 	/** Every stored trial, most recent first (US12 CA1). */
 	list(): Promise<TrialSummary[]>;
