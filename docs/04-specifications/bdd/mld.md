@@ -20,7 +20,7 @@ Notation : <u>souligné</u> = clé primaire, `#` = clé étrangère. Une clé pe
 - **trials** (<u>trial_id</u>, sequence_number, #owner_id, #discipline, mode, status, started_at, item_count, memorization_limit_ms, recall_limit_ms, memorization_ms, recall_ms, score)
 - **trial_items** (<u>#trial_id, position</u>, is_correct)
 - **trial_items_numbers** (<u>#trial_id, #position</u>, expected_digit, answered_digit)
-- **discipline_settings** (<u>#owner_id, #discipline</u>, group_pattern, pause_before_memorization_s, pause_before_recall_s)
+- **discipline_settings** (<u>#owner_id, #discipline</u>, group_pattern, pause_before_memorization_s, pause_before_recall_s, launch_mode, custom_item_count, custom_memorization_s)
 
 ## 2. Diagramme
 
@@ -73,6 +73,9 @@ erDiagram
         smallint_array group_pattern
         smallint pause_before_memorization_s
         smallint pause_before_recall_s
+        trial_mode launch_mode
+        smallint custom_item_count
+        smallint custom_memorization_s
     }
 ```
 

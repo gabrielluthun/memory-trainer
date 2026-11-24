@@ -1,10 +1,10 @@
 import type { Digit, NumbersDiscipline } from '../domain/disciplines/numbers';
 import type { DisciplineName } from '../domain/disciplines/discipline';
-import type { Format } from '../domain/format';
+import { Format } from '../domain/format';
 import type { DisplayPattern } from '../domain/navigation/display-pattern';
 import type { RandomSource } from '../domain/random';
 import type { SequenceRecall } from '../domain/recall/sequence-recall';
-import type { Settings } from '../domain/settings/settings';
+import type { LaunchSettings, Settings } from '../domain/settings/settings';
 import type { MonotonicClock } from '../domain/timing/timing';
 import {
 	PausedBeforeMemorization,
@@ -25,10 +25,17 @@ export interface TrialSessionDependencies {
 	ids: IdGenerator;
 	scheduler: Scheduler;
 	repository: TrialRepository;
-	/** The current settings, read at launch (US07 CA1bis); the pauses chosen are kept there (RG25). */
+	/**
+	 * The current settings, read at launch (US07 CA1bis); the pauses and launch settings chosen
+	 * are kept there (RG25, US09 CA4).
+	 */
 	settings: {
 		readonly current: Settings;
-		setPauses(discipline: DisciplineName, pauses: PreparationPauses): Promise<void>;
+		setLaunch(
+			discipline: DisciplineName,
+			pauses: PreparationPauses,
+			launch: LaunchSettings
+		): Promise<void>;
 	};
 }
 
@@ -78,22 +85,32 @@ export class TrialSession {
 
 	constructor(private readonly deps: TrialSessionDependencies) {}
 
-	/** US01: a standard trial. */
-	start(options: { pauses?: PreparationPauses } = {}): void {
+	/**
+	 * US01, US09: a standard or custom trial. Without a choice, the last pauses and launch
+	 * settings of the discipline are used (RG25, US09 CA4). Custom settings out of bounds are
+	 * refused before anything starts (RG15).
+	 */
+	start(options: { pauses?: PreparationPauses; launch?: LaunchSettings } = {}): void {
 		const { discipline, random, ids, wallClock, clock } = this.deps;
+		const current = this.deps.settings.current;
+		const standard = discipline.standardFormat();
+		const launch = options.launch ?? current.launchFor(discipline.name, standard);
+		const format =
+			launch.mode === 'custom'
+				? Format.custom(launch.custom.itemCount, launch.custom.memorizationMs)
+				: standard;
 		this.#stopSaving();
-		const format = discipline.standardFormat();
-		this.displayPattern = this.deps.settings.current.groupPatternFor(discipline.name);
-		const pauses = options.pauses ?? this.deps.settings.current.pausesFor(discipline.name);
-		if (options.pauses) {
-			// RG25: the pauses chosen become the ones proposed next time. Not worth blocking the trial.
-			void this.deps.settings.setPauses(discipline.name, pauses).catch(() => {});
+		this.displayPattern = current.groupPatternFor(discipline.name);
+		const pauses = options.pauses ?? current.pausesFor(discipline.name);
+		if (options.pauses || options.launch) {
+			// RG25, US09 CA4: proposed next time. Not worth blocking the trial.
+			void this.deps.settings.setLaunch(discipline.name, pauses, launch).catch(() => {});
 		}
 		const paused = PausedBeforeMemorization.begin(
 			{
 				id: ids.next(),
 				discipline,
-				mode: 'standard',
+				mode: launch.mode,
 				format,
 				pauses,
 				displayPattern: this.displayPattern,

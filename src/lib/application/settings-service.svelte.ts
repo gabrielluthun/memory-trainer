@@ -1,4 +1,4 @@
-import { Settings } from '../domain/settings/settings';
+import { Settings, type LaunchSettings } from '../domain/settings/settings';
 import type { DisciplineName } from '../domain/disciplines/discipline';
 import type { DisplayPattern } from '../domain/navigation/display-pattern';
 import type { PreparationPauses } from '../domain/trial/trial';
@@ -24,6 +24,23 @@ export class SettingsService {
 	/** The pauses of a discipline: its setting, and the last ones used (RG25). */
 	async setPauses(discipline: DisciplineName, pauses: PreparationPauses): Promise<void> {
 		const updated = this.current.withPauses(discipline, pauses, this.wallClock.now());
+		await this.repository.save(updated);
+		this.current = updated;
+	}
+
+	/**
+	 * What a trial was launched with: its pauses and its launch settings, proposed next time
+	 * (RG25, US09 CA4, ADR 0028). One change, one save.
+	 */
+	async setLaunch(
+		discipline: DisciplineName,
+		pauses: PreparationPauses,
+		launch: LaunchSettings
+	): Promise<void> {
+		const at = this.wallClock.now();
+		const updated = this.current
+			.withPauses(discipline, pauses, at)
+			.withLaunch(discipline, launch, at);
 		await this.repository.save(updated);
 		this.current = updated;
 	}

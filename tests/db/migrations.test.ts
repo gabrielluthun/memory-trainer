@@ -69,3 +69,27 @@ describe('display pattern migration (ADR 0027)', () => {
 		await fresh.close();
 	});
 });
+
+describe('launch settings migration (ADR 0028)', () => {
+	it('gives the settings already stored the standard mode and the standard Numbers format', async () => {
+		const migrations = await loadMigrations();
+		const index = migrations.findIndex((migration) => migration.file.includes('launch_settings'));
+		const fresh = await PGlite.create();
+		await fresh.exec(neonPrerequisites);
+		await applyUp(fresh, migrations.slice(0, index));
+		await fresh.exec(`
+			INSERT INTO accounts (owner_id) VALUES ('owner-1');
+			INSERT INTO discipline_settings VALUES ('owner-1', 'numbers', 5, 0, '{2}');
+		`);
+
+		await applyUp(fresh, migrations.slice(index));
+
+		const { rows } = await fresh.query(
+			'SELECT launch_mode, custom_item_count, custom_memorization_s FROM discipline_settings'
+		);
+		expect(rows).toEqual([
+			{ launch_mode: 'standard', custom_item_count: 80, custom_memorization_s: 60 }
+		]);
+		await fresh.close();
+	});
+});

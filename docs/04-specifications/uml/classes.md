@@ -145,8 +145,10 @@ classDiagram
         +groupPatterns [1..*] : DisplayPattern
         +modifiedAt [1] : Date
         +withLanguage()
-        +withGroupSize()
+        +withGroupPattern()
         +withPauses()
+        +launchFor()
+        +withLaunch()
         +isNewerThan()
     }
 
@@ -200,7 +202,7 @@ classDiagram
 | **SequenceRecall** | Taper, effacer à gauche, insérer une case (+), supprimer une case (−). Resservira pour Cards, Images et Words | RG10 |
 | **GroupNavigation** | Position dans les groupes, dont la taille est la somme du motif d'affichage (« 2 3 » : 5 éléments). `next()` signale la fin quand → est pressé deux fois rapidement sur le dernier groupe | RG09, RG11 |
 | **Stopwatch**, **Countdown** | Chronomètre et compte à rebours, sur l'horloge monotone (section 3) | ENF01, RG25 |
-| **Settings** | Langue, motif d'affichage et dernières pauses par discipline. Chaque modification renvoie de nouveaux paramètres, datés par l'appareil | EF20, RG11, RG25, [ADR 0012](../adr/0012-conflits-parametres-heure-appareil.md) |
+| **Settings** | Langue, motif d'affichage, dernières pauses et derniers réglages de lancement (mode, nombre d'éléments et durée du mode personnalisé) par discipline. Chaque modification renvoie de nouveaux paramètres, datés par l'appareil | EF20, RG11, RG25, [ADR 0012](../adr/0012-conflits-parametres-heure-appareil.md) |
 
 `finishMemorization()` et `finishRecall()` sont appelées de deux façons : par le pratiquant (Finished, Entrée), ou par l'application quand le temps du format est écoulé.
 

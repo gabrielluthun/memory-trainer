@@ -1,6 +1,7 @@
 import type { DisciplineName } from '../disciplines/discipline';
+import { Format } from '../format';
 import { assertDisplayPattern, type DisplayPattern } from '../navigation/display-pattern';
-import type { PreparationPauses } from '../trial/trial';
+import type { Mode, PreparationPauses } from '../trial/trial';
 
 export type Language = 'fr' | 'en';
 
@@ -17,12 +18,23 @@ export interface LegacySettingsData {
 
 const NO_PAUSE: PreparationPauses = { beforeMemorizationMs: 0, beforeRecallMs: 0 };
 
+/**
+ * What the launch screen proposes for a discipline (US09 CA4, ADR 0028): the last mode chosen
+ * and the custom settings, kept even when going back to the standard mode.
+ */
+export interface LaunchSettings {
+	mode: Mode;
+	custom: { itemCount: number; memorizationMs: number };
+}
+
 export interface SettingsData {
 	interfaceLanguage: Language;
 	/** Display pattern per discipline (RG11, ADR 0027). */
 	groupPatterns: Record<DisciplineName, DisplayPattern>;
 	/** Last pauses chosen per discipline (RG25). Missing in settings stored before US23. */
 	pauses?: Partial<Record<DisciplineName, PreparationPauses>>;
+	/** Last launch settings per discipline (ADR 0028). Missing in settings stored before US09. */
+	launches?: Partial<Record<DisciplineName, LaunchSettings>>;
 	modifiedAt: Date;
 }
 
@@ -57,6 +69,7 @@ export class Settings {
 			interfaceLanguage: data.interfaceLanguage,
 			groupPatterns: { ...groupPatterns },
 			pauses: { ...data.pauses },
+			launches: { ...('launches' in data ? data.launches : {}) },
 			modifiedAt: data.modifiedAt
 		});
 	}
@@ -100,11 +113,37 @@ export class Settings {
 		});
 	}
 
+	/**
+	 * The last launch settings of a discipline. Before any custom trial: standard mode, and custom
+	 * settings at the standard format of the discipline (RG15, ADR 0028).
+	 */
+	launchFor(discipline: DisciplineName, standard: Format): LaunchSettings {
+		const launch = this.data.launches?.[discipline];
+		if (launch) return { mode: launch.mode, custom: { ...launch.custom } };
+		return {
+			mode: 'standard',
+			custom: { itemCount: standard.itemCount, memorizationMs: standard.memorizationMs }
+		};
+	}
+
+	withLaunch(discipline: DisciplineName, launch: LaunchSettings, at: Date): Settings {
+		Format.custom(launch.custom.itemCount, launch.custom.memorizationMs);
+		return new Settings({
+			...this.data,
+			launches: {
+				...this.data.launches,
+				[discipline]: { mode: launch.mode, custom: { ...launch.custom } }
+			},
+			modifiedAt: at
+		});
+	}
+
 	toData(): SettingsData {
 		return {
 			...this.data,
 			groupPatterns: { ...this.data.groupPatterns },
-			pauses: { ...this.data.pauses }
+			pauses: { ...this.data.pauses },
+			launches: { ...this.data.launches }
 		};
 	}
 }

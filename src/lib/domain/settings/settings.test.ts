@@ -107,3 +107,58 @@ describe('Settings — preparation pauses (US23)', () => {
 		expect(settings.groupPatternFor('numbers')).toEqual([3]);
 	});
 });
+
+describe('Settings — last launch settings (US09, ADR 0028)', () => {
+	const standard = { itemCount: 80, memorizationMs: 60_000, recallMs: 240_000 };
+	const at = new Date('2026-11-24T10:00:00Z');
+
+	it('RG15 — before any custom trial: standard mode, custom settings at the standard format', () => {
+		expect(Settings.defaults().launchFor('numbers', standard)).toEqual({
+			mode: 'standard',
+			custom: { itemCount: 80, memorizationMs: 60_000 }
+		});
+	});
+
+	it('US09 CA4 — keeps the last mode and custom settings of a discipline, dated by the device', () => {
+		const launch = { mode: 'custom' as const, custom: { itemCount: 10, memorizationMs: 30_000 } };
+
+		const after = Settings.defaults().withLaunch('numbers', launch, at);
+
+		expect(after.launchFor('numbers', standard)).toEqual(launch);
+		expect(after.modifiedAt).toEqual(at);
+		expect(Settings.defaults().launchFor('numbers', standard).mode).toBe('standard');
+	});
+
+	it('US09 CA4 — the custom settings are kept when going back to the standard mode', () => {
+		const custom = { itemCount: 10, memorizationMs: 30_000 };
+		const after = Settings.defaults()
+			.withLaunch('numbers', { mode: 'custom', custom }, at)
+			.withLaunch('numbers', { mode: 'standard', custom }, at);
+
+		expect(after.launchFor('numbers', standard)).toEqual({ mode: 'standard', custom });
+	});
+
+	it('RG15 — refuses custom settings out of bounds', () => {
+		expect(() =>
+			Settings.defaults().withLaunch(
+				'numbers',
+				{ mode: 'custom', custom: { itemCount: 501, memorizationMs: 30_000 } },
+				at
+			)
+		).toThrow(RangeError);
+	});
+
+	it('ADR 0028 — survives a save and a restore', () => {
+		const launch = { mode: 'custom' as const, custom: { itemCount: 12, memorizationMs: 45_000 } };
+		const saved = Settings.defaults().withLaunch('numbers', launch, at).toData();
+
+		expect(Settings.restore(saved).launchFor('numbers', standard)).toEqual(launch);
+	});
+
+	it('ADR 0028 — settings stored before US09 get the standard launch', () => {
+		const old = Settings.defaults().toData();
+		delete old.launches;
+
+		expect(Settings.restore(old).launchFor('numbers', standard).mode).toBe('standard');
+	});
+});
