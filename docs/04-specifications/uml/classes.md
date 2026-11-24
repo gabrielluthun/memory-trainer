@@ -272,6 +272,10 @@ classDiagram
         +isDirty()
         +markSynced()
     }
+    class InterfaceLanguage {
+        <<interface>>
+        +apply()
+    }
     class RemoteStore {
         <<interface>>
         +sendTrial()
@@ -297,6 +301,7 @@ classDiagram
     InterruptedTrialRecovery "1" --> "1" TrialRepository : reads
     HistoryQuery "1" --> "1" TrialRepository : reads
     SettingsService "1" --> "1" SettingsRepository : updates
+    SettingsService "1" --> "1" InterfaceLanguage : applies its language to
     SyncService "1" --> "1" Outbox : empties
     SyncService "1" --> "1" TrialRepository : adds received trials to
     SyncService "1" --> "1" SettingsRepository : syncs
@@ -315,6 +320,7 @@ classDiagram
 | **TrialRepository** | Essai en cours, essais clos, repère de réception. `close()` écrit l'essai et l'ajoute à la file d'envoi **en une transaction** | — | SEQ02 |
 | **Outbox** | File d'envoi : essais à envoyer, retrait après confirmation, marque « refusé » | — | SEQ05 |
 | **SettingsRepository** | Paramètres de l'appareil et indicateur « à envoyer » | — | SEQ05 |
+| **InterfaceLanguage** | Langue des écrans : appliquée au chargement des paramètres et à chaque changement enregistré ([ADR 0029](../adr/0029-langue-reactive.md)) | CU15 | — |
 | **RemoteStore** | Ce que l'application attend du serveur, sans savoir que c'est Neon | — | SEQ05 |
 | **AuthSession** | Session et jeton, sans savoir que c'est Hanko | — | SEQ04 |
 | **Scheduler** | Comptes à rebours, enregistrement régulier, relance de la synchronisation. Simulable dans les tests | — | SEQ02, SEQ05 |
@@ -334,6 +340,9 @@ classDiagram
         <<interface>>
     }
     class SettingsRepository {
+        <<interface>>
+    }
+    class InterfaceLanguage {
         <<interface>>
     }
     class RemoteStore {
@@ -380,6 +389,10 @@ classDiagram
     class CryptoRandomSource
     class CryptoIdGenerator
     class BrowserScheduler
+    class ParaglideInterfaceLanguage {
+        -current [1] : Language
+        +apply()
+    }
     class AppContainer {
         +build()
     }
@@ -387,6 +400,7 @@ classDiagram
     TrialRepository <|.. DexieTrialStore
     Outbox <|.. DexieTrialStore
     SettingsRepository <|.. DexieSettingsStore
+    InterfaceLanguage <|.. ParaglideInterfaceLanguage
     RemoteStore <|.. DataApiClient
     AuthSession <|.. HankoSession
     Scheduler <|.. BrowserScheduler
@@ -414,6 +428,7 @@ classDiagram
 | **MonotonicClock** et **WallClock** | La monotone mesure les durées, insensible aux changements d'heure. La murale date les essais et les paramètres | `performance.now()`, `Date` |
 | **RandomSource**, **IdGenerator** | Hasard du tirage et identifiants créés sur l'appareil | `crypto.getRandomValues()`, `crypto.randomUUID()` |
 | **BrowserScheduler** | Implémente `Scheduler` | `setTimeout`, `setInterval` |
+| **ParaglideInterfaceLanguage** | Implémente `InterfaceLanguage` : la langue courante est une rune lue par Paraglide à chaque texte, recopiée sur l'appareil et dans l'attribut `lang` de la page ([ADR 0029](../adr/0029-langue-reactive.md)) | Paraglide JS, `localStorage` |
 | **AppContainer** | Crée tous les objets au démarrage et les relie : c'est le seul endroit qui connaît les classes concrètes | — |
 
 Le **Worker de sauvegarde** (SEQ06) est un programme à part, d'une seule fonction : il n'est pas modélisé ici.
