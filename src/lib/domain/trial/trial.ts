@@ -67,13 +67,71 @@ abstract class Trial {
 	}
 }
 
+/** The phases an ongoing trial can be saved, abandoned or interrupted in (RG23, RG24). */
+export type OngoingPhase = 'memorizing' | 'paused-before-recall' | 'recalling';
+
+/**
+ * A plain value saved on the device while the trial runs: at the start of memorization, every
+ * 2 s, at each phase change (SEQ02). After an interruption, the trial is rebuilt from the last one
+ * (RG24). The pauses are not part of it: they are never recorded with a trial (RG25).
+ */
+export interface TrialSnapshot {
+	readonly id: TrialId;
+	readonly discipline: DisciplineName;
+	readonly mode: Mode;
+	readonly format: Format;
+	readonly displayPattern: DisplayPattern;
+	readonly items: Digit[];
+	readonly startedAt: Date;
+	readonly phase: OngoingPhase;
+	readonly answers: (Digit | null)[];
+	readonly memorizationMs: number;
+	readonly recallMs: number;
+}
+
 /**
  * The phases a trial can be abandoned or interrupted in (RG23, RG24). The pause before
  * memorization is not one of them: abandoning there keeps nothing (RG25).
  */
 abstract class OngoingTrial extends Trial {
+	abstract readonly phase: OngoingPhase;
+
+	/** What the trial is now: the answers and times so far, the timers still running. */
+	abstract snapshot(): TrialSnapshot;
+
 	/** Stops the trial for good and waits for the practitioner's choice (CU05). */
-	abstract abandon(): PendingDecision;
+	abandon(): PendingDecision {
+		const { answers, memorizationMs, recallMs } = this.snapshot();
+		return new PendingDecision(
+			this.setup,
+			this.clock,
+			'abandoned',
+			this.phase,
+			answers,
+			memorizationMs,
+			recallMs
+		);
+	}
+
+	protected snapshotWith(
+		answers: (Digit | null)[],
+		memorizationMs: number,
+		recallMs: number
+	): TrialSnapshot {
+		return {
+			id: this.id,
+			discipline: this.disciplineName,
+			mode: this.mode,
+			format: { ...this.format },
+			displayPattern: [...this.displayPattern],
+			items: [...this.items],
+			startedAt: new Date(this.startedAt),
+			phase: this.phase,
+			answers: [...answers],
+			memorizationMs,
+			recallMs
+		};
+	}
 }
 
 /** Countdown before memorization; the items stay hidden (RG25). */
@@ -129,16 +187,9 @@ export class MemorizingTrial extends OngoingTrial {
 		return new PausedBeforeRecall(this.setup, this.clock, this.#memorizationMs());
 	}
 
-	abandon(): PendingDecision {
+	snapshot(): TrialSnapshot {
 		const noAnswers = this.items.map(() => null);
-		return new PendingDecision(
-			this.setup,
-			this.clock,
-			'abandoned',
-			noAnswers,
-			this.#memorizationMs(),
-			0
-		);
+		return this.snapshotWith(noAnswers, this.#memorizationMs(), 0);
 	}
 
 	#memorizationMs(): number {
@@ -160,16 +211,9 @@ export class PausedBeforeRecall extends OngoingTrial {
 		this.countdown = Countdown.start(clock, setup.pauses.beforeRecallMs);
 	}
 
-	abandon(): PendingDecision {
+	snapshot(): TrialSnapshot {
 		const noAnswers = this.items.map(() => null);
-		return new PendingDecision(
-			this.setup,
-			this.clock,
-			'abandoned',
-			noAnswers,
-			this.memorizationMs,
-			0
-		);
+		return this.snapshotWith(noAnswers, this.memorizationMs, 0);
 	}
 
 	startRecall(): RecallingTrial {
@@ -218,15 +262,8 @@ export class RecallingTrial extends OngoingTrial {
 		);
 	}
 
-	abandon(): PendingDecision {
-		return new PendingDecision(
-			this.setup,
-			this.clock,
-			'abandoned',
-			this.recall.answers(),
-			this.memorizationMs,
-			this.#recallMs()
-		);
+	snapshot(): TrialSnapshot {
+		return this.snapshotWith(this.recall.answers(), this.memorizationMs, this.#recallMs());
 	}
 
 	#recallMs(): number {
@@ -248,11 +285,47 @@ export class PendingDecision extends Trial {
 		setup: TrialSetup,
 		clock: MonotonicClock,
 		readonly reason: DecisionReason,
+		/** The phase the trial stopped in, to tell the practitioner (mock-up 09). */
+		readonly stoppedIn: OngoingPhase,
 		readonly answers: (Digit | null)[],
 		readonly memorizationMs: number,
 		readonly recallMs: number
 	) {
 		super(setup, clock);
+	}
+
+	/**
+	 * A trial interrupted by an outside incident, rebuilt at reopening from its last snapshot
+	 * (RG24, CU06). Its times are those of the snapshot: at most 2 s off.
+	 */
+	static fromSnapshot(
+		snapshot: TrialSnapshot,
+		discipline: Discipline<Digit, Digit>,
+		clock: MonotonicClock
+	): PendingDecision {
+		if (snapshot.discipline !== discipline.name) {
+			throw new Error('An interrupted trial is rebuilt with its own discipline only');
+		}
+		const setup: TrialSetup = {
+			id: snapshot.id,
+			discipline,
+			mode: snapshot.mode,
+			format: snapshot.format,
+			// Not saved (RG25), and of no use once the trial has stopped.
+			pauses: { beforeMemorizationMs: 0, beforeRecallMs: 0 },
+			displayPattern: snapshot.displayPattern,
+			items: snapshot.items,
+			startedAt: snapshot.startedAt
+		};
+		return new PendingDecision(
+			setup,
+			clock,
+			'interrupted',
+			snapshot.phase,
+			snapshot.answers,
+			snapshot.memorizationMs,
+			snapshot.recallMs
+		);
 	}
 
 	/** "Compter tel quel": scored with the answers already given, then counted normally (RG12, RG23). */
