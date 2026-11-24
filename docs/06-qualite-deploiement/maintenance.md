@@ -33,6 +33,8 @@ Version initiale, rédigée avant le développement. Elle sera **finalisée en p
 
 > Décision : Dependabot passe **une fois par semaine**, avec les regroupements ci-dessus. Ses pull requests sont relues, puis fusionnées **en local** dans `develop`, comme les branches de fonctionnalité ([conventions](../02-projet/conventions.md)). Elles ne vont jamais directement dans `main`.
 
+> Décision : Dependabot **ne propose pas TypeScript 7**. `svelte-check`, `typescript-eslint` et SvelteKit n'acceptent encore que TypeScript 6. Les versions 6.x continuent d'arriver ; une version que `typescript-eslint` n'accepte pas encore est arrêtée par la CI. La règle est retirée quand ces outils acceptent la 7.
+
 Chaque mise à jour passe par les contrôles de la CI avant d'atteindre la production, comme tout autre changement.
 
 ## 2. Sauvegardes
