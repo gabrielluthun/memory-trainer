@@ -1,6 +1,6 @@
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import adapter from '@sveltejs/adapter-static';
-import { sveltekit } from '@sveltejs/kit/vite';
+import { withPwa } from '@vite-pwa/sveltekit';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
@@ -12,16 +12,59 @@ export default defineConfig({
 			outdir: './src/lib/paraglide',
 			strategy: ['custom-settings', 'baseLocale']
 		}),
-		sveltekit({
-			compilerOptions: {
-				// Force runes mode for the project, except for libraries. Can be removed in svelte 6.
-				runes: ({ filename }) =>
-					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
+		// SvelteKit, wrapped by the service worker plugin (ADR 0008, US20): the whole app is kept on
+		// the device and opens without network (ENF02).
+		...withPwa(
+			{
+				compilerOptions: {
+					// Force runes mode for the project, except for libraries. Can be removed in svelte 6.
+					runes: ({ filename }) =>
+						filename.split(/[/\\]/).includes('node_modules') ? undefined : true
+				},
+				// SPA mode (ADR 0007): no server rendering, every path falls back to index.html.
+				// Cloudflare Pages serves index.html for unknown paths when there is no 404.html.
+				adapter: adapter({ fallback: 'index.html' })
 			},
-			// SPA mode (ADR 0007): no server rendering, every path falls back to index.html.
-			// Cloudflare Pages serves index.html for unknown paths when there is no 404.html.
-			adapter: adapter({ fallback: 'index.html' })
-		})
+			{
+				strategies: 'generateSW',
+				// A new version waits for the practitioner, never during a trial (deployment, section 5).
+				registerType: 'prompt',
+				injectRegister: false,
+				// The app page is kept under "/": the hosting serves it there, not as /index.html.
+				kit: { adapterFallback: 'index.html', spa: { fallbackMapping: '/' } },
+				manifest: {
+					name: 'memory-trainer',
+					short_name: 'memory-trainer',
+					description: 'Entraînement à la mémorisation au format Memory League',
+					lang: 'fr',
+					start_url: '/',
+					scope: '/',
+					display: 'standalone',
+					background_color: '#f4f7fb',
+					theme_color: '#1b2a4a',
+					icons: [
+						{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+						{ src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+						{
+							src: '/icons/icon-maskable-512.png',
+							sizes: '512x512',
+							type: 'image/png',
+							purpose: 'maskable'
+						}
+					]
+				},
+				generateSW: {
+					// The app, its fonts and icons only, from the client build: never an answer of the
+					// Data API or of Hanko (SE5). The index.html fallback is added by `kit.spa`.
+					globPatterns: ['client/**/*.{js,css,woff2,svg,png,webmanifest}'],
+					// The plugin also looks for prerendered pages; this SPA has none (ADR 0007).
+					globStrict: false,
+					// Any path opened offline gets the app (SPA), from the page kept under "/".
+					navigateFallback: '/',
+					cleanupOutdatedCaches: true
+				}
+			}
+		)
 	],
 	// Test strategy: docs/06-qualite-deploiement/tests.md (ADR 0021).
 	test: {
