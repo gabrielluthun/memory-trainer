@@ -27,6 +27,8 @@ export interface TrialRecord {
 	recall_ms: number;
 	score: number | null;
 	items: TrialItemRecord[];
+	/** Refused by the database (ES07); set on the device only, never sent. */
+	rejected?: boolean;
 }
 
 /** Converts domain trials into stored records, and stored records into what the history reads. */
@@ -71,7 +73,8 @@ export class TrialMapper {
 			startedAt: new Date(record.started_at),
 			itemCount: record.item_count,
 			score: record.score,
-			memorizationMs: record.memorization_ms
+			memorizationMs: record.memorization_ms,
+			rejected: record.rejected === true
 		};
 	}
 

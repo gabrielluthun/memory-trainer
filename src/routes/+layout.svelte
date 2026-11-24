@@ -26,7 +26,8 @@
 
 	onMount(() => {
 		// Online without a session: the sign-in screen, until "Continuer hors connexion" (CU16).
-		void app.connection.open();
+		// Then the trials and settings waiting on the device are sent (CU17).
+		void app.connection.open().then(() => app.sync.sync());
 		// A damaged save must not block the app: the next trial replaces it.
 		app.recovery
 			.check()

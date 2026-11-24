@@ -19,7 +19,10 @@ export default defineConfig({
 	webServer: {
 		command: `npm run build && npm run preview -- --port ${port} --strictPort`,
 		// Simulated services (tests/e2e/fixtures.ts): these addresses win over the .env file.
-		env: { PUBLIC_HANKO_API_URL: 'https://hanko.test' },
+		env: {
+			PUBLIC_HANKO_API_URL: 'https://hanko.test',
+			PUBLIC_DATA_API_URL: 'https://data-api.test/neondb/rest/v1'
+		},
 		port,
 		reuseExistingServer: !process.env.CI
 	},

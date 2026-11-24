@@ -102,8 +102,9 @@ Les **adresses publiques** du front ne sont pas des secrets (ES08) : elles sont 
 | Variable | Nom dans GitHub | Utilisée par |
 |---|---|---|
 | **Adresse de l'API Hanko** | `PUBLIC_HANKO_API_URL` | Build : écran de connexion ([ADR 0030](../04-specifications/adr/0030-connexion-hanko-elements.md)) |
+| **Adresse de la Data API** de la branche de production, terminée par `/rest/v1` | `PUBLIC_DATA_API_URL` | Build : synchronisation ([ADR 0031](../04-specifications/adr/0031-client-data-api-postgrest.md)) |
 
-Dans les contrôles et les tests de bout en bout, une adresse factice (`https://hanko.test`) remplace l'adresse réelle : Hanko y est simulé ([stratégie de tests](tests.md)).
+Dans les contrôles et les tests de bout en bout, des adresses factices (`https://hanko.test`, `https://data-api.test/…`) remplacent les adresses réelles : Hanko et la Data API y sont simulés ([stratégie de tests](tests.md)).
 
 Aucun de ces secrets n'est sur le poste du développeur ([surface d'attaque](../05-securite/surface-attaque.md)). La procédure en cas de fuite est dans la [sécurité de la base](../05-securite/bdd.md), section 3.
 

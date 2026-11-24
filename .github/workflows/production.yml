@@ -42,6 +42,7 @@ jobs:
         # Public addresses (ES08), kept as variables of the production environment, not secrets.
         env:
           PUBLIC_HANKO_API_URL: ${{ vars.PUBLIC_HANKO_API_URL }}
+          PUBLIC_DATA_API_URL: ${{ vars.PUBLIC_DATA_API_URL }}
         run: npm run build
 
       - name: Install the PostgreSQL client matching Neon

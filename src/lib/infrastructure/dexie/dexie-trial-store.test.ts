@@ -197,3 +197,47 @@ describe('MemoryTrainerDatabase — version 2', () => {
 		expect(await db.ongoing.count()).toBe(0);
 	});
 });
+
+describe('DexieTrialStore — upload queue (SEQ05)', () => {
+	async function storeWith(...trials: [string, string][]) {
+		db = new MemoryTrainerDatabase(`test-${crypto.randomUUID()}`);
+		const store = new DexieTrialStore(db, new TrialMapper());
+		for (const [id, startedAt] of trials) await store.close(completedTrial(id, startedAt));
+		return { store, db };
+	}
+
+	it('SEQ05 — gives the queued trials oldest first, each with its stored record', async () => {
+		const { store } = await storeWith(
+			['trial-late', '2026-11-22T12:00:00Z'],
+			['trial-early', '2026-11-22T08:00:00Z']
+		);
+
+		const pending = await store.pending();
+
+		expect(pending.map((trial) => trial.id)).toEqual(['trial-early', 'trial-late']);
+		expect(pending[0].record).toMatchObject({ trial_id: 'trial-early', status: 'completed' });
+	});
+
+	it('CU17 — a trial received by the database leaves the queue, and stays on the device', async () => {
+		const { store, db } = await storeWith(['trial-a', '2026-11-22T10:00:00Z']);
+
+		await store.remove('trial-a');
+
+		expect(await store.pending()).toEqual([]);
+		expect(await db.trials.get('trial-a')).toBeDefined();
+	});
+
+	it('ES07 — a refused trial leaves the queue, stays on the device, and the history shows it', async () => {
+		const { store } = await storeWith(
+			['trial-a', '2026-11-22T10:00:00Z'],
+			['trial-b', '2026-11-22T11:00:00Z']
+		);
+
+		await store.markRejected('trial-a');
+
+		expect((await store.pending()).map((trial) => trial.id)).toEqual(['trial-b']);
+		const listed = await store.list();
+		expect(listed.find((trial) => trial.id === 'trial-a')?.rejected).toBe(true);
+		expect(listed.find((trial) => trial.id === 'trial-b')?.rejected).toBe(false);
+	});
+});

@@ -172,5 +172,6 @@
 	"settings_signed_in": "Signed in with a passkey",
 	"settings_signed_out": "Not signed in: your trials stay on this device.",
 	"settings_connection_unknown": "Checked when the network is back.",
-	"settings_sign_out": "Sign out"
+	"settings_sign_out": "Sign out",
+	"status_rejected": "Refused by the database"
 }
