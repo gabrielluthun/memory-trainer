@@ -132,3 +132,21 @@ describe('SettingsService — interface language (US19)', () => {
 		expect(language.current).toBe('fr');
 	});
 });
+
+describe('SettingsService — settings received from another device (ADR 0012)', () => {
+	it('US21 — the screens take the received settings, language included, without saving them again', async () => {
+		const repository = new InMemorySettingsRepository();
+		const language = new RecordingInterfaceLanguage();
+		const service = new SettingsService(repository, wallClock, language);
+		await service.load();
+		const received = Settings.defaults()
+			.withLanguage('en', new Date('2026-11-24T08:00:00Z'))
+			.withGroupPattern('numbers', [3], new Date('2026-11-24T08:00:00Z'));
+
+		service.adopt(received);
+
+		expect(service.current.groupPatternFor('numbers')).toEqual([3]);
+		expect(language.current).toBe('en');
+		expect(repository.saves).toBe(0);
+	});
+});
