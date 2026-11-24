@@ -54,5 +54,4 @@ Choix du développeur, au moment de coder la mise à jour :
 | **Version publiée illisible** | La synchronisation s'arrête avant tout envoi | Un essai n'est jamais envoyé sans savoir si l'appareil est à jour. |
 | **Message** | Un **encart** en bas de l'écran, hors essai, avec « Mettre à jour » | Ne décale pas le contenu. Pendant l'attente, la pastille de synchronisation l'indique aussi. |
 | **Fermeture** | Une croix ferme l'encart jusqu'à la prochaine ouverture | Le pratiquant choisit son moment ; la pastille rappelle que la synchronisation attend. |
-
-Limite connue : si l'application est ouverte dans deux onglets, la mise à jour lancée dans l'un ne recharge pas l'autre. Elle est déjà notée pour les essais en cours (piste : Web Locks).
+| **Autres fenêtres** | Une version installée depuis une autre fenêtre recharge celle-ci **seulement quand aucun essai n'y est en cours** | Le service worker recharge sinon toutes les fenêtres ouvertes, même en plein essai. |
