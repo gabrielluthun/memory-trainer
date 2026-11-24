@@ -30,6 +30,7 @@ Amont : [objectifs](../02-projet/objectifs.md) (O3), [règles de gestion](../01-
 | **Intégration : infrastructure** | `TrialMapper` (aller-retour sans perte), transactions Dexie.js, conversion de la file d'envoi entre deux versions ([déploiement](deploiement.md)) | Vitest | Poste et CI |
 | **Intégration : Data API** | `DataApiClient` : requêtes envoyées (fonction, filtres, tri, page, jeton) et lecture des réponses (envoi, doublon, refus, réception par pages, jeton refusé) | Vitest ; réponses HTTP simulées | Poste et CI |
 | **Base de données** | Les 14 cas d'intégrité et les 17 cas d'accès déjà menés, aucune table sans RLS, aucune fonction exécutable par tous, chaque table lisible par `backup_reader` | Vitest ; PGlite ; `auth.user_id()` simulée ; base construite **depuis les fichiers de migration** | Poste et CI |
+| **Worker de sauvegarde** | Document du jour construit par la requête réelle, avec le rôle `backup_reader`, sur la base des migrations : essais après le repère, au plus 100, paramètres ; repère et nom du fichier ; échec sans avancer le repère | Vitest ; PGlite ; faux R2 en mémoire | Poste et CI |
 | **Bout en bout** | Parcours du lot 1 : essai Numbers standard et personnalisé, pauses, abandon, interruption puis réouverture, hors ligne puis retour du réseau, historique, paramètres | Playwright : Chromium, Firefox, WebKit, plus iPhone, iPad et Android émulés (tactile compris) | Poste et CI |
 
 Les tests de la base sont construits à partir des migrations : ils vérifient donc aussi que chaque migration s'applique sur une base vide (ES19).
