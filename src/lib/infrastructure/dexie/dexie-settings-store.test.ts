@@ -64,6 +64,19 @@ describe('DexieSettingsStore', () => {
 		});
 	});
 
+	it('US09 CA4 — gives back the last launch settings of each discipline', async () => {
+		db = new MemoryTrainerDatabase(`test-${crypto.randomUUID()}`);
+		const store = new DexieSettingsStore(db);
+		const launch = { mode: 'custom' as const, custom: { itemCount: 12, memorizationMs: 45_000 } };
+
+		await store.save(
+			Settings.defaults().withLaunch('numbers', launch, new Date('2026-11-24T12:00:00Z'))
+		);
+
+		const standard = { itemCount: 80, memorizationMs: 60_000, recallMs: 240_000 };
+		expect((await store.load())?.launchFor('numbers', standard)).toEqual(launch);
+	});
+
 	it('ADR 0027 — settings saved before the display pattern are converted when loaded', async () => {
 		db = new MemoryTrainerDatabase(`test-${crypto.randomUUID()}`);
 		// A record as US01 and US23 stored it: one group size per discipline.
