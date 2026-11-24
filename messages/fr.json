@@ -173,5 +173,17 @@
 	"settings_signed_out": "Non connecté : vos essais restent sur cet appareil.",
 	"settings_connection_unknown": "Connexion vérifiée au retour du réseau.",
 	"settings_sign_out": "Se déconnecter",
-	"status_rejected": "Refusé par la base"
+	"status_rejected": "Refusé par la base",
+
+	"sync_offline": "Hors connexion",
+	"sync_running": "Synchronisation…",
+	"sync_pending": "Synchronisation en attente",
+	"sync_just_now": "Synchronisé à l’instant",
+	"sync_minutes": "Synchronisé il y a {minutes} min",
+	"sync_hours": "Synchronisé il y a {hours} h",
+	"settings_sync": "Synchronisation",
+	"settings_sync_today": "Dernière : aujourd'hui à {time}",
+	"settings_sync_on": "Dernière : le {day} à {time}",
+	"settings_sync_never": "Pas encore synchronisé depuis l'ouverture de l'application.",
+	"settings_sync_now": "Synchroniser"
 }
