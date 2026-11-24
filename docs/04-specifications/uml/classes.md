@@ -252,7 +252,9 @@ classDiagram
         +signOut()
     }
     class SyncService {
-        -running [1] : boolean
+        -running [0..1] : Promise
+        +state [1] : SyncState
+        +lastSyncedAt [0..1] : Date
         +sync()
         +startTriggers()
     }
@@ -331,7 +333,7 @@ classDiagram
 | **InterruptedTrialRecovery** | À l'ouverture, cherche un essai en cours et propose les trois choix | CU06 | SEQ01, SEQ03 |
 | **HistoryQuery** | Liste et détail des essais, lus sur l'appareil | CU04, CU07 | — |
 | **SettingsService** | Lit et modifie les paramètres, les marque à envoyer | CU15 | — |
-| **SyncService** | Envoi, réception, paramètres. Une seule synchronisation à la fois. Déclencheurs : retour du réseau, fin d'essai, toutes les 5 minutes | CU16, CU17 | SEQ04, SEQ05 |
+| **SyncService** | Envoi, réception, paramètres. Une seule synchronisation à la fois : un second déclenchement rejoint celle en cours. Son état (`state`, `lastSyncedAt`) est lu par les écrans. Déclencheurs : ouverture, session créée, retour du réseau, fin d'essai, toutes les 5 minutes | CU16, CU17 | SEQ04, SEQ05 |
 | **TrialRepository** | Essai en cours, essais clos, repère de réception. `close()` écrit l'essai et l'ajoute à la file d'envoi **en une transaction** | — | SEQ02 |
 | **Outbox** | File d'envoi : essais à envoyer, retrait après confirmation, marque « refusé » | — | SEQ05 |
 | **SettingsRepository** | Paramètres de l'appareil et indicateur « à envoyer » | — | SEQ05 |
@@ -396,7 +398,6 @@ classDiagram
     class TrialMapper {
         +toRecord()
         +fromRecord()
-        +toApiPayload()
         +fromApi()
     }
     class DataApiClient
@@ -444,8 +445,8 @@ classDiagram
 |---|---|---|
 | **DexieTrialStore** | Implémente `TrialRepository` et `Outbox` dans une seule classe, pour que la clôture d'un essai et son ajout à la file soient dans la même transaction | Dexie.js |
 | **DexieSettingsStore** | Implémente `SettingsRepository` | Dexie.js |
-| **TrialMapper** | Convertit les objets du métier en enregistrements Dexie.js et en données JSON pour la Data API, et inversement | — |
-| **DataApiClient** | Appelle la fonction d'envoi ([ADR 0010](../adr/0010-envoi-essai-fonction-sql.md)) et lit les essais par numéro d'ordre ([ADR 0011](../adr/0011-repere-numero-ordre-verrou.md)), avec le jeton de la session | `fetch`, Data API Neon |
+| **TrialMapper** | Convertit les objets du métier en enregistrements Dexie.js, et les essais reçus de la Data API en enregistrements. L'enregistrement Dexie.js a déjà la forme attendue par `submit_trial` : il est envoyé tel quel, sans la marque « refusé » propre à l'appareil | — |
+| **DataApiClient** | Appelle `submit_trial` et `save_settings` ([ADR 0010](../adr/0010-envoi-essai-fonction-sql.md), [ADR 0012](../adr/0012-conflits-parametres-heure-appareil.md)) et lit les essais par numéro d'ordre ([ADR 0011](../adr/0011-repere-numero-ordre-verrou.md)), avec le jeton de la session et rien d'autre (ES15). Traduit les réponses : valeur refusée → essai refusé (ES07) ; jeton ou compte refusé → reconnexion ; le reste → nouvel essai plus tard | @neondatabase/postgrest-js ([ADR 0031](../adr/0031-client-data-api-postgrest.md)) |
 | **HankoSession** | Implémente `AuthSession`. Enregistre le composant `<hanko-auth>` de l'écran de connexion ; jeton dans un cookie `SameSite=Strict` | hanko-elements ([ADR 0030](../adr/0030-connexion-hanko-elements.md)) |
 | **BrowserNetwork** | Implémente `Network` | `navigator.onLine` |
 | **MonotonicClock** et **WallClock** | La monotone mesure les durées, insensible aux changements d'heure. La murale date les essais et les paramètres | `performance.now()`, `Date` |
