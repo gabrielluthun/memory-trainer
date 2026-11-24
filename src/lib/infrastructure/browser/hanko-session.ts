@@ -58,4 +58,9 @@ export class BrowserNetwork implements Network {
 	isOnline(): boolean {
 		return navigator.onLine;
 	}
+
+	onOnline(listener: () => void): Cancel {
+		window.addEventListener('online', listener);
+		return () => window.removeEventListener('online', listener);
+	}
 }
