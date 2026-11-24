@@ -165,6 +165,8 @@ Une fiche par cas du lot 1. Les fiches des autres lots seront rédigées juste a
 
 Décision : en mode personnalisé, la durée de rappel reste de **4 minutes**, conformément à RG15.
 
+Décision : le **dernier mode** et les **derniers réglages personnalisés** (nombre d'éléments, durée de mémorisation) de chaque épreuve sont gardés avec les paramètres, comme les pauses, et donc synchronisés ([ADR 0028](../adr/0028-derniers-reglages-de-lancement.md)). Avant tout essai personnalisé, ils valent le format standard (80 chiffres, 1 minute pour Numbers).
+
 Décision : l'essai « en cours » est enregistré au **démarrage de la mémorisation**, et non au lancement. Une interruption pendant la pause avant la mémorisation ne laisse donc rien à décider (5d), comme l'abandon sans question (5c).
 
 Décision : les dernières durées de pause utilisées pour chaque épreuve sont gardées **avec les paramètres**, et donc synchronisées entre les appareils comme eux ([ADR 0012](../adr/0012-conflits-parametres-heure-appareil.md)).
