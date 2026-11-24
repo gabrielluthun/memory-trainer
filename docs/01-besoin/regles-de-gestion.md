@@ -31,7 +31,7 @@ Amont : [exigences](exigences.md), [contraintes](contraintes.md). Statuts, déta
 
 | ID | Règle | Statut |
 |---|---|---|
-| RG15 | Le **mode personnalisé** permet de régler la durée de mémorisation et le **nombre d'éléments**, de très peu d'éléments jusqu'au format standard et au-delà, pour progresser par paliers. Ses essais sont **mélangés aux essais standard** dans l'historique, les statistiques et les meilleures performances, mais **reconnaissables par un code couleur**. | Décision |
+| RG15 | Le **mode personnalisé** permet de régler la durée de mémorisation et le **nombre d'éléments**, de très peu d'éléments jusqu'au format standard et au-delà, pour progresser par paliers. Ses essais sont **mélangés aux essais standard** dans l'historique, les statistiques et les meilleures performances, mais **reconnaissables par un code couleur**. Au lancement d'un essai, le **dernier mode choisi** et les **derniers réglages du mode personnalisé** de l'épreuve sont proposés, comme les pauses (RG25) ; avant tout essai personnalisé, ces réglages valent le **format standard**. | Décision |
 
 ## Points IAM (statistiques)
 
