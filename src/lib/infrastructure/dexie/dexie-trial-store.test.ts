@@ -1,7 +1,8 @@
+import Dexie from 'dexie';
 import { afterEach, describe, expect, it } from 'vitest';
 import { FakeMonotonicClock } from '../../../../tests/fakes/fake-monotonic-clock';
 import { NumbersDiscipline } from '../../domain/disciplines/numbers';
-import { PausedBeforeMemorization } from '../../domain/trial/trial';
+import { PausedBeforeMemorization, type TrialSnapshot } from '../../domain/trial/trial';
 import { TrialMapper } from '../trial-mapper';
 import { MemoryTrainerDatabase } from './database';
 import { DexieTrialStore } from './dexie-trial-store';
@@ -87,5 +88,112 @@ describe('DexieTrialStore', () => {
 		const store = new DexieTrialStore(db, new TrialMapper());
 
 		expect(await store.get('unknown')).toBeNull();
+	});
+});
+
+const snapshot = (id: string, overrides: Partial<TrialSnapshot> = {}): TrialSnapshot => ({
+	id,
+	discipline: 'numbers',
+	mode: 'standard',
+	format: { itemCount: 3, memorizationMs: 60_000, recallMs: 240_000 },
+	displayPattern: [2, 3],
+	items: [1, 2, 3],
+	startedAt: new Date('2026-11-23T21:14:00Z'),
+	phase: 'recalling',
+	answers: [1, null, null],
+	memorizationMs: 40_000,
+	recallMs: 20_000,
+	...overrides
+});
+
+describe('DexieTrialStore — the ongoing trial (US10, SEQ02)', () => {
+	const open = () => {
+		db = new MemoryTrainerDatabase(`test-${crypto.randomUUID()}`);
+		return new DexieTrialStore(db, new TrialMapper());
+	};
+
+	it('RG24 — keeps the ongoing trial on the device, dates included', async () => {
+		const store = open();
+
+		await store.saveSnapshot(snapshot('trial-a'));
+
+		expect(await store.loadSnapshot()).toEqual(snapshot('trial-a'));
+	});
+
+	it('SEQ01 — gives null when no trial was left ongoing', async () => {
+		expect(await open().loadSnapshot()).toBeNull();
+	});
+
+	it('SEQ02 — each save replaces the previous one: one ongoing trial at most', async () => {
+		const store = open();
+		await store.saveSnapshot(snapshot('trial-a', { recallMs: 2_000 }));
+		await store.saveSnapshot(snapshot('trial-a', { recallMs: 4_000 }));
+		await store.saveSnapshot(snapshot('trial-b'));
+
+		expect(await db?.ongoing.count()).toBe(1);
+		expect((await store.loadSnapshot())?.id).toBe('trial-b');
+	});
+
+	it('CU06 — the ongoing trial never joins the upload queue', async () => {
+		const store = open();
+
+		await store.saveSnapshot(snapshot('trial-a'));
+
+		expect(await db?.outbox.count()).toBe(0);
+		expect(await db?.trials.count()).toBe(0);
+	});
+
+	it('RG23 — "Ne pas garder" erases the ongoing trial, and only that one', async () => {
+		const store = open();
+		await store.saveSnapshot(snapshot('trial-b'));
+
+		await store.deleteSnapshot('trial-a');
+		expect(await store.loadSnapshot()).not.toBeNull();
+
+		await store.deleteSnapshot('trial-b');
+		expect(await store.loadSnapshot()).toBeNull();
+	});
+
+	it('ENF07 — closing a trial erases its ongoing save in the same transaction', async () => {
+		const store = open();
+		await store.saveSnapshot(snapshot('trial-a'));
+
+		await store.close(completedTrial('trial-a'));
+
+		expect(await store.loadSnapshot()).toBeNull();
+		expect(await db?.trials.count()).toBe(1);
+	});
+
+	it('ENF07 — closing another trial keeps the ongoing save', async () => {
+		const store = open();
+		await store.saveSnapshot(snapshot('trial-b'));
+
+		await store.close(completedTrial('trial-a'));
+
+		expect((await store.loadSnapshot())?.id).toBe('trial-b');
+	});
+
+	it('RG18 — a late save of a trial already closed is ignored', async () => {
+		const store = open();
+		await store.close(completedTrial('trial-a'));
+
+		await store.saveSnapshot(snapshot('trial-a'));
+
+		expect(await store.loadSnapshot()).toBeNull();
+	});
+});
+
+describe('MemoryTrainerDatabase — version 2', () => {
+	it('keeps the trials, the queue and the settings of a version 1 device', async () => {
+		const name = `test-${crypto.randomUUID()}`;
+		const v1 = new Dexie(name);
+		v1.version(1).stores({ trials: 'trial_id, started_at', outbox: 'trial_id', settings: 'id' });
+		await v1.table('outbox').put({ trial_id: 'trial-a' });
+		v1.close();
+
+		db = new MemoryTrainerDatabase(name);
+
+		expect(await db.outbox.toArray()).toEqual([{ trial_id: 'trial-a' }]);
+		expect(await db.ongoing.count()).toBe(0);
 	});
 });
