@@ -87,7 +87,8 @@ describe('TrialMapper', () => {
 			startedAt: new Date('2026-11-22T10:00:00Z'),
 			itemCount: 2,
 			score: 1,
-			memorizationMs: 40_000
+			memorizationMs: 40_000,
+			rejected: false
 		});
 	});
 
