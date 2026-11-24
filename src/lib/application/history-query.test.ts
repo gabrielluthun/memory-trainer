@@ -10,7 +10,8 @@ const summary = (id: string, mode: 'standard' | 'custom'): TrialSummary => ({
 	startedAt: new Date('2026-11-22T10:00:00Z'),
 	itemCount: 80,
 	score: 70,
-	memorizationMs: 50_000
+	memorizationMs: 50_000,
+	rejected: false
 });
 
 /** A repository already holding these trials, most recent first. */
