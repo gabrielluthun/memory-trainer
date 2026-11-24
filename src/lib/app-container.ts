@@ -6,16 +6,19 @@ import { InterruptedTrialRecovery } from './application/interrupted-trial-recove
 import { SettingsService } from './application/settings-service.svelte';
 import { SyncService } from './application/sync-service.svelte';
 import { TrialSession } from './application/trial-session.svelte';
+import { UpdateService } from './application/update-service.svelte';
 import { NumbersDiscipline } from './domain/disciplines/numbers';
 import { BrowserScheduler } from './infrastructure/browser/browser-scheduler';
 import { BrowserMonotonicClock, BrowserWallClock } from './infrastructure/browser/clocks';
 import { CryptoIdGenerator } from './infrastructure/browser/crypto-id-generator';
 import { CryptoRandomSource } from './infrastructure/browser/crypto-random-source';
+import { FetchAppVersion } from './infrastructure/browser/fetch-app-version';
 import { BrowserNetwork, HankoSession } from './infrastructure/browser/hanko-session';
 import {
 	deviceStorage,
 	ParaglideInterfaceLanguage
 } from './infrastructure/browser/paraglide-interface-language.svelte';
+import { PwaUpdater } from './infrastructure/browser/pwa-updater';
 import { DataApiClient } from './infrastructure/data-api/data-api-client';
 import { MemoryTrainerDatabase } from './infrastructure/dexie/database';
 import { DexieSettingsStore } from './infrastructure/dexie/dexie-settings-store';
@@ -36,6 +39,8 @@ export interface App {
 	connection: ConnectionService;
 	/** Synchronisation (CU17): opening, session created, end of a trial, network back, every 5 min. */
 	sync: SyncService;
+	/** A new version (deployment, section 5): compared before each sync, offered outside a trial. */
+	update: UpdateService;
 	/** Resolves once the settings of the device are loaded. */
 	ready: Promise<void>;
 }
@@ -61,6 +66,7 @@ function build(): App {
 	// One Hanko session for signing in and for the token of the Data API (ADR 0030, ADR 0031).
 	const auth = new HankoSession(PUBLIC_HANKO_API_URL);
 	const network = new BrowserNetwork();
+	const update = new UpdateService(new FetchAppVersion(__APP_VERSION__), new PwaUpdater());
 	const sync = new SyncService({
 		outbox: trials,
 		trials,
@@ -70,6 +76,7 @@ function build(): App {
 		network,
 		scheduler,
 		wallClock,
+		update,
 		onSettingsReceived: (received) => settings.adopt(received)
 	});
 	// Every way of closing a trial ends with a synchronisation (CU17).
@@ -91,6 +98,7 @@ function build(): App {
 		recovery: new InterruptedTrialRecovery({ discipline, clock, repository: closing }),
 		connection: new ConnectionService(auth, network),
 		sync,
+		update,
 		ready: settings.load()
 	};
 }
