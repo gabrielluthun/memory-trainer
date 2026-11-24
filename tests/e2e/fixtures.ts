@@ -55,14 +55,13 @@ export const test = base.extend<{
 	/** Signed in by default: the other tests are not about signing in (CU16). */
 	session: ['valid', { option: true }],
 	hanko: [
-		async ({ page, session, baseURL }, use) => {
+		async ({ context, session, baseURL }, use) => {
 			const state: HankoState = { valid: session === 'valid' };
 			if (state.valid) {
-				await page
-					.context()
-					.addCookies([{ name: 'hanko', value: SESSION_TOKEN, url: baseURL ?? '' }]);
+				await context.addCookies([{ name: 'hanko', value: SESSION_TOKEN, url: baseURL ?? '' }]);
 			}
-			await page.route(`${HANKO_API_URL}/**`, async (route) => {
+			// Context-wide: requests of the service worker are answered too (US20).
+			await context.route(`${HANKO_API_URL}/**`, async (route) => {
 				const request = route.request();
 				const path = new URL(request.url()).pathname;
 				if (request.method() === 'OPTIONS') return answer(route, 204);
@@ -91,14 +90,14 @@ export const test = base.extend<{
 		{ auto: true }
 	],
 	dataApi: [
-		async ({ page }, use) => {
+		async ({ context }, use) => {
 			const state: DataApiState = {
 				calls: [],
 				trialAnswer: { status: 200, body: 'inserted' },
 				remoteTrials: [],
 				account: null
 			};
-			await page.route(`${DATA_API_URL}/**`, async (route) => {
+			await context.route(`${DATA_API_URL}/**`, async (route) => {
 				const request = route.request();
 				if (request.method() === 'OPTIONS') return answer(route, 204);
 				const url = new URL(request.url());
