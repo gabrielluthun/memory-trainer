@@ -74,7 +74,8 @@ Déclenchée par la fusion d'une pull request `release/X.Y.Z` ou `hotfix/X.Y.Z` 
 | **2. Export complet** | `pg_dump` de toute la base, envoyé dans l'espace privé de R2 ; le nom du fichier porte la date et la version | Rôle de migration, écriture dans R2 |
 | **3. Migrations** | `dbmate up` : applique les migrations pas encore appliquées, chacune dans une transaction, sous un verrou qui fait attendre une autre exécution | Rôle de migration |
 | **4. Compte autorisé** | Enregistre le compte unique dans `accounts`, s'il n'y est pas déjà ([modèle physique](../04-specifications/bdd/mpd.md)) | Rôle de migration, identifiant du compte |
-| **5. Publication** | Envoie le build à Cloudflare Pages | Jeton Cloudflare limité à Pages |
+| **5. Publication** | Envoie le build à Cloudflare Pages | Jeton Cloudflare limité à Pages et Workers |
+| **6. Worker de sauvegarde** | `wrangler deploy` : code et tâche planifiée du Worker ; puis `wrangler secret put` de l'adresse de la base ([ADR 0032](../04-specifications/adr/0032-worker-de-sauvegarde.md)) | Jeton Cloudflare limité à Pages et Workers, adresse de la base avec `backup_reader` |
 
 Les connexions à PostgreSQL sont chiffrées (TLS obligatoire). `pg_dump` doit avoir la même version majeure que le serveur Neon.
 
@@ -85,6 +86,7 @@ Les connexions à PostgreSQL sont chiffrées (TLS obligatoire). `pg_dump` doit a
 | **Build ou export** | Rien n'a changé : ni la base, ni le site | Corriger, puis relancer la tâche |
 | **Migration** | La migration en échec est annulée par sa transaction ; les migrations précédentes du même lot restent appliquées ; **le site n'est pas publié** | Lire l'erreur, corriger par un hotfix ; restaurer depuis l'export de l'étape 2 seulement si une migration réussie a abîmé des données ([maintenance](maintenance.md)) |
 | **Publication** | La base est migrée, l'ancienne version du site reste en ligne | Relancer la tâche : les étapes 2 à 4 n'ont plus rien à faire ou sont sans effet |
+| **Worker** | Le site est publié ; l'ancien Worker continue ses sauvegardes | Relancer la tâche |
 
 Chaque échec envoie un e-mail de GitHub ([sécurité du back](../05-securite/back.md)).
 
@@ -94,8 +96,9 @@ Chaque échec envoie un e-mail de GitHub ([sécurité du back](../05-securite/ba
 |---|---|---|---|---|
 | **Adresse de la base avec le rôle de migration** (connexion directe, sans pooler) | `MIGRATION_DATABASE_URL` | Environnement `production` | Export, migrations, compte autorisé, reprise | Propriétaire des tables ; ne peut pas modifier un essai terminé ([accès aux données](../04-specifications/acces.md)) |
 | **Clé R2**, avec l'adresse et le nom de l'espace | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT`, `R2_BUCKET` | Environnement `production` | Export, reprise | Lecture et écriture sur l'espace de sauvegarde seulement |
+| **Adresse de la base avec le rôle `backup_reader`** | `BACKUP_DATABASE_URL` | Environnement `production` | Worker (envoyée comme secret du Worker) | Lecture seule, sans fonction ([accès aux données](../04-specifications/acces.md)) |
 | **Identifiant du compte autorisé** | `AUTHORIZED_ACCOUNT_ID` | Environnement `production` | Compte autorisé | — |
-| **Jeton Cloudflare**, avec l'identifiant du compte | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | Environnement `production` | Publication | Modification de Cloudflare Pages seulement |
+| **Jeton Cloudflare**, avec l'identifiant du compte | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | Environnement `production` | Publication, Worker | Modification de Cloudflare Pages et des Workers seulement |
 
 Les **adresses publiques** du front ne sont pas des secrets (ES08) : elles sont rangées en **variables** de l'environnement `production`, et lues au build ([`src/env.ts`](../../src/env.ts)). Un build sans elles échoue.
 
