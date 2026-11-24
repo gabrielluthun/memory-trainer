@@ -146,7 +146,7 @@ Contrôle du sprint 0 : un faux secret est bloqué par chacun des trois barrages
 |---|---|
 | **Nouvelle version publiée** | À l'ouverture, ou au retour du réseau, le service worker télécharge la nouvelle version, sans l'appliquer. |
 | **Hors essai** (accueil, historique, résultat, paramètres) | Un encart « Nouvelle version disponible » s'affiche en bas de l'écran, avec un bouton pour l'installer et une croix qui le ferme jusqu'à la prochaine ouverture. |
-| **Pendant un essai** (lancement, pauses, mémorisation, rappel, abandon) | Aucun encart ; la version en cours n'est jamais remplacée. |
+| **Pendant un essai** (lancement, pauses, mémorisation, rappel, abandon) | Aucun encart ; la version en cours n'est jamais remplacée. Une version installée depuis une autre fenêtre ne recharge celle-ci qu'après l'essai. |
 | **Encart fermé ou ignoré** | L'application continue de fonctionner, hors ligne compris. Les essais terminés s'ajoutent à la file d'envoi, mais **la synchronisation attend** la mise à jour : l'encart et la pastille de synchronisation l'indiquent. |
 | **Après la mise à jour** | La base locale (Dexie.js) passe au nouveau format et **convertit la file d'envoi**, puis la synchronisation reprend. |
 
