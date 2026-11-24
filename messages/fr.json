@@ -172,5 +172,6 @@
 	"settings_signed_in": "Connecté avec une passkey",
 	"settings_signed_out": "Non connecté : vos essais restent sur cet appareil.",
 	"settings_connection_unknown": "Connexion vérifiée au retour du réseau.",
-	"settings_sign_out": "Se déconnecter"
+	"settings_sign_out": "Se déconnecter",
+	"status_rejected": "Refusé par la base"
 }
