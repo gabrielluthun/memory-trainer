@@ -197,3 +197,13 @@ export interface AppUpdater {
 	/** Installs the downloaded version and reloads the page. */
 	apply(): Promise<void>;
 }
+
+/** The installation of the app on this device (CU18, technical constraints). */
+export interface InstallContext {
+	/** Opened from its icon, in its own window, rather than in a browser tab. */
+	isInstalled(): boolean;
+	/** iPhone or iPad: without installation, Safari may erase the data of the device. */
+	isAppleMobile(): boolean;
+	/** Asks the browser to keep the data of the device; false when refused or not possible. */
+	persist(): Promise<boolean>;
+}
