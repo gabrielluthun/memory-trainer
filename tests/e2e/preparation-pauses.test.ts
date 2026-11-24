@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 
 // US23 (Me préparer avant la mémorisation et avant le rappel). The browser clock is faked.
 

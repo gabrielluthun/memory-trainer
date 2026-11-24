@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 
 // RG11 and ADR 0027: the display pattern ("2 3"...) shapes memorization and recall.
 

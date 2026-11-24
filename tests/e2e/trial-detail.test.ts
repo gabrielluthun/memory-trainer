@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 // US11 (Voir le détail d'un essai): the corrected copy of mock-up 07, for Numbers.
 

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 
 // US10 (Abandonner un essai), interrupted trial (CU06, TR06): the app is closed during a trial,
 // then reopened. Each test starts on an empty device.

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 
 // US19 (Choisir la langue de l'interface), ADR 0029. Each test starts on an empty device.
 
