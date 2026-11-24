@@ -8,6 +8,7 @@
 		splitGroup,
 		type DisplayPattern
 	} from '../../domain/navigation/display-pattern';
+	import { m } from '../../paraglide/messages';
 
 	let {
 		items,
@@ -36,7 +37,10 @@
 		{/each}
 	</ol>
 	<p class="visually-hidden" aria-live="polite">
-		Groupe {groupIndex + 1} : {groups[groupIndex]?.replaceAll(' ', '').split('').join(' ')}
+		{m.trial_group_announcement({
+			number: groupIndex + 1,
+			digits: groups[groupIndex]?.replaceAll(' ', '').split('').join(' ') ?? ''
+		})}
 	</p>
 </div>
 

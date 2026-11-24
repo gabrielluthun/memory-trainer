@@ -6,6 +6,7 @@
 	 */
 	import type { ItemResult } from '../../domain/disciplines/discipline';
 	import { isSubgroupStart, type DisplayPattern } from '../../domain/navigation/display-pattern';
+	import { m } from '../../paraglide/messages';
 	import { rowMark, rowSizeFor, rowsOf } from '../grid-rows';
 
 	let { results, pattern }: { results: ItemResult<number, number>[]; pattern: DisplayPattern } =
@@ -16,9 +17,9 @@
 	const rows = $derived(rowsOf(results.length, rowSize));
 
 	function label({ position, expected, answer, correct }: ItemResult<number, number>): string {
-		if (correct) return `Case ${position} : ${answer}, juste`;
-		if (answer === null) return `Case ${position} : vide, attendu ${expected}`;
-		return `Case ${position} : ${answer} au lieu de ${expected}`;
+		if (correct) return m.copy_cell_right({ position, answer: answer ?? '' });
+		if (answer === null) return m.copy_cell_blank({ position, expected });
+		return m.copy_cell_wrong({ position, answer, expected });
 	}
 </script>
 
@@ -26,12 +27,12 @@
 
 <section class="sheet" aria-labelledby="copy-title">
 	<div class="sheet-head">
-		<h2 id="copy-title">Copie corrigée</h2>
-		<ul class="legend" aria-label="Légende">
-			<li><span class="sample">7</span> Juste</li>
-			<li><span class="sample wrong"><s>2</s></span> Faux, corrigé en rouge</li>
-			<li><span class="sample blank"></span> Case laissée vide</li>
-			<li><span class="mark">17<small>/20</small></span> Note de la ligne</li>
+		<h2 id="copy-title">{m.copy_title()}</h2>
+		<ul class="legend" aria-label={m.copy_legend()}>
+			<li><span class="sample">7</span> {m.copy_legend_right()}</li>
+			<li><span class="sample wrong"><s>2</s></span> {m.copy_legend_wrong()}</li>
+			<li><span class="sample blank"></span> {m.copy_legend_blank()}</li>
+			<li><span class="mark">17<small>/20</small></span> {m.copy_legend_row_mark()}</li>
 		</ul>
 	</div>
 
@@ -61,7 +62,10 @@
 						</li>
 					{/each}
 				</ol>
-				<span class="mark" aria-label="Ligne {rowIndex + 1} : {mark.right} sur {mark.total}">
+				<span
+					class="mark"
+					aria-label={m.copy_row_mark({ row: rowIndex + 1, right: mark.right, total: mark.total })}
+				>
 					{mark.right}<small>/{mark.total}</small>
 				</span>
 			</div>

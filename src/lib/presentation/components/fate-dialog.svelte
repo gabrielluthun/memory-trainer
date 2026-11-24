@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { AbandonChoice } from '../../application/trial-session.svelte';
+	import { m } from '../../paraglide/messages';
 
 	/**
 	 * The three choices of RG23 (mock-ups 06 and 09), in a modal window with no "Annuler" and no
@@ -27,20 +28,21 @@
 		dialog?.showModal();
 	});
 
-	const options: { choice: AbandonChoice; label: string; hint: () => string; tone: string }[] = [
+	// Labels and hints are read in the template, so they follow the language (ADR 0029).
+	const options: {
+		choice: AbandonChoice;
+		label: () => string;
+		hint: () => string;
+		tone: string;
+	}[] = [
 		{
 			choice: 'keep-out-of-stats',
-			label: 'Garder hors statistiques',
-			hint: () => "Visible dans l'historique, sans compter dans les statistiques.",
+			label: m.fate_keep_out,
+			hint: m.fate_keep_out_hint,
 			tone: 'neutral'
 		},
-		{ choice: 'count-as-is', label: 'Compter tel quel', hint: () => countAsIsHint, tone: 'right' },
-		{
-			choice: 'discard',
-			label: 'Ne pas garder',
-			hint: () => "Rien n'est enregistré.",
-			tone: 'wrong'
-		}
+		{ choice: 'count-as-is', label: m.fate_count, hint: () => countAsIsHint, tone: 'right' },
+		{ choice: 'discard', label: m.fate_discard, hint: m.fate_discard_hint, tone: 'wrong' }
 	];
 
 	function choose(choice: AbandonChoice) {
@@ -63,7 +65,7 @@
 			<button type="button" class="option" disabled={chosen} onclick={() => choose(option.choice)}>
 				<span class="dot {option.tone}" aria-hidden="true"></span>
 				<span class="text">
-					<strong>{option.label}</strong>
+					<strong>{option.label()}</strong>
 					<span class="hint">{option.hint()}</span>
 				</span>
 			</button>

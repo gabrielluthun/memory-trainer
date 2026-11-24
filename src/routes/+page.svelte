@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import AppHeader from '#lib/presentation/components/app-header.svelte';
+	import { m } from '#lib/paraglide/messages.js';
 
 	const hour = new Date().getHours();
-	const greeting = hour >= 18 || hour < 5 ? 'Bonsoir.' : 'Bonjour.';
+	const evening = hour >= 18 || hour < 5;
 	const comingSoon = ['Cards', 'Images', 'Words', 'Names', 'International Names'];
 	// Decorative preview of the Numbers sheet (not a real draw).
 	const preview = ['41 59 26 53', '58 97 93 23', '84 62 64 33'];
@@ -16,15 +17,16 @@
 <AppHeader />
 
 <main class="home">
-	<h1>{greeting}</h1>
-	<p class="lead">Une série de Numbers ?</p>
+	<h1>{evening ? m.home_good_evening() : m.home_good_morning()}</h1>
+	<p class="lead">{m.home_lead()}</p>
 
 	<section class="discipline" aria-labelledby="numbers-title">
 		<div class="discipline-text">
 			<h2 id="numbers-title">Numbers</h2>
-			<p>80 chiffres à mémoriser en 1 minute, puis 4 minutes pour les restituer dans l'ordre.</p>
+			<p>{m.home_numbers_description()}</p>
 			<a class="button button-primary" href={resolve('/train/numbers')}>
-				<span aria-hidden="true">▶</span> Lancer un essai
+				<span aria-hidden="true">▶</span>
+				{m.launch_trial()}
 			</a>
 		</div>
 		<div class="preview" aria-hidden="true">
@@ -35,7 +37,7 @@
 	</section>
 
 	<section class="soon" aria-labelledby="soon-title">
-		<h2 id="soon-title">Bientôt</h2>
+		<h2 id="soon-title">{m.home_coming_soon()}</h2>
 		<ul>
 			{#each comingSoon as name (name)}
 				<li>{name}</li>

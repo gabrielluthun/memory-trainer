@@ -13,6 +13,8 @@
 	import PauseCountdown from '#lib/presentation/components/pause-countdown.svelte';
 	import TrialResult from '#lib/presentation/components/trial-result.svelte';
 	import { formatClock, formatCountdown } from '#lib/presentation/format.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
 
 	const session = getApp().session;
 	const trial = $derived(session.current);
@@ -133,7 +135,7 @@
 </script>
 
 <svelte:head>
-	<title>Essai de Numbers — memory-trainer</title>
+	<title>{m.numbers_trial()} — memory-trainer</title>
 </svelte:head>
 
 <svelte:window {onkeydown} />
@@ -158,20 +160,26 @@
 		{#snippet status()}
 			{#if trial.phase === 'memorizing' || trial.phase === 'recalling'}
 				<!-- On a phone, abandoning is the ✕ of the header (mock-ups 04 and 05). -->
-				<button class="close" type="button" aria-label="Abandonner" onclick={abandon}>✕</button>
+				<button class="close" type="button" aria-label={m.abandon()} onclick={abandon}>✕</button>
 			{/if}
 			{#if trial.phase === 'memorizing'}
-				<span>Groupe <strong>{session.groupIndex + 1}</strong> sur {session.groupCount}</span>
+				<span>
+					{m.trial_group()} <strong>{session.groupIndex + 1}</strong>
+					{m.trial_of({ count: session.groupCount })}
+				</span>
 				<span class="clock" data-testid="memorization-clock">
-					{formatClock(memorizationElapsed)}
+					{formatClock(memorizationElapsed, getLocale())}
 				</span>
 				<span>/ {formatCountdown(trial.format.memorizationMs)}</span>
 			{:else if trial.phase === 'recalling'}
-				<span>Case <strong>{session.selected + 1}</strong> sur {trial.items.length}</span>
+				<span>
+					{m.trial_cell()} <strong>{session.selected + 1}</strong>
+					{m.trial_of({ count: trial.items.length })}
+				</span>
 				<span class="clock" data-testid="recall-countdown">{formatCountdown(recallRemaining)}</span>
-				<span>restantes</span>
+				<span>{m.trial_left()}</span>
 			{:else if trial.phase === 'paused-before-memorization' || trial.phase === 'paused-before-recall'}
-				<button class="button button-quiet" type="button" onclick={abandon}>Abandonner</button>
+				<button class="button button-quiet" type="button" onclick={abandon}>{m.abandon()}</button>
 			{/if}
 		{/snippet}
 	</TrialHeader>
@@ -183,16 +191,16 @@
 				pattern={session.displayPattern}
 				groupIndex={session.groupIndex}
 			/>
-			<p class="hint">La bande glisse sous le cadre, un groupe à la fois.</p>
+			<p class="hint">{m.trial_slide_hint()}</p>
 
-			<div class="touch-nav" aria-label="Navigation">
+			<div class="touch-nav" aria-label={m.trial_navigation()}>
 				<button class="button button-secondary" type="button" onclick={() => session.toStart()}>
-					Début
+					{m.trial_to_start()}
 				</button>
 				<button
 					class="button button-secondary"
 					type="button"
-					aria-label="Groupe précédent"
+					aria-label={m.trial_previous_group()}
 					onclick={() => session.previous()}
 				>
 					←
@@ -200,7 +208,7 @@
 				<button
 					class="button button-secondary"
 					type="button"
-					aria-label="Groupe suivant"
+					aria-label={m.trial_next_group()}
 					onclick={() => session.next()}
 				>
 					→
@@ -208,25 +216,29 @@
 			</div>
 			<div class="actions">
 				<button class="button button-quiet abandon" type="button" onclick={abandon}>
-					Abandonner
+					{m.abandon()}
 				</button>
 				<button
 					class="button button-primary finished"
 					type="button"
 					onclick={() => session.finishMemorization()}
 				>
-					Finished
+					{m.finished()}
 				</button>
 			</div>
 			<p class="keys">
-				<kbd>→</kbd> groupe suivant <kbd>←</kbd> précédent <kbd>Espace</kbd> début
-				<kbd>Entrée</kbd> terminer
+				<kbd>→</kbd>
+				{m.keys_next_group()} <kbd>←</kbd>
+				{m.keys_previous()} <kbd>{m.keys_space()}</kbd>
+				{m.keys_to_start()}
+				<kbd>{m.keys_enter()}</kbd>
+				{m.keys_finish()}
 			</p>
 		{:else if trial.phase === 'recalling'}
 			<section class="sheet" aria-labelledby="recall-title">
 				<div class="sheet-head">
-					<h1 id="recall-title">Votre rappel</h1>
-					<span>{trial.items.length} chiffres, dans l'ordre</span>
+					<h1 id="recall-title">{m.recall_title()}</h1>
+					<span>{m.recall_count({ count: trial.items.length })}</span>
 				</div>
 				<RecallGrid
 					answers={session.answers}
@@ -244,45 +256,49 @@
 						<button
 							class="button button-secondary"
 							type="button"
-							aria-label="Insérer une case"
+							aria-label={m.recall_insert_cell()}
 							onpointerdown={(event) => event.preventDefault()}
 							onclick={() => session.insert()}
 						>
-							+ Insérer<span class="long"> une case</span>
+							+ {m.recall_insert()}<span class="long"> {m.recall_insert_more()}</span>
 						</button>
 						<button
 							class="button button-secondary"
 							type="button"
-							aria-label="Supprimer la case"
+							aria-label={m.recall_remove_cell()}
 							onpointerdown={(event) => event.preventDefault()}
 							onclick={() => session.remove()}
 						>
-							− Supprimer<span class="long"> la case</span>
+							− {m.recall_remove()}<span class="long"> {m.recall_remove_more()}</span>
 						</button>
 					</div>
 					<div class="ends">
 						<button class="button button-quiet abandon" type="button" onclick={abandon}>
-							Abandonner
+							{m.abandon()}
 						</button>
 						<button
 							class="button button-primary finished"
 							type="button"
 							onclick={() => session.finishRecall()}
 						>
-							Finished
+							{m.finished()}
 						</button>
 					</div>
 				</div>
 			</section>
 			<p class="keys">
-				<kbd>0</kbd>–<kbd>9</kbd> saisir <kbd>⌫</kbd> effacer <kbd>+</kbd> insérer <kbd>−</kbd> supprimer
-				· flèches ou clic pour changer de case
+				<kbd>0</kbd>–<kbd>9</kbd>
+				{m.keys_type()} <kbd>⌫</kbd>
+				{m.keys_erase()} <kbd>+</kbd>
+				{m.keys_insert()} <kbd>−</kbd>
+				{m.keys_remove()}
+				{m.keys_change_cell()}
 			</p>
 		{:else if trial.phase === 'pending-decision'}
 			<FateDialog
-				title="Abandonner l'essai ?"
-				intro="Ce choix est définitif : l'essai ne reprendra pas."
-				countAsIsHint="Corrigé avec les réponses déjà saisies."
+				title={m.abandon_title()}
+				intro={m.abandon_intro()}
+				countAsIsHint={m.abandon_count_hint()}
 				onchoose={choose}
 			/>
 		{:else if trial.countdown.durationMs > 0}
