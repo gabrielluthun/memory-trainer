@@ -66,6 +66,7 @@ Test prévu par ES12 : un texte contenant `<script>` s'affiche tel quel.
 | Stockage | Contenu | Sensible | Protection |
 |---|---|---|---|
 | **IndexedDB** (Dexie.js) | Essais, paramètres, file d'envoi, essai en cours, repère de réception | Faible | Isolé par le navigateur (une seule origine) ; verrouillage de l'appareil |
+| **localStorage** | Langue de l'interface, copie des paramètres lue au démarrage ([ADR 0029](../04-specifications/adr/0029-langue-reactive.md)) | Aucun | Isolé par le navigateur ; les paramètres restent la référence |
 | **Cache du service worker** | Fichiers de l'application et polices | Aucun | Uniquement les fichiers de l'application ; **jamais les réponses de la Data API** |
 | **Jeton de session** | Jeton Hanko | Moyen | Traité en [sécurité du back](back.md) |
 
