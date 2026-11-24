@@ -5,7 +5,7 @@ Amont : [dictionnaire de données](dictionnaire.md), [règles de gestion](../../
 ## En bref
 
 - **5 entités** pour le lot 1 : **COMPTE**, **DISCIPLINE**, **ESSAI**, **ÉLÉMENT** et sa sous-entité **ÉLÉMENT_NUMBERS**.
-- **4 associations** : un compte **réalise** des essais, un essai **relève** d'une discipline, un essai **contient** ses éléments, un compte **règle** chaque discipline (taille des groupes, pauses).
+- **4 associations** : un compte **réalise** des essais, un essai **relève** d'une discipline, un essai **contient** ses éléments, un compte **règle** chaque discipline (motif d'affichage, pauses, derniers réglages de lancement).
 - **Les éléments sont spécialisés par discipline** : ÉLÉMENT porte ce qui est commun (position, juste ou non), ÉLÉMENT_NUMBERS porte les chiffres. Cards, Images, Words et Names ajouteront chacune leur sous-entité.
 - Les 22 données du dictionnaire sont toutes placées, une seule fois.
 - Ces trois choix de modélisation sont tracés dans l'[ADR 0015](../adr/0015-modele-conceptuel-donnees.md).
@@ -26,7 +26,7 @@ flowchart LR
     REALISER(["<b>RÉALISER</b>"])
     RELEVER(["<b>RELEVER DE</b>"])
     CONTENIR(["<b>CONTENIR</b>"])
-    REGLER(["<b>RÉGLER</b><br/>group_pattern<br/>pause_before_memorization_s<br/>pause_before_recall_s"])
+    REGLER(["<b>RÉGLER</b><br/>group_pattern<br/>pause_before_memorization_s<br/>pause_before_recall_s<br/>launch_mode<br/>custom_item_count<br/>custom_memorization_s"])
 
     COMPTE ---|"0,n"| REALISER
     REALISER ---|"1,1"| ESSAI
@@ -56,7 +56,7 @@ flowchart LR
 | **RÉALISER** | COMPTE et ESSAI | COMPTE 0,n — ESSAI 1,1 | Un compte peut n'avoir aucun essai. Un essai appartient à un seul compte. |
 | **RELEVER DE** | ESSAI et DISCIPLINE | ESSAI 1,1 — DISCIPLINE 0,n | Un essai relève d'une seule discipline. Une discipline peut n'avoir aucun essai. |
 | **CONTENIR** | ESSAI et ÉLÉMENT | ESSAI 1,n — ÉLÉMENT 1,1 (R) | Un essai contient au moins un élément. Un élément n'existe que dans son essai. |
-| **RÉGLER** | COMPTE et DISCIPLINE | COMPTE 0,n — DISCIPLINE 0,n | Pour chaque discipline réglée, le compte retient le motif d'affichage et les deux pauses. L'association porte ces trois données. |
+| **RÉGLER** | COMPTE et DISCIPLINE | COMPTE 0,n — DISCIPLINE 0,n | Pour chaque discipline réglée, le compte retient le motif d'affichage, les deux pauses, le dernier mode choisi et les réglages du mode personnalisé. L'association porte ces six données. |
 
 **Spécialisation** : ÉLÉMENT_NUMBERS **est un** ÉLÉMENT. La contrainte **XT** (exclusion et totalité) dit que chaque élément appartient à **une et une seule** sous-entité. Au lot 1, il n'y en a qu'une.
 
