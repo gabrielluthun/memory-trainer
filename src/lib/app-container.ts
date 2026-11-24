@@ -1,6 +1,7 @@
 import { PUBLIC_DATA_API_URL, PUBLIC_HANKO_API_URL } from '$app/env/public';
 import { ConnectionService } from './application/connection-service.svelte';
 import { HistoryQuery } from './application/history-query';
+import { notifyOnClose } from './application/notify-on-close';
 import { InterruptedTrialRecovery } from './application/interrupted-trial-recovery';
 import { SettingsService } from './application/settings-service.svelte';
 import { SyncService } from './application/sync-service.svelte';
@@ -33,7 +34,7 @@ export interface App {
 	recovery: InterruptedTrialRecovery;
 	/** Signing in (CU16): checked at opening, online only. */
 	connection: ConnectionService;
-	/** Synchronisation (CU17): at opening, and when a session is created. */
+	/** Synchronisation (CU17): opening, session created, end of a trial, network back, every 5 min. */
 	sync: SyncService;
 	/** Resolves once the settings of the device are loaded. */
 	ready: Promise<void>;
@@ -56,32 +57,38 @@ function build(): App {
 	const trials = new DexieTrialStore(db, new TrialMapper());
 	const discipline = new NumbersDiscipline();
 	const clock = new BrowserMonotonicClock();
+	const scheduler = new BrowserScheduler();
+	// One Hanko session for signing in and for the token of the Data API (ADR 0030, ADR 0031).
+	const auth = new HankoSession(PUBLIC_HANKO_API_URL);
+	const network = new BrowserNetwork();
+	const sync = new SyncService({
+		outbox: trials,
+		trials,
+		settings: settingsStore,
+		remote: new DataApiClient(PUBLIC_DATA_API_URL, auth, [discipline]),
+		auth,
+		network,
+		scheduler,
+		wallClock,
+		onSettingsReceived: (received) => settings.adopt(received)
+	});
+	// Every way of closing a trial ends with a synchronisation (CU17).
+	const closing = notifyOnClose(trials, () => void sync.sync());
 	const session = new TrialSession({
 		discipline,
 		clock,
 		wallClock,
 		random: new CryptoRandomSource(),
 		ids: new CryptoIdGenerator(),
-		scheduler: new BrowserScheduler(),
-		repository: trials,
+		scheduler,
+		repository: closing,
 		settings
-	});
-	// One Hanko session for signing in and for the token of the Data API (ADR 0030, ADR 0031).
-	const auth = new HankoSession(PUBLIC_HANKO_API_URL);
-	const network = new BrowserNetwork();
-	const sync = new SyncService({
-		outbox: trials,
-		settings: settingsStore,
-		remote: new DataApiClient(PUBLIC_DATA_API_URL, auth, [discipline]),
-		auth,
-		network,
-		wallClock
 	});
 	return {
 		settings,
 		session,
 		history: new HistoryQuery(trials),
-		recovery: new InterruptedTrialRecovery({ discipline, clock, repository: trials }),
+		recovery: new InterruptedTrialRecovery({ discipline, clock, repository: closing }),
 		connection: new ConnectionService(auth, network),
 		sync,
 		ready: settings.load()
