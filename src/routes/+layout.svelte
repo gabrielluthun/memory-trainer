@@ -1,9 +1,38 @@
 <script lang="ts">
 	import '../app.css';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { onMount } from 'svelte';
 	import favicon from '#lib/assets/favicon.svg';
+	import { getApp } from '#lib/app-container.ts';
+	import type { AbandonChoice } from '#lib/application/trial-session.svelte.ts';
+	import type { PendingDecision } from '#lib/domain/trial/trial.ts';
+	import FateDialog from '#lib/presentation/components/fate-dialog.svelte';
+	import { describeInterruptedTrial } from '#lib/presentation/interrupted-trial-text.ts';
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
+
+	const app = getApp();
+
+	/** A trial interrupted by an outside incident, found at opening (SEQ01, CU06). */
+	let interrupted = $state<PendingDecision | null>(null);
+	const text = $derived(interrupted && describeInterruptedTrial(interrupted, new Date()));
+
+	onMount(() => {
+		// A damaged save must not block the app: the next trial replaces it.
+		app.recovery
+			.check()
+			.then((pending) => (interrupted = pending))
+			.catch(() => {});
+	});
+
+	/** "Compter tel quel" shows the result (CU04); the two other choices stay where we are (RG23). */
+	async function choose(choice: AbandonChoice) {
+		const completed = await app.recovery.decide(choice);
+		interrupted = null;
+		if (completed) await goto(resolve('/history/[id]', { id: completed.id }));
+	}
 </script>
 
 <svelte:head>
@@ -11,3 +40,28 @@
 </svelte:head>
 
 {@render children()}
+
+{#if interrupted && text}
+	<FateDialog
+		title={text.title}
+		intro={text.intro}
+		countAsIsHint="Corrigé avec les réponses enregistrées avant l'arrêt."
+		onchoose={choose}
+	>
+		{#snippet badge()}
+			<span class="badge">Essai interrompu</span>
+		{/snippet}
+	</FateDialog>
+{/if}
+
+<style>
+	.badge {
+		display: inline-block;
+		margin-bottom: 1.25rem;
+		padding: 0.35rem 0.75rem;
+		border-radius: 0.5rem;
+		background: color-mix(in srgb, var(--waiting) 14%, transparent);
+		color: var(--waiting);
+		font-weight: 700;
+	}
+</style>
