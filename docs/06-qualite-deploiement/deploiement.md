@@ -71,7 +71,7 @@ Déclenchée par la fusion d'une pull request `release/X.Y.Z` ou `hotfix/X.Y.Z` 
 | Étape | Ce qu'elle fait | Secret utilisé |
 |---|---|---|
 | **1. Build** | Construit l'application depuis le commit fusionné | Aucun |
-| **2. Export complet** | `pg_dump` de toute la base, envoyé dans l'espace privé de R2 ; le nom du fichier porte la date et la version | Rôle de migration, écriture dans R2 |
+| **2. Export complet** | `pg_dump` de toute la base, envoyé dans l'espace privé de R2 ; le nom du fichier porte la date et la version. **Jusqu'à 3 tentatives** de l'ensemble, à 15 puis 30 s d'intervalle : une coupure passagère ou le réveil de Neon n'arrêtent pas la mise en production | Rôle de migration, écriture dans R2 |
 | **3. Migrations** | `dbmate up` : applique les migrations pas encore appliquées, chacune dans une transaction, sous un verrou qui fait attendre une autre exécution | Rôle de migration |
 | **4. Compte autorisé** | Enregistre le compte unique dans `accounts`, s'il n'y est pas déjà ([modèle physique](../04-specifications/bdd/mpd.md)) | Rôle de migration, identifiant du compte |
 | **5. Publication** | Envoie le build à Cloudflare Pages | Jeton Cloudflare limité à Pages et Workers |
