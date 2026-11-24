@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import { FakeAppUpdater } from '../../../tests/fakes/fake-app-updater';
+import { FakeAppVersion } from '../../../tests/fakes/fake-app-version';
 import { FakeAuthSession } from '../../../tests/fakes/fake-auth-session';
 import { FakeMonotonicClock } from '../../../tests/fakes/fake-monotonic-clock';
 import { FakeNetwork } from '../../../tests/fakes/fake-network';
@@ -10,6 +12,7 @@ import { InMemoryTrialRepository } from '../../../tests/fakes/in-memory-trial-re
 import { Settings } from '../domain/settings/settings';
 import type { ReceivedTrial } from './ports';
 import { SYNC_INTERVAL_MS, SyncService } from './sync-service.svelte';
+import { UpdateService } from './update-service.svelte';
 
 const now = new Date('2026-11-24T10:00:00Z');
 
@@ -18,13 +21,16 @@ interface Setup {
 	session?: 'valid' | 'invalid';
 	online?: boolean;
 	settings?: Settings | null;
+	/** What version.json says, or "unreadable"; the device runs 0.1.0. */
+	published?: string;
 }
 
 function setup({
 	queue = ['trial-a', 'trial-b', 'trial-c'],
 	session = 'valid',
 	online = true,
-	settings = null
+	settings = null,
+	published = '0.1.0'
 }: Setup = {}) {
 	const outbox = new InMemoryOutbox(queue.map((id) => InMemoryOutbox.trial(id)));
 	const remote = new FakeRemoteStore();
@@ -34,6 +40,8 @@ function setup({
 	const network = new FakeNetwork(online);
 	const scheduler = new FakeScheduler(new FakeMonotonicClock());
 	const adopted: Settings[] = [];
+	const version = new FakeAppVersion('0.1.0', published);
+	const update = new UpdateService(version, new FakeAppUpdater());
 	const sync = new SyncService({
 		outbox,
 		trials,
@@ -43,9 +51,22 @@ function setup({
 		network,
 		scheduler,
 		wallClock: { now: () => now },
+		update,
 		onSettingsReceived: (received) => adopted.push(received)
 	});
-	return { sync, outbox, remote, auth, settingsRepository, trials, network, scheduler, adopted };
+	return {
+		sync,
+		outbox,
+		remote,
+		auth,
+		settingsRepository,
+		trials,
+		network,
+		scheduler,
+		adopted,
+		version,
+		update
+	};
 }
 
 /** A trial of another device, as the database numbers it (ADR 0011). */
@@ -53,6 +74,39 @@ const received = (sequenceNumber: number): ReceivedTrial => ({
 	id: `remote-${sequenceNumber}`,
 	sequenceNumber,
 	record: { trial_id: `remote-${sequenceNumber}` }
+});
+
+describe('SyncService — waiting for the update (ADR 0023)', () => {
+	it('another version is published: nothing is sent or received, the sync awaits the update', async () => {
+		const { sync, outbox, remote } = setup({ published: '0.2.0' });
+
+		await sync.sync();
+
+		expect(remote.sentTrials).toEqual([]);
+		expect(remote.fetchedAfter).toEqual([]);
+		expect(outbox.ids).toEqual(['trial-a', 'trial-b', 'trial-c']);
+		expect(sync.state).toBe('awaiting-update');
+		expect(sync.lastSyncedAt).toBeNull();
+	});
+
+	it('version.json cannot be read: nothing is sent, the sync tries again later', async () => {
+		const { sync, outbox, remote } = setup({ published: 'unreadable' });
+
+		await sync.sync();
+
+		expect(remote.sentTrials).toEqual([]);
+		expect(outbox.ids).toEqual(['trial-a', 'trial-b', 'trial-c']);
+		expect(sync.state).toBe('failed');
+	});
+
+	it('offline: the version is not even read', async () => {
+		const { sync, version } = setup({ online: false, published: '0.2.0' });
+
+		await sync.sync();
+
+		expect(version.reads).toBe(0);
+		expect(sync.state).toBe('idle');
+	});
 });
 
 describe('SyncService — sending the queue (CU17, SEQ05)', () => {
