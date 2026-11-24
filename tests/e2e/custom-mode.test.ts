@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 
 // US09 (S'entraîner en mode personnalisé), TR01 and TR07. Each test starts on an empty device.
 

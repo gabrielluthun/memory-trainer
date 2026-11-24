@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 
 // US12 (Consulter mon historique), CU07. Each test starts on an empty device.
 

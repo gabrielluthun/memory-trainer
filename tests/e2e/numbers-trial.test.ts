@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 
 // US01 (S'entraîner à Numbers) and US07 (Naviguer et terminer la mémorisation plus tôt).
 // The browser clock is faked, so the 1 minute and 4 minute limits are checked for real.

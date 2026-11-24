@@ -160,5 +160,17 @@
 	"settings_pauses_hint": "Offered at launch; changing the pauses at launch updates them here.",
 	"settings_pause_before_memorization": "Before memorization",
 	"settings_pause_before_recall": "Before recall",
-	"settings_saved": "Saved on this device."
+	"settings_saved": "Saved on this device.",
+
+	"sign_in_title": "Sign in",
+	"sign_in_lead": "To find your trials on your computer, phone and tablet.",
+	"sign_in_devices": "Face ID, Touch ID, Windows Hello or the device passcode.",
+	"sign_in_offline": "Continue offline",
+	"sign_in_offline_note": "Your trials stay on this device and will be sent once you sign in.",
+	"status_signed_out": "Not signed in",
+	"settings_account": "Account",
+	"settings_signed_in": "Signed in with a passkey",
+	"settings_signed_out": "Not signed in: your trials stay on this device.",
+	"settings_connection_unknown": "Checked when the network is back.",
+	"settings_sign_out": "Sign out"
 }

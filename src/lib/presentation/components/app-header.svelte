@@ -1,10 +1,15 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import { getApp } from '../../app-container';
 	import { m } from '../../paraglide/messages';
 	import Logo from './logo.svelte';
 
-	// The sync status (US21) joins the header with its user story.
+	/** Minimal: the brand only, as on the sign-in screen (mock-up 11). */
+	let { minimal = false }: { minimal?: boolean } = $props();
+
+	// Not signed in: a status that opens the sign-in screen (CU16). The sync status joins it later.
+	const connection = getApp().connection;
 	// Labels are messages, read in the template so they follow the language (ADR 0029).
 	const links = [
 		{ href: resolve('/'), label: m.home, icon: 'home' },
@@ -26,30 +31,38 @@
 		<Logo />
 		<span>memory-trainer</span>
 	</a>
-	<!-- On a computer, links in the top bar; on a phone, a tab bar at the bottom (wireframes). -->
-	<nav aria-label={m.main_navigation()}>
-		{#each links as link (link.href)}
-			<a
-				href={link.href}
-				class:active={isActive(link.href)}
-				aria-current={isActive(link.href) ? 'page' : undefined}
-			>
-				<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-					{#if link.icon === 'home'}
-						<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z" />
-					{:else if link.icon === 'list'}
-						<path d="M4 6h16M4 12h16M4 18h10" />
-					{:else}
-						<circle cx="12" cy="12" r="3.2" />
-						<path
-							d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"
-						/>
-					{/if}
-				</svg>
-				<span>{link.label()}</span>
-			</a>
-		{/each}
-	</nav>
+	{#if !minimal}
+		<!-- On a computer, links in the top bar; on a phone, a tab bar at the bottom (wireframes). -->
+		<nav aria-label={m.main_navigation()}>
+			{#each links as link (link.href)}
+				<a
+					href={link.href}
+					class:active={isActive(link.href)}
+					aria-current={isActive(link.href) ? 'page' : undefined}
+				>
+					<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+						{#if link.icon === 'home'}
+							<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z" />
+						{:else if link.icon === 'list'}
+							<path d="M4 6h16M4 12h16M4 18h10" />
+						{:else}
+							<circle cx="12" cy="12" r="3.2" />
+							<path
+								d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"
+							/>
+						{/if}
+					</svg>
+					<span>{link.label()}</span>
+				</a>
+			{/each}
+		</nav>
+		{#if connection.status === 'signed-out'}
+			<button class="status" type="button" onclick={() => connection.ask()}>
+				<span class="dot" aria-hidden="true"></span>
+				{m.status_signed_out()}
+			</button>
+		{/if}
+	{/if}
 </header>
 
 <style>
@@ -72,6 +85,26 @@
 	nav {
 		display: flex;
 		gap: 0.25rem;
+	}
+	.status {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-left: auto;
+		padding: 0.45rem 1rem;
+		border: 0;
+		border-radius: 999px;
+		background: color-mix(in srgb, var(--waiting) 14%, transparent);
+		color: var(--waiting);
+		font: inherit;
+		font-weight: 500;
+		cursor: pointer;
+	}
+	.dot {
+		width: 0.55rem;
+		height: 0.55rem;
+		border-radius: 50%;
+		background: currentColor;
 	}
 	nav a {
 		padding: 0.5rem 1rem;

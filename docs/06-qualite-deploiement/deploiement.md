@@ -97,6 +97,14 @@ Chaque échec envoie un e-mail de GitHub ([sécurité du back](../05-securite/ba
 | **Identifiant du compte autorisé** | `AUTHORIZED_ACCOUNT_ID` | Environnement `production` | Compte autorisé | — |
 | **Jeton Cloudflare**, avec l'identifiant du compte | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | Environnement `production` | Publication | Modification de Cloudflare Pages seulement |
 
+Les **adresses publiques** du front ne sont pas des secrets (ES08) : elles sont rangées en **variables** de l'environnement `production`, et lues au build ([`src/env.ts`](../../src/env.ts)). Un build sans elles échoue.
+
+| Variable | Nom dans GitHub | Utilisée par |
+|---|---|---|
+| **Adresse de l'API Hanko** | `PUBLIC_HANKO_API_URL` | Build : écran de connexion ([ADR 0030](../04-specifications/adr/0030-connexion-hanko-elements.md)) |
+
+Dans les contrôles et les tests de bout en bout, une adresse factice (`https://hanko.test`) remplace l'adresse réelle : Hanko y est simulé ([stratégie de tests](tests.md)).
+
 Aucun de ces secrets n'est sur le poste du développeur ([surface d'attaque](../05-securite/surface-attaque.md)). La procédure en cas de fuite est dans la [sécurité de la base](../05-securite/bdd.md), section 3.
 
 ## 3. Migrations (dbmate)

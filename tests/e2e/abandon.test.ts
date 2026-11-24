@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 
 // US10 (Abandonner un essai), voluntary abandon (CU05). Each test starts on an empty device.
 

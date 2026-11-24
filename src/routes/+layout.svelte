@@ -8,6 +8,7 @@
 	import type { AbandonChoice } from '#lib/application/trial-session.svelte.ts';
 	import type { PendingDecision } from '#lib/domain/trial/trial.ts';
 	import FateDialog from '#lib/presentation/components/fate-dialog.svelte';
+	import SignInScreen from '#lib/presentation/components/sign-in-screen.svelte';
 	import { describeInterruptedTrial } from '#lib/presentation/interrupted-trial-text.ts';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
@@ -24,6 +25,8 @@
 	);
 
 	onMount(() => {
+		// Online without a session: the sign-in screen, until "Continuer hors connexion" (CU16).
+		void app.connection.open();
 		// A damaged save must not block the app: the next trial replaces it.
 		app.recovery
 			.check()
@@ -43,7 +46,11 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-{@render children()}
+{#if app.connection.prompting}
+	<SignInScreen ondismiss={() => app.connection.dismiss()} />
+{:else}
+	{@render children()}
+{/if}
 
 {#if interrupted && text}
 	<FateDialog

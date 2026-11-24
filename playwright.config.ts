@@ -18,6 +18,8 @@ export default defineConfig({
 	},
 	webServer: {
 		command: `npm run build && npm run preview -- --port ${port} --strictPort`,
+		// Simulated services (tests/e2e/fixtures.ts): these addresses win over the .env file.
+		env: { PUBLIC_HANKO_API_URL: 'https://hanko.test' },
 		port,
 		reuseExistingServer: !process.env.CI
 	},

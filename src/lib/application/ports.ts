@@ -84,3 +84,23 @@ export interface SettingsRepository {
 export interface InterfaceLanguage {
 	apply(language: Language): void;
 }
+
+/**
+ * The session of the practitioner (CU16, ADR 0030), without knowing it is Hanko. Signing in itself
+ * happens in Hanko's own screen; the app only reads the session and follows its changes.
+ */
+export interface AuthSession {
+	/** Asks Hanko whether the session is still open (network). Rejects when Hanko is unreachable. */
+	isValid(): Promise<boolean>;
+	/** The session token (JWT) for the Data API, or null without a session. */
+	token(): string | null;
+	/** Ends the session of this device (ES03). */
+	signOut(): Promise<void>;
+	/** Called with true when a session starts, false when it ends or expires. */
+	onChange(listener: (signedIn: boolean) => void): Cancel;
+}
+
+/** Whether the device is online. `navigator.onLine` in the browser. */
+export interface Network {
+	isOnline(): boolean;
+}

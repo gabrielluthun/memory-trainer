@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './fixtures';
 
 // US08 (Saisir et corriger mon rappel comme sur Memory League), for Numbers.
 

@@ -1,3 +1,5 @@
+import { PUBLIC_HANKO_API_URL } from '$app/env/public';
+import { ConnectionService } from './application/connection-service.svelte';
 import { HistoryQuery } from './application/history-query';
 import { InterruptedTrialRecovery } from './application/interrupted-trial-recovery';
 import { SettingsService } from './application/settings-service.svelte';
@@ -7,6 +9,7 @@ import { BrowserScheduler } from './infrastructure/browser/browser-scheduler';
 import { BrowserMonotonicClock, BrowserWallClock } from './infrastructure/browser/clocks';
 import { CryptoIdGenerator } from './infrastructure/browser/crypto-id-generator';
 import { CryptoRandomSource } from './infrastructure/browser/crypto-random-source';
+import { BrowserNetwork, HankoSession } from './infrastructure/browser/hanko-session';
 import {
 	deviceStorage,
 	ParaglideInterfaceLanguage
@@ -26,6 +29,8 @@ export interface App {
 	history: HistoryQuery;
 	/** At opening, the choice for a trial interrupted by an outside incident (CU06). */
 	recovery: InterruptedTrialRecovery;
+	/** Signing in (CU16): checked at opening, online only. */
+	connection: ConnectionService;
 	/** Resolves once the settings of the device are loaded. */
 	ready: Promise<void>;
 }
@@ -61,6 +66,7 @@ function build(): App {
 		session,
 		history: new HistoryQuery(trials),
 		recovery: new InterruptedTrialRecovery({ discipline, clock, repository: trials }),
+		connection: new ConnectionService(new HankoSession(PUBLIC_HANKO_API_URL), new BrowserNetwork()),
 		ready: settings.load()
 	};
 }
