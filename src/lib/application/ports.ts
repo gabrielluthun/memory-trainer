@@ -173,3 +173,27 @@ export interface Network {
 	/** Called each time the network comes back (CU17). */
 	onOnline(listener: () => void): Cancel;
 }
+
+/**
+ * The version of the app (ADR 0023): the one on this device, and the one published with the site.
+ * They are compared before each synchronisation (deployment, section 5).
+ */
+export interface AppVersion {
+	/** The version of this device, set at build time from package.json. */
+	readonly local: string;
+	/** The version of the published site, read without any cache. Rejects when it cannot be read. */
+	published(): Promise<string>;
+}
+
+/** The service worker (ADR 0008), without knowing it is Workbox. */
+export interface AppUpdater {
+	/**
+	 * Registers the service worker. `onReady`: a new version is downloaded. `onReplaced`: it was
+	 * installed (by this window or another one) and now serves the app; the page must reload.
+	 */
+	start(onReady: () => void, onReplaced: () => void): void;
+	/** Looks for a new version now. Rejects when the site cannot be reached. */
+	check(): Promise<void>;
+	/** Installs the downloaded version and reloads the page. */
+	apply(): Promise<void>;
+}

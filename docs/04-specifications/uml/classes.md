@@ -259,6 +259,38 @@ classDiagram
         +sync()
         +startTriggers()
     }
+    class UpdateService {
+        +stale [1] : boolean
+        +ready [1] : boolean
+        +dismissed [1] : boolean
+        +replaced [1] : boolean
+        +start()
+        +checkPublished()
+        +dismiss()
+        +apply()
+    }
+    class InstallService {
+        +reminding [1] : boolean
+        +open()
+        +later()
+    }
+    class AppVersion {
+        <<interface>>
+        +local [1] : string
+        +published()
+    }
+    class AppUpdater {
+        <<interface>>
+        +start()
+        +check()
+        +apply()
+    }
+    class InstallContext {
+        <<interface>>
+        +isInstalled()
+        +isAppleMobile()
+        +persist()
+    }
     class TrialRepository {
         <<interface>>
         +saveSnapshot()
@@ -327,6 +359,10 @@ classDiagram
     ConnectionService "1" --> "1" AuthSession : follows
     ConnectionService "1" --> "1" Network : checks
     SyncService "1" --> "1" Scheduler : retriggered by
+    SyncService "1" --> "1" UpdateService : waits for
+    UpdateService "1" --> "1" AppVersion : compares
+    UpdateService "1" --> "1" AppUpdater : installs through
+    InstallService "1" --> "1" InstallContext : checks
 ```
 
 | Classe | Rôle | Cas d'utilisation | Séquence |
@@ -335,7 +371,12 @@ classDiagram
 | **InterruptedTrialRecovery** | À l'ouverture, cherche un essai en cours et propose les trois choix | CU06 | SEQ01, SEQ03 |
 | **HistoryQuery** | Liste et détail des essais, lus sur l'appareil | CU04, CU07 | — |
 | **SettingsService** | Lit et modifie les paramètres, les marque à envoyer | CU15 | — |
-| **SyncService** | Envoi, réception, paramètres. Une seule synchronisation à la fois : un second déclenchement rejoint celle en cours. Son état (`state`, `lastSyncedAt`) est lu par les écrans. Déclencheurs : ouverture, session créée, retour du réseau, fin d'essai, toutes les 5 minutes (`startTriggers()`). La fin d'essai passe par le dépôt d'essais, qui prévient après chaque clôture (`notifyOnClose`) : les cas d'usage n'en savent rien. Reçoit les essais par pages de 50 après le repère, puis les paramètres s'ils sont plus récents, transmis à `SettingsService.adopt()` | CU16, CU17 | SEQ04, SEQ05 |
+| **SyncService** | Envoi, réception, paramètres. Une seule synchronisation à la fois : un second déclenchement rejoint celle en cours. Son état (`state`, `lastSyncedAt`) est lu par les écrans. Avant tout envoi, demande à `UpdateService` si l'appareil est à jour : sinon, l'état passe à « en attente de mise à jour » et rien n'est envoyé ni reçu. Déclencheurs : ouverture, session créée, retour du réseau, fin d'essai, toutes les 5 minutes (`startTriggers()`). La fin d'essai passe par le dépôt d'essais, qui prévient après chaque clôture (`notifyOnClose`) : les cas d'usage n'en savent rien. Reçoit les essais par pages de 50 après le repère, puis les paramètres s'ils sont plus récents, transmis à `SettingsService.adopt()` | CU16, CU17 | SEQ04, SEQ05 |
+| **UpdateService** | Nouvelle version de l'application ([déploiement](../../06-qualite-deploiement/deploiement.md), section 5). `checkPublished()`, appelée par `SyncService` avant chaque synchronisation, compare la version de l'appareil à la version publiée : si elles diffèrent, `stale` passe à vrai et le service worker est relancé pour télécharger la nouvelle version. `ready` : nouvelle version téléchargée, proposée dans l'encart. `dismiss()` ferme l'encart jusqu'à la prochaine ouverture. `apply()` installe la nouvelle version. `replaced` : la nouvelle version, installée depuis cette fenêtre ou une autre, sert désormais l'application ; la page se recharge dès qu'aucun essai n'est en cours | CU17 | SEQ01, SEQ05 |
+| **InstallService** | À l'ouverture : application installée, demande le stockage persistant ; iPhone ou iPad sans installation, `reminding` affiche le rappel (écran 12). `later()` le ferme jusqu'à la prochaine ouverture | CU18 | SEQ01 |
+| **AppVersion** | Version de l'appareil (`local`, fixée au build) et version publiée (`published()`, lue sans cache). Une version illisible est une erreur | — | SEQ05 |
+| **AppUpdater** | Service worker, sans savoir que c'est Workbox : prévient quand une nouvelle version est prête, puis quand elle sert l'application ; la cherche, l'installe. Ne recharge jamais la page lui-même | — | SEQ01 |
+| **InstallContext** | Application installée ou non, iPhone ou iPad, demande de stockage persistant | CU18 | SEQ01 |
 | **TrialRepository** | Essai en cours, essais clos, repère de réception. `close()` écrit l'essai et l'ajoute à la file d'envoi **en une transaction** | — | SEQ02 |
 | **Outbox** | File d'envoi : essais à envoyer, retrait après confirmation, marque « refusé » | — | SEQ05 |
 | **SettingsRepository** | Paramètres de l'appareil et indicateur « à envoyer » | — | SEQ05 |
@@ -417,6 +458,18 @@ classDiagram
         -current [1] : Language
         +apply()
     }
+    class AppVersion {
+        <<interface>>
+    }
+    class AppUpdater {
+        <<interface>>
+    }
+    class InstallContext {
+        <<interface>>
+    }
+    class FetchAppVersion
+    class PwaUpdater
+    class BrowserInstallContext
     class AppContainer {
         +build()
     }
@@ -433,6 +486,9 @@ classDiagram
     WallClock <|.. BrowserWallClock
     RandomSource <|.. CryptoRandomSource
     IdGenerator <|.. CryptoIdGenerator
+    AppVersion <|.. FetchAppVersion
+    AppUpdater <|.. PwaUpdater
+    InstallContext <|.. BrowserInstallContext
     DexieTrialStore "1" --> "1" DexieDatabase : writes to
     DexieSettingsStore "1" --> "1" DexieDatabase : writes to
     DexieTrialStore "1" --> "1" TrialMapper : converts with
@@ -455,6 +511,9 @@ classDiagram
 | **RandomSource**, **IdGenerator** | Hasard du tirage et identifiants créés sur l'appareil | `crypto.getRandomValues()`, `crypto.randomUUID()` |
 | **BrowserScheduler** | Implémente `Scheduler` | `setTimeout` |
 | **ParaglideInterfaceLanguage** | Implémente `InterfaceLanguage` : la langue courante est une rune lue par Paraglide à chaque texte, recopiée sur l'appareil et dans l'attribut `lang` de la page ([ADR 0029](../adr/0029-langue-reactive.md)) | Paraglide JS, `localStorage` |
+| **FetchAppVersion** | Implémente `AppVersion` : version de `package.json` injectée au build, et fichier `version.json` publié avec le site, lu sans cache | `fetch` (`cache: 'no-store'`), Vite |
+| **PwaUpdater** | Implémente `AppUpdater` : enregistre le service worker en mode `prompt` ([ADR 0008](../adr/0008-service-worker-vite-plugin-pwa.md)) | `virtual:pwa-register` |
+| **BrowserInstallContext** | Implémente `InstallContext` : affichage `standalone`, appareil Apple tactile (l'iPad se présente comme un Mac), stockage persistant | `matchMedia`, `navigator.standalone`, `navigator.storage.persist()` |
 | **AppContainer** | Crée tous les objets au démarrage et les relie : c'est le seul endroit qui connaît les classes concrètes | — |
 
 Le **Worker de sauvegarde** (SEQ06) est un programme à part, d'une seule fonction : il n'est pas modélisé ici.

@@ -67,7 +67,7 @@ Le procès-verbal note, pour chaque appareil, son système et son navigateur ave
 | **TR11** : Installer l'application | CU18 | Installation sur l'écran d'accueil du téléphone et de la tablette ; rappel d'installation affiché tant qu'elle n'est pas faite ; stockage persistant accordé. | Téléphone, tablette |
 | **TR12** : Sauvegarder | CU19 | Le lendemain de la recette : un fichier JSON daté dans R2, avec les essais de la recette ; aucune erreur dans la console Cloudflare. | Console Cloudflare |
 | **TR13** : Contrôles de sécurité en production | — (ES01, ES02, ES08, ES13, ES15) | En-têtes HSTS et CSP présents (analyse des en-têtes du site) ; inscription refusée chez Hanko ; requête à la Data API sans jeton refusée ; aucune requête vers un autre site que l'hébergeur, la base et Hanko ; aucune clé secrète dans les fichiers publiés. | Ordinateur |
-| **TR14** : Mettre à jour l'application | — (décision du [déploiement](deploiement.md)) | Dès la version 0.2 : bandeau « Nouvelle version » jamais affiché pendant un essai ; essais en attente d'envoi convertis puis envoyés après la mise à jour. | Téléphone, ordinateur |
+| **TR14** : Mettre à jour l'application | — (décision du [déploiement](deploiement.md)) | Dès la version 0.2 : encart « Nouvelle version » jamais affiché pendant un essai ; synchronisation en attente tant que la mise à jour n'est pas faite ; essais en attente d'envoi convertis puis envoyés après la mise à jour. | Téléphone, ordinateur |
 
 ### Critères d'acceptation couverts
 

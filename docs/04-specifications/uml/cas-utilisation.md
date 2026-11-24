@@ -352,7 +352,7 @@ Décision : les paramètres sont **synchronisés entre les appareils**, comme le
 2. Au premier lancement de l'application installée, elle demande un stockage persistant (S3).
 
 **Scénarios alternatifs**
-- **iPhone ou iPad sans installation** : l'application affiche un rappel, car sans installation, Safari peut effacer les données locales.
+- **iPhone ou iPad sans installation** : l'application affiche un rappel à chaque ouverture, car sans installation, Safari peut effacer les données locales. « Plus tard » le ferme jusqu'à la prochaine ouverture.
 - **Firefox sur ordinateur** : l'installation n'est pas possible ; l'application reste utilisable dans un onglet.
 
 ### CU19 — Sauvegarder les données

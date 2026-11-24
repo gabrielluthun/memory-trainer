@@ -42,6 +42,17 @@ describe('syncStatus — the status of the header (mock-up 10, CU17)', () => {
 		expect(syncStatus({ ...base, state: 'needs-sign-in' })?.signIn).toBe(true);
 	});
 
+	it('ADR 0023 — another version published: the trials wait for the update, even after a sync', () => {
+		expect(syncStatus({ ...base, state: 'awaiting-update' })).toEqual({
+			label: 'Mise à jour en attente',
+			tone: 'waiting',
+			signIn: false
+		});
+		expect(syncStatus({ ...base, state: 'awaiting-update', language: 'en' })?.label).toBe(
+			'Update pending'
+		);
+	});
+
 	it('CU17 — running, then failed: said as it is', () => {
 		expect(syncStatus({ ...base, state: 'running', lastSyncedAt: null })?.label).toBe(
 			'Synchronisation…'

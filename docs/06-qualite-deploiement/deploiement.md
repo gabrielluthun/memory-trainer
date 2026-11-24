@@ -9,7 +9,7 @@ Amont : [conventions et workflow Git](../02-projet/conventions.md), [architectur
   - les **contrôles**, à chaque push et sur chaque pull request, sans aucun secret ;
   - la **mise en production**, après la fusion dans `main` : export complet vers R2, migrations, publication. Elle s'arrête au premier échec.
 - **Migrations avec dbmate** : des fichiers SQL versionnés, appliqués en production **uniquement par la CI** (ES19).
-- **Mise à jour sur les appareils** : un bandeau « Nouvelle version » apparaît hors essai. Tant que la mise à jour n'est pas faite, la synchronisation attend ; la nouvelle version convertit la file d'envoi, puis l'envoie.
+- **Mise à jour sur les appareils** : un encart « Nouvelle version » apparaît hors essai. Tant que la mise à jour n'est pas faite, la synchronisation attend ; la nouvelle version convertit la file d'envoi, puis l'envoie.
 - **Outils** : ESLint, Prettier et svelte-check pour le lint ; gitleaks pour le scan des secrets, en local et dans la CI.
 
 ## Décisions prises
@@ -19,7 +19,7 @@ Amont : [conventions et workflow Git](../02-projet/conventions.md), [architectur
 | **Lint et formatage** | ESLint, Prettier, svelte-check | Section 4 |
 | **Migrations** | dbmate | Section 3, [ADR 0022](../04-specifications/adr/0022-migrations-dbmate.md) |
 | **Compatibilité avec les anciennes versions** | Mise à jour d'abord : la base n'accepte que le format courant, l'appareil se met à jour puis convertit sa file d'envoi | Section 5, [ADR 0023](../04-specifications/adr/0023-compatibilite-des-versions.md) |
-| **Installation d'une nouvelle version** | Bandeau hors essai | Section 5, [ADR 0023](../04-specifications/adr/0023-compatibilite-des-versions.md) |
+| **Installation d'une nouvelle version** | Encart hors essai | Section 5, [ADR 0023](../04-specifications/adr/0023-compatibilite-des-versions.md) |
 | **Scan des secrets** | gitleaks, avant chaque commit et dans la CI | Section 4 |
 
 Déjà décidé en amont : sauvegarde complète par `pg_dump` vers R2 avant chaque migration ([sécurité de la base](../05-securite/bdd.md)), puis publication par la CI après les migrations ([séquence de déploiement](../04-specifications/uml/sequences.md)). Ces deux décisions ferment deux points ouverts des séquences : la méthode de sauvegarde avant migration, et la compatibilité de la fonction d'envoi.
@@ -145,12 +145,12 @@ Contrôle du sprint 0 : un faux secret est bloqué par chacun des trois barrages
 | Situation | Comportement |
 |---|---|
 | **Nouvelle version publiée** | À l'ouverture, ou au retour du réseau, le service worker télécharge la nouvelle version, sans l'appliquer. |
-| **Hors essai** (accueil, historique, résultat, paramètres) | Un bandeau « Nouvelle version disponible » s'affiche, avec un bouton pour l'installer. |
-| **Pendant un essai** (lancement, pauses, mémorisation, rappel, abandon) | Aucun bandeau ; la version en cours n'est jamais remplacée. |
-| **Bandeau ignoré** | L'application continue de fonctionner, hors ligne compris. Les essais terminés s'ajoutent à la file d'envoi, mais **la synchronisation attend** la mise à jour, et le bandeau l'indique. |
+| **Hors essai** (accueil, historique, résultat, paramètres) | Un encart « Nouvelle version disponible » s'affiche en bas de l'écran, avec un bouton pour l'installer et une croix qui le ferme jusqu'à la prochaine ouverture. |
+| **Pendant un essai** (lancement, pauses, mémorisation, rappel, abandon) | Aucun encart ; la version en cours n'est jamais remplacée. Une version installée depuis une autre fenêtre ne recharge celle-ci qu'après l'essai. |
+| **Encart fermé ou ignoré** | L'application continue de fonctionner, hors ligne compris. Les essais terminés s'ajoutent à la file d'envoi, mais **la synchronisation attend** la mise à jour : l'encart et la pastille de synchronisation l'indiquent. |
 | **Après la mise à jour** | La base locale (Dexie.js) passe au nouveau format et **convertit la file d'envoi**, puis la synchronisation reprend. |
 
-> Décision : pour savoir qu'elle est périmée, l'application lit, avant chaque synchronisation, un petit fichier `version.json` publié avec le site et jamais mis en cache. Si sa version diffère de celle de l'appareil, la synchronisation attend. Ainsi, un ancien format n'atteint jamais la base, et un essai valide n'est jamais marqué « refusé » à cause de sa version.
+> Décision : pour savoir qu'elle est périmée, l'application lit, avant chaque synchronisation, un petit fichier `version.json` publié avec le site et jamais mis en cache. Il contient la version de `package.json`. Si elle diffère de celle de l'appareil, ou si le fichier est illisible, la synchronisation attend ([ADR 0023](../04-specifications/adr/0023-compatibilite-des-versions.md), mise en œuvre). Ainsi, un ancien format n'atteint jamais la base, et un essai valide n'est jamais marqué « refusé » à cause de sa version.
 
 **Ce que cela impose à chaque lot** :
 - toute modification du format d'un essai arrive avec sa **conversion Dexie.js** et son test d'intégration ([stratégie de tests](tests.md)) ;

@@ -100,7 +100,8 @@ sequenceDiagram
 |---|---|
 | **Aucun réseau nécessaire** | L'application, les données et l'historique viennent de l'appareil. La connexion n'est demandée qu'au moment de synchroniser. |
 | **Déclencheurs suivants de la synchronisation** | Retour du réseau, fin d'un essai, et toutes les 5 minutes tant que l'application est ouverte (CU17). |
-| **Mise à jour** | Une nouvelle version téléchargée n'est pas appliquée pendant un essai (valeur retenue ci-dessus). |
+| **Mise à jour** | Une nouvelle version téléchargée n'est pas appliquée pendant un essai (valeur retenue ci-dessus) : un encart la propose hors essai ([déploiement](../../06-qualite-deploiement/deploiement.md), section 5). |
+| **Rappel d'installation** | Sur iPhone et iPad sans installation, à chaque ouverture ; « Plus tard » le ferme jusqu'à la prochaine (CU18). |
 
 ## 2. SEQ02 — Essai Numbers
 
@@ -311,6 +312,13 @@ sequenceDiagram
     participant API as Data API
     participant H as Hanko
     participant PG as PostgreSQL
+    participant CF as Cloudflare Pages
+
+    A->>CF: Lit version.json, sans cache
+    alt Version publiée différente de celle de l'appareil
+        A->>A: Relance le service worker, qui télécharge la nouvelle version
+        A-->>A: Synchronisation en attente de mise à jour, fin
+    end
 
     A->>A: Vérifie la session
     opt Session absente ou expirée
@@ -363,6 +371,8 @@ sequenceDiagram
 
 | Cas | Ce qui se passe |
 |---|---|
+| **Version publiée illisible** | La synchronisation s'arrête avant tout envoi, et reprendra au prochain déclencheur : un essai n'est jamais envoyé sans savoir si l'appareil est à jour ([ADR 0023](../adr/0023-compatibilite-des-versions.md)). |
+| **Appareil pas à jour** | Rien n'est envoyé ni reçu ; la pastille l'indique, l'encart propose la mise à jour ([déploiement](../../06-qualite-deploiement/deploiement.md), section 5). |
 | **Réseau perdu en cours de route** | La synchronisation s'arrête. Les essais non confirmés restent dans la file : le prochain envoi les rejoue sans doublon. |
 | **Jeton refusé** (session expirée entre-temps) | Connexion (SEQ04), puis reprise au début. |
 | **Essai refusé par la base** (ES07) | L'essai est marqué « refusé » sur l'appareil, signalé, et la file continue (valeur retenue ci-dessus). |

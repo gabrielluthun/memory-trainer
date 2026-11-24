@@ -12,6 +12,7 @@ import {
 	type TrialRepository,
 	type WallClock
 } from './ports';
+import type { UpdateService } from './update-service.svelte';
 
 /** Every 5 minutes while the app is open (SEQ05: Neon stays under 100 hours awake a month). */
 export const SYNC_INTERVAL_MS = 5 * 60_000;
@@ -21,8 +22,11 @@ export const PAGE_SIZE = 50;
 /**
  * Idle: never tried yet, or offline. Needs sign-in: no session, or the Data API refused it.
  * Failed: network lost or server unreachable; everything not confirmed waits for the next time.
+ * Awaiting update: another version is published; nothing is sent until this device installs it
+ * (ADR 0023).
  */
-export type SyncState = 'idle' | 'running' | 'done' | 'needs-sign-in' | 'failed';
+export type SyncState =
+	'idle' | 'running' | 'done' | 'needs-sign-in' | 'failed' | 'awaiting-update';
 
 export interface SyncServiceDeps {
 	outbox: Outbox;
@@ -33,6 +37,8 @@ export interface SyncServiceDeps {
 	network: Network;
 	scheduler: Scheduler;
 	wallClock: WallClock;
+	/** Compares this device to the published version, before anything is sent (SEQ05). */
+	update: Pick<UpdateService, 'checkPublished'>;
 	/** More recent settings were received: the screens take them (ADR 0012). */
 	onSettingsReceived: (settings: Settings) => void;
 }
@@ -84,8 +90,18 @@ export class SyncService {
 	}
 
 	async #run(): Promise<void> {
-		const { outbox, settings, remote, auth, network, wallClock } = this.deps;
+		const { outbox, settings, remote, auth, network, wallClock, update } = this.deps;
 		if (!network.isOnline()) return;
+		// An old format never reaches the database (ADR 0023): unknown version, nothing is sent.
+		try {
+			if (!(await update.checkPublished())) {
+				this.state = 'awaiting-update';
+				return;
+			}
+		} catch {
+			this.state = 'failed';
+			return;
+		}
 		if (!auth.token()) {
 			this.state = 'needs-sign-in';
 			return;

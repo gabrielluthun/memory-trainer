@@ -51,7 +51,7 @@ ENF09 vise les deux dernières versions de Chrome, Safari (macOS et iOS), Firefo
 | Contrainte | Navigateurs concernés | Conséquence |
 |---|---|---|
 | **Pas de synchronisation en arrière-plan** (API Background Sync non prise en charge) | Safari, Firefox | La synchronisation se fait à l'ouverture de l'application, au retour du réseau, et régulièrement tant qu'elle est ouverte. Un essai terminé est d'abord écrit dans Dexie.js : il n'est jamais perdu (ENF07). |
-| **Données locales effacées après quelques jours sans visite** | Safari sur iOS et iPadOS, si l'application n'est pas installée | Installer l'application sur l'écran d'accueil, et demander un stockage persistant (`navigator.storage.persist()`). L'application le rappelle au premier lancement sur iPhone et iPad. |
+| **Données locales effacées après quelques jours sans visite** | Safari sur iOS et iPadOS, si l'application n'est pas installée | Installer l'application sur l'écran d'accueil, et demander un stockage persistant (`navigator.storage.persist()`). Sur iPhone et iPad, l'application le rappelle à chaque ouverture, tant qu'elle n'est pas installée. |
 | **Précision du chronomètre réduite** : environ 1 ms, au lieu de quelques microsecondes | Firefox, Safari (protection contre certaines attaques) | Suffisant : ENF01 demande une mesure à la milliseconde et un affichage au centième. |
 | **Installation sur ordinateur impossible** | Firefox | L'application de bureau (lot 7) s'installe depuis Chrome, Edge ou Safari. Firefox reste utilisable dans un onglet. |
 | **Écran qui se met en veille** pendant un essai (rappel de 4 minutes) | Téléphones et tablettes | Garder l'écran allumé pendant l'essai (API Screen Wake Lock, disponible dans les navigateurs ciblés). |
