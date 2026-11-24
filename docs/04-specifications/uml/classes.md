@@ -243,6 +243,14 @@ classDiagram
         +load()
         +update()
     }
+    class ConnectionService {
+        +status [1] : ConnectionStatus
+        +prompting [1] : boolean
+        +open()
+        +dismiss()
+        +ask()
+        +signOut()
+    }
     class SyncService {
         -running [1] : boolean
         +sync()
@@ -287,7 +295,12 @@ classDiagram
         <<interface>>
         +isValid()
         +token()
-        +signIn()
+        +signOut()
+        +onChange()
+    }
+    class Network {
+        <<interface>>
+        +isOnline()
     }
     class Scheduler {
         <<interface>>
@@ -307,6 +320,8 @@ classDiagram
     SyncService "1" --> "1" SettingsRepository : syncs
     SyncService "1" --> "1" RemoteStore : exchanges with
     SyncService "1" --> "1" AuthSession : authenticates through
+    ConnectionService "1" --> "1" AuthSession : follows
+    ConnectionService "1" --> "1" Network : checks
     SyncService "1" --> "1" Scheduler : retriggered by
 ```
 
@@ -322,7 +337,9 @@ classDiagram
 | **SettingsRepository** | Paramètres de l'appareil et indicateur « à envoyer » | — | SEQ05 |
 | **InterfaceLanguage** | Langue des écrans : appliquée au chargement des paramètres et à chaque changement enregistré ([ADR 0029](../adr/0029-langue-reactive.md)) | CU15 | — |
 | **RemoteStore** | Ce que l'application attend du serveur, sans savoir que c'est Neon | — | SEQ05 |
-| **AuthSession** | Session et jeton, sans savoir que c'est Hanko | — | SEQ04 |
+| **ConnectionService** | À l'ouverture, en ligne et sans session, affiche l'écran de connexion ; « Continuer hors connexion » le ferme jusqu'à la prochaine ouverture ; suit la session et la déconnexion | CU16 | SEQ04 |
+| **AuthSession** | Session et jeton, sans savoir que c'est Hanko. La connexion elle-même se fait dans l'écran de Hanko ([ADR 0030](../adr/0030-connexion-hanko-elements.md)) : l'application lit la session et suit ses changements | — | SEQ04 |
+| **Network** | En ligne ou non. Simulable dans les tests | CU16 | SEQ01 |
 | **Scheduler** | Comptes à rebours, enregistrement régulier, relance de la synchronisation. Simulable dans les tests | — | SEQ02, SEQ05 |
 
 ## 3. Couche Infrastructure
@@ -384,6 +401,10 @@ classDiagram
     }
     class DataApiClient
     class HankoSession
+    class BrowserNetwork
+    class Network {
+        <<interface>>
+    }
     class BrowserMonotonicClock
     class BrowserWallClock
     class CryptoRandomSource
@@ -403,6 +424,7 @@ classDiagram
     InterfaceLanguage <|.. ParaglideInterfaceLanguage
     RemoteStore <|.. DataApiClient
     AuthSession <|.. HankoSession
+    Network <|.. BrowserNetwork
     Scheduler <|.. BrowserScheduler
     MonotonicClock <|.. BrowserMonotonicClock
     WallClock <|.. BrowserWallClock
@@ -424,7 +446,8 @@ classDiagram
 | **DexieSettingsStore** | Implémente `SettingsRepository` | Dexie.js |
 | **TrialMapper** | Convertit les objets du métier en enregistrements Dexie.js et en données JSON pour la Data API, et inversement | — |
 | **DataApiClient** | Appelle la fonction d'envoi ([ADR 0010](../adr/0010-envoi-essai-fonction-sql.md)) et lit les essais par numéro d'ordre ([ADR 0011](../adr/0011-repere-numero-ordre-verrou.md)), avec le jeton de la session | `fetch`, Data API Neon |
-| **HankoSession** | Implémente `AuthSession` | SDK Hanko |
+| **HankoSession** | Implémente `AuthSession`. Enregistre le composant `<hanko-auth>` de l'écran de connexion ; jeton dans un cookie `SameSite=Strict` | hanko-elements ([ADR 0030](../adr/0030-connexion-hanko-elements.md)) |
+| **BrowserNetwork** | Implémente `Network` | `navigator.onLine` |
 | **MonotonicClock** et **WallClock** | La monotone mesure les durées, insensible aux changements d'heure. La murale date les essais et les paramètres | `performance.now()`, `Date` |
 | **RandomSource**, **IdGenerator** | Hasard du tirage et identifiants créés sur l'appareil | `crypto.getRandomValues()`, `crypto.randomUUID()` |
 | **BrowserScheduler** | Implémente `Scheduler` | `setTimeout`, `setInterval` |
