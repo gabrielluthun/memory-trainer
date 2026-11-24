@@ -63,6 +63,9 @@ erDiagram
         smallint_array group_pattern "NOT NULL, 1 à 3 valeurs de 1 à 5"
         smallint pause_before_memorization_s "NOT NULL, 0 5 10 20"
         smallint pause_before_recall_s "NOT NULL, 0 5 10 20"
+        trial_mode launch_mode "NOT NULL"
+        smallint custom_item_count "NOT NULL, 1 à 500"
+        smallint custom_memorization_s "NOT NULL, 1 à 3600"
     }
 ```
 
@@ -103,7 +106,7 @@ L'identité vient du jeton, par `auth.user_id()`, fournie par Neon. Les droits d
 | Fonction | S'exécute avec | Reçoit | Renvoie | Ce qu'elle fait | Décisions |
 |---|---|---|---|---|---|
 | **submit_trial** | Les droits de l'appelant, sous RLS | L'essai clos et ses éléments, en JSON | `inserted` ou `duplicate` ; une erreur si une valeur est refusée | Prend le verrou du numéro d'ordre, ignore un essai déjà reçu, pose le propriétaire depuis le jeton, insère l'essai, ses éléments et leurs chiffres | ADR 0010, 0011 |
-| **save_settings** | Les droits du propriétaire des tables (seul chemin d'écriture des paramètres) | Les paramètres, leur heure de modification et les réglages par discipline, en JSON | `saved` ou `ignored` | Ne remplace les paramètres que si l'heure reçue est plus récente, puis met à jour chaque discipline. Ne touche que la ligne de l'identité du jeton | ADR 0012, 0018 |
+| **save_settings** | Les droits du propriétaire des tables (seul chemin d'écriture des paramètres) | Les paramètres, leur heure de modification et les réglages par discipline (motif, pauses, derniers réglages de lancement), en JSON | `saved` ou `ignored` | Ne remplace les paramètres que si l'heure reçue est plus récente, puis met à jour chaque discipline. Ne touche que la ligne de l'identité du jeton | ADR 0012, 0018, 0028 |
 
 ## 6. Données initiales
 
