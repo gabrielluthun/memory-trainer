@@ -18,6 +18,11 @@ updates:
       # Patches and minor versions together; each major version on its own.
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # TypeScript 7: svelte-check, typescript-eslint and SvelteKit only accept TypeScript 6 for
+      # now (maintenance.md). To remove once they accept it.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: github-actions
     directory: /
