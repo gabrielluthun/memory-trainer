@@ -152,6 +152,7 @@ Couvre : EF07 · RG15
 - CA1 : pour chaque discipline, je peux régler la durée de mémorisation et le nombre d'éléments avant de lancer l'essai.
 - CA2 : je peux démarrer avec très peu d'éléments (ex. 10 chiffres) et augmenter par paliers.
 - CA3 : un essai personnalisé figure dans l'historique et les statistiques avec les essais standard, mais il se reconnaît à un code couleur.
+- CA4 : au lancement suivant, le dernier mode choisi et mes derniers réglages personnalisés de la discipline me sont proposés, sur tous mes appareils.
 
 ### US10 — Abandonner un essai
 Je veux pouvoir abandonner un essai et décider de ce qu'il devient, afin que mon historique et mes statistiques reflètent ce que je veux mesurer.
