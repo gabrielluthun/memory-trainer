@@ -36,6 +36,8 @@ Les tests de la base sont construits à partir des migrations : ils vérifient d
 
 > Décision : dans les tests de bout en bout, la **Data API et Hanko sont simulés** en interceptant les requêtes du navigateur (fonction `page.route` de Playwright). La CI n'a ainsi aucun secret. La vraie connexion et la vraie synchronisation sont vérifiées à la recette en production.
 
+> Décision : dans les tests de bout en bout, le **service worker est bloqué**, sauf dans les tests du hors ligne (US20). Ceux-ci ne tournent que sous Chromium : ailleurs, Playwright ne peut pas simuler les services pour une page contrôlée par un service worker. Le hors ligne sur iPhone et iPad est vérifié sur les vrais appareils à la recette (TR10, mode avion).
+
 > Décision : le seul projet Hanko est celui de production, qui n'accepte que l'adresse du site. Sur le poste, aucun jeton réel n'est donc disponible, et un jeton de production y serait un identifiant de production ([surface d'attaque](../05-securite/surface-attaque.md)). `DataApiClient` est donc testé avec des **réponses simulées**, partout ; la vraie Data API est vérifiée à la recette (TR10).
 
 ### Exigences vérifiées par les tests

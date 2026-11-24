@@ -14,7 +14,10 @@ export default defineConfig({
 	reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
 	use: {
 		baseURL: `http://localhost:${port}`,
-		trace: 'on-first-retry'
+		trace: 'on-first-retry',
+		// The service worker (US20) is only allowed in the offline tests: elsewhere, every request
+		// goes straight to the simulated services.
+		serviceWorkers: 'block'
 	},
 	webServer: {
 		command: `npm run build && npm run preview -- --port ${port} --strictPort`,
