@@ -5,6 +5,9 @@ import type { Mode, PreparationPauses } from '../trial/trial';
 
 export type Language = 'fr' | 'en';
 
+/** The languages of the interface (EF20). */
+export const LANGUAGES: readonly Language[] = ['fr', 'en'];
+
 /** The only pause durations allowed: 0, 5, 10 or 20 s (RG25). */
 export const PAUSE_DURATIONS_MS = [0, 5_000, 10_000, 20_000] as const;
 
@@ -39,7 +42,7 @@ export interface SettingsData {
 }
 
 /**
- * The practitioner's settings (CU15): interface language and group size per discipline.
+ * The practitioner's settings (CU15): interface language and display pattern per discipline.
  * Every change returns new settings, dated by the device; the most recent wins (ADR 0012).
  * The pauses chosen for a discipline are both its setting and the last ones used (RG25).
  * Synchronisation comes with US21.
@@ -80,6 +83,14 @@ export class Settings {
 
 	get modifiedAt(): Date {
 		return this.data.modifiedAt;
+	}
+
+	/** US19: only the language changes; the screens follow it without reloading (ADR 0029). */
+	withLanguage(language: Language, at: Date): Settings {
+		if (!LANGUAGES.includes(language)) {
+			throw new RangeError(`The interface is in French or English, got ${String(language)}`);
+		}
+		return new Settings({ ...this.data, interfaceLanguage: language, modifiedAt: at });
 	}
 
 	groupPatternFor(discipline: DisciplineName): DisplayPattern {
