@@ -16,7 +16,7 @@ export interface HankoState {
 
 /** A call received by the simulated Data API. */
 export interface DataApiCall {
-	fn: 'submit_trial' | 'save_settings';
+	fn: 'submit_trial' | 'save_settings' | 'trials' | 'accounts';
 	body: Record<string, unknown>;
 	authorization: string | null;
 }
@@ -25,6 +25,10 @@ export interface DataApiCall {
 export interface DataApiState {
 	calls: DataApiCall[];
 	trialAnswer: { status: number; body: unknown };
+	/** Trials of the database, as rows with their sequence number (ADR 0011). */
+	remoteTrials: { sequence_number: number }[];
+	/** The account row with its settings; none by default. */
+	account: Record<string, unknown> | null;
 }
 
 /** Answers a cross-origin request: the browser checks CORS even on simulated responses. */
@@ -90,17 +94,34 @@ export const test = base.extend<{
 		async ({ page }, use) => {
 			const state: DataApiState = {
 				calls: [],
-				trialAnswer: { status: 200, body: 'inserted' }
+				trialAnswer: { status: 200, body: 'inserted' },
+				remoteTrials: [],
+				account: null
 			};
 			await page.route(`${DATA_API_URL}/**`, async (route) => {
 				const request = route.request();
 				if (request.method() === 'OPTIONS') return answer(route, 204);
-				const fn = new URL(request.url()).pathname.split('/').pop();
+				const url = new URL(request.url());
+				const fn = url.pathname.split('/').pop();
+				const authorization = await request.headerValue('authorization');
+				if (request.method() === 'GET' && fn === 'trials') {
+					const after = Number(url.searchParams.get('sequence_number')?.replace('gt.', '') ?? 0);
+					state.calls.push({ fn, body: { after }, authorization });
+					const limit = Number(url.searchParams.get('limit') ?? 50);
+					const page = state.remoteTrials
+						.filter((trial) => trial.sequence_number > after)
+						.slice(0, limit);
+					return answer(route, 200, page);
+				}
+				if (request.method() === 'GET' && fn === 'accounts') {
+					state.calls.push({ fn, body: {}, authorization });
+					return answer(route, 200, state.account ? [state.account] : []);
+				}
 				if (fn !== 'submit_trial' && fn !== 'save_settings') return answer(route, 404, {});
 				state.calls.push({
 					fn,
 					body: request.postDataJSON() as Record<string, unknown>,
-					authorization: await request.headerValue('authorization')
+					authorization
 				});
 				if (fn === 'save_settings') return answer(route, 200, 'saved');
 				return answer(route, state.trialAnswer.status, state.trialAnswer.body);
