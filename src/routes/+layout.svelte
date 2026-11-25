@@ -1,12 +1,114 @@
 <script lang="ts">
+	import '../app.css';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import { onMount } from 'svelte';
 	import favicon from '#lib/assets/favicon.svg';
+	import { getApp } from '#lib/app-container.ts';
+	import type { AbandonChoice } from '#lib/application/trial-session.svelte.ts';
+	import type { PendingDecision } from '#lib/domain/trial/trial.ts';
+	import FateDialog from '#lib/presentation/components/fate-dialog.svelte';
+	import InstallReminder from '#lib/presentation/components/install-reminder.svelte';
+	import SignInScreen from '#lib/presentation/components/sign-in-screen.svelte';
+	import UpdateCard from '#lib/presentation/components/update-card.svelte';
+	import { describeInterruptedTrial } from '#lib/presentation/interrupted-trial-text.ts';
+	import { canReload, showsUpdateCard } from '#lib/presentation/update-offer.ts';
+	import { m } from '#lib/paraglide/messages.js';
+	import { getLocale } from '#lib/paraglide/runtime.js';
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
+
+	const app = getApp();
+
+	/** A trial interrupted by an outside incident, found at opening (SEQ01, CU06). */
+	let interrupted = $state<PendingDecision | null>(null);
+	const text = $derived(
+		interrupted && describeInterruptedTrial(interrupted, new Date(), getLocale())
+	);
+
+	// A new version (deployment, section 5): offered outside a trial, and once installed (here or in
+	// another window), the page reloads as soon as no trial runs, never during one.
+	const phase = $derived(app.session.current?.phase);
+	const outsideTrial = $derived(showsUpdateCard({ routeId: page.route.id, phase }));
+	// On iPhone and iPad without installation, at every opening (CU18), never during a trial nor
+	// over the choice for an interrupted trial. The update card waits for it to close.
+	const remindsInstall = $derived(app.install.reminding && outsideTrial && !interrupted);
+	const offersUpdate = $derived(
+		app.update.ready && !app.update.dismissed && outsideTrial && !remindsInstall
+	);
+	$effect(() => {
+		if (app.update.replaced && canReload(phase)) location.reload();
+	});
+
+	onMount(() => {
+		// The app is kept on the device and opens without network (US20, ENF02); new versions wait.
+		app.update.start();
+		// Installation reminder, or persistent storage once installed (CU18).
+		void app.install.open();
+		// Online without a session: the sign-in screen, until "Continuer hors connexion" (CU16).
+		// Then the trials and settings waiting on the device are sent, those of the other devices
+		// received; and again when the network comes back, and every 5 minutes (CU17).
+		void app.connection.open().then(() => app.sync.sync());
+		const stopTriggers = app.sync.startTriggers();
+		// A damaged save must not block the app: the next trial replaces it.
+		app.recovery
+			.check()
+			.then((pending) => (interrupted = pending))
+			.catch(() => {});
+		return stopTriggers;
+	});
+
+	/** "Compter tel quel" shows the result (CU04); the two other choices stay where we are (RG23). */
+	async function choose(choice: AbandonChoice) {
+		const completed = await app.recovery.decide(choice);
+		interrupted = null;
+		if (completed) await goto(resolve('/history/[id]', { id: completed.id }));
+	}
 </script>
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-{@render children()}
+{#if app.connection.prompting}
+	<SignInScreen ondismiss={() => app.connection.dismiss()} />
+{:else}
+	{@render children()}
+	{#if remindsInstall}
+		<InstallReminder onlater={() => app.install.later()} />
+	{/if}
+	{#if offersUpdate}
+		<UpdateCard
+			syncWaits={app.update.stale}
+			oninstall={() => void app.update.apply()}
+			onclose={() => app.update.dismiss()}
+		/>
+	{/if}
+{/if}
+
+{#if interrupted && text}
+	<FateDialog
+		title={text.title}
+		intro={text.intro}
+		countAsIsHint={m.interrupted_count_hint()}
+		onchoose={choose}
+	>
+		{#snippet badge()}
+			<span class="badge">{m.interrupted_badge()}</span>
+		{/snippet}
+	</FateDialog>
+{/if}
+
+<style>
+	.badge {
+		display: inline-block;
+		margin-bottom: 1.25rem;
+		padding: 0.35rem 0.75rem;
+		border-radius: 0.5rem;
+		background: color-mix(in srgb, var(--waiting) 14%, transparent);
+		color: var(--waiting);
+		font-weight: 700;
+	}
+</style>

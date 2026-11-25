@@ -9,7 +9,7 @@ Amont : [conventions et workflow Git](../02-projet/conventions.md), [architectur
   - les **contrôles**, à chaque push et sur chaque pull request, sans aucun secret ;
   - la **mise en production**, après la fusion dans `main` : export complet vers R2, migrations, publication. Elle s'arrête au premier échec.
 - **Migrations avec dbmate** : des fichiers SQL versionnés, appliqués en production **uniquement par la CI** (ES19).
-- **Mise à jour sur les appareils** : un bandeau « Nouvelle version » apparaît hors essai. Tant que la mise à jour n'est pas faite, la synchronisation attend ; la nouvelle version convertit la file d'envoi, puis l'envoie.
+- **Mise à jour sur les appareils** : un encart « Nouvelle version » apparaît hors essai. Tant que la mise à jour n'est pas faite, la synchronisation attend ; la nouvelle version convertit la file d'envoi, puis l'envoie.
 - **Outils** : ESLint, Prettier et svelte-check pour le lint ; gitleaks pour le scan des secrets, en local et dans la CI.
 
 ## Décisions prises
@@ -19,7 +19,7 @@ Amont : [conventions et workflow Git](../02-projet/conventions.md), [architectur
 | **Lint et formatage** | ESLint, Prettier, svelte-check | Section 4 |
 | **Migrations** | dbmate | Section 3, [ADR 0022](../04-specifications/adr/0022-migrations-dbmate.md) |
 | **Compatibilité avec les anciennes versions** | Mise à jour d'abord : la base n'accepte que le format courant, l'appareil se met à jour puis convertit sa file d'envoi | Section 5, [ADR 0023](../04-specifications/adr/0023-compatibilite-des-versions.md) |
-| **Installation d'une nouvelle version** | Bandeau hors essai | Section 5, [ADR 0023](../04-specifications/adr/0023-compatibilite-des-versions.md) |
+| **Installation d'une nouvelle version** | Encart hors essai | Section 5, [ADR 0023](../04-specifications/adr/0023-compatibilite-des-versions.md) |
 | **Scan des secrets** | gitleaks, avant chaque commit et dans la CI | Section 4 |
 
 Déjà décidé en amont : sauvegarde complète par `pg_dump` vers R2 avant chaque migration ([sécurité de la base](../05-securite/bdd.md)), puis publication par la CI après les migrations ([séquence de déploiement](../04-specifications/uml/sequences.md)). Ces deux décisions ferment deux points ouverts des séquences : la méthode de sauvegarde avant migration, et la compatibilité de la fonction d'envoi.
@@ -71,10 +71,11 @@ Déclenchée par la fusion d'une pull request `release/X.Y.Z` ou `hotfix/X.Y.Z` 
 | Étape | Ce qu'elle fait | Secret utilisé |
 |---|---|---|
 | **1. Build** | Construit l'application depuis le commit fusionné | Aucun |
-| **2. Export complet** | `pg_dump` de toute la base, envoyé dans l'espace privé de R2 ; le nom du fichier porte la date et la version | Rôle de migration, écriture dans R2 |
+| **2. Export complet** | `pg_dump` de toute la base, envoyé dans l'espace privé de R2 ; le nom du fichier porte la date et la version. **Jusqu'à 3 tentatives** de l'ensemble, à 15 puis 30 s d'intervalle : une coupure passagère ou le réveil de Neon n'arrêtent pas la mise en production | Rôle de migration, écriture dans R2 |
 | **3. Migrations** | `dbmate up` : applique les migrations pas encore appliquées, chacune dans une transaction, sous un verrou qui fait attendre une autre exécution | Rôle de migration |
 | **4. Compte autorisé** | Enregistre le compte unique dans `accounts`, s'il n'y est pas déjà ([modèle physique](../04-specifications/bdd/mpd.md)) | Rôle de migration, identifiant du compte |
-| **5. Publication** | Envoie le build à Cloudflare Pages | Jeton Cloudflare limité à Pages |
+| **5. Publication** | Envoie le build à Cloudflare Pages | Jeton Cloudflare limité à Pages et Workers |
+| **6. Worker de sauvegarde** | `wrangler deploy` : code et tâche planifiée du Worker ; puis `wrangler secret put` de l'adresse de la base ([ADR 0032](../04-specifications/adr/0032-worker-de-sauvegarde.md)). Sans ce secret (première release, avant que `backup_reader` existe), un avertissement le signale : créer le secret, puis relancer la tâche | Jeton Cloudflare limité à Pages et Workers, adresse de la base avec `backup_reader` |
 
 Les connexions à PostgreSQL sont chiffrées (TLS obligatoire). `pg_dump` doit avoir la même version majeure que le serveur Neon.
 
@@ -85,6 +86,7 @@ Les connexions à PostgreSQL sont chiffrées (TLS obligatoire). `pg_dump` doit a
 | **Build ou export** | Rien n'a changé : ni la base, ni le site | Corriger, puis relancer la tâche |
 | **Migration** | La migration en échec est annulée par sa transaction ; les migrations précédentes du même lot restent appliquées ; **le site n'est pas publié** | Lire l'erreur, corriger par un hotfix ; restaurer depuis l'export de l'étape 2 seulement si une migration réussie a abîmé des données ([maintenance](maintenance.md)) |
 | **Publication** | La base est migrée, l'ancienne version du site reste en ligne | Relancer la tâche : les étapes 2 à 4 n'ont plus rien à faire ou sont sans effet |
+| **Worker** | Le site est publié ; l'ancien Worker continue ses sauvegardes | Relancer la tâche |
 
 Chaque échec envoie un e-mail de GitHub ([sécurité du back](../05-securite/back.md)).
 
@@ -94,8 +96,18 @@ Chaque échec envoie un e-mail de GitHub ([sécurité du back](../05-securite/ba
 |---|---|---|---|---|
 | **Adresse de la base avec le rôle de migration** (connexion directe, sans pooler) | `MIGRATION_DATABASE_URL` | Environnement `production` | Export, migrations, compte autorisé, reprise | Propriétaire des tables ; ne peut pas modifier un essai terminé ([accès aux données](../04-specifications/acces.md)) |
 | **Clé R2**, avec l'adresse et le nom de l'espace | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT`, `R2_BUCKET` | Environnement `production` | Export, reprise | Lecture et écriture sur l'espace de sauvegarde seulement |
+| **Adresse de la base avec le rôle `backup_reader`** | `BACKUP_DATABASE_URL` | Environnement `production` | Worker (envoyée comme secret du Worker) | Lecture seule, sans fonction ([accès aux données](../04-specifications/acces.md)) |
 | **Identifiant du compte autorisé** | `AUTHORIZED_ACCOUNT_ID` | Environnement `production` | Compte autorisé | — |
-| **Jeton Cloudflare**, avec l'identifiant du compte | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | Environnement `production` | Publication | Modification de Cloudflare Pages seulement |
+| **Jeton Cloudflare**, avec l'identifiant du compte | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | Environnement `production` | Publication, Worker | Modification de Cloudflare Pages et des Workers seulement |
+
+Les **adresses publiques** du front ne sont pas des secrets (ES08) : elles sont rangées en **variables** de l'environnement `production`, et lues au build ([`src/env.ts`](../../src/env.ts)). Un build sans elles échoue.
+
+| Variable | Nom dans GitHub | Utilisée par |
+|---|---|---|
+| **Adresse de l'API Hanko** | `PUBLIC_HANKO_API_URL` | Build : écran de connexion ([ADR 0030](../04-specifications/adr/0030-connexion-hanko-elements.md)) |
+| **Adresse de la Data API** de la branche de production, terminée par `/rest/v1` | `PUBLIC_DATA_API_URL` | Build : synchronisation ([ADR 0031](../04-specifications/adr/0031-client-data-api-postgrest.md)) |
+
+Dans les contrôles et les tests de bout en bout, des adresses factices (`https://hanko.test`, `https://data-api.test/…`) remplacent les adresses réelles : Hanko et la Data API y sont simulés ([stratégie de tests](tests.md)).
 
 Aucun de ces secrets n'est sur le poste du développeur ([surface d'attaque](../05-securite/surface-attaque.md)). La procédure en cas de fuite est dans la [sécurité de la base](../05-securite/bdd.md), section 3.
 
@@ -136,12 +148,12 @@ Contrôle du sprint 0 : un faux secret est bloqué par chacun des trois barrages
 | Situation | Comportement |
 |---|---|
 | **Nouvelle version publiée** | À l'ouverture, ou au retour du réseau, le service worker télécharge la nouvelle version, sans l'appliquer. |
-| **Hors essai** (accueil, historique, résultat, paramètres) | Un bandeau « Nouvelle version disponible » s'affiche, avec un bouton pour l'installer. |
-| **Pendant un essai** (lancement, pauses, mémorisation, rappel, abandon) | Aucun bandeau ; la version en cours n'est jamais remplacée. |
-| **Bandeau ignoré** | L'application continue de fonctionner, hors ligne compris. Les essais terminés s'ajoutent à la file d'envoi, mais **la synchronisation attend** la mise à jour, et le bandeau l'indique. |
+| **Hors essai** (accueil, historique, résultat, paramètres) | Un encart « Nouvelle version disponible » s'affiche en bas de l'écran, avec un bouton pour l'installer et une croix qui le ferme jusqu'à la prochaine ouverture. |
+| **Pendant un essai** (lancement, pauses, mémorisation, rappel, abandon) | Aucun encart ; la version en cours n'est jamais remplacée. Une version installée depuis une autre fenêtre ne recharge celle-ci qu'après l'essai. |
+| **Encart fermé ou ignoré** | L'application continue de fonctionner, hors ligne compris. Les essais terminés s'ajoutent à la file d'envoi, mais **la synchronisation attend** la mise à jour : l'encart et la pastille de synchronisation l'indiquent. |
 | **Après la mise à jour** | La base locale (Dexie.js) passe au nouveau format et **convertit la file d'envoi**, puis la synchronisation reprend. |
 
-> Décision : pour savoir qu'elle est périmée, l'application lit, avant chaque synchronisation, un petit fichier `version.json` publié avec le site et jamais mis en cache. Si sa version diffère de celle de l'appareil, la synchronisation attend. Ainsi, un ancien format n'atteint jamais la base, et un essai valide n'est jamais marqué « refusé » à cause de sa version.
+> Décision : pour savoir qu'elle est périmée, l'application lit, avant chaque synchronisation, un petit fichier `version.json` publié avec le site et jamais mis en cache. Il contient la version de `package.json`. Si elle diffère de celle de l'appareil, ou si le fichier est illisible, la synchronisation attend ([ADR 0023](../04-specifications/adr/0023-compatibilite-des-versions.md), mise en œuvre). Ainsi, un ancien format n'atteint jamais la base, et un essai valide n'est jamais marqué « refusé » à cause de sa version.
 
 **Ce que cela impose à chaque lot** :
 - toute modification du format d'un essai arrive avec sa **conversion Dexie.js** et son test d'intégration ([stratégie de tests](tests.md)) ;

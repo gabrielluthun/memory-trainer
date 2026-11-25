@@ -48,6 +48,7 @@ classDiagram
     }
     class PendingDecision {
         +reason [1] : DecisionReason
+        +stoppedIn [1] : OngoingPhase
         +answers [0..*] : Answer
         +memorizationMs [1] : number
         +recallMs [1] : number
@@ -74,11 +75,16 @@ classDiagram
         +correct [1] : boolean
     }
     class TrialSnapshot {
+        +id [1] : TrialId
+        +discipline [1] : DisciplineName
+        +mode [1] : Mode
+        +items [1..*] : Item
+        +startedAt [1] : Date
+        +displayPattern [1..3] : number
         +phase [1] : OngoingPhase
-        +answers [0..*] : Answer
-        +memorizationMs [0..1] : number
-        +recallElapsedMs [0..1] : number
-        +savedAt [1] : Date
+        +answers [1..*] : Answer
+        +memorizationMs [1] : number
+        +recallMs [1] : number
     }
     class Format {
         +itemCount [1] : number
@@ -118,7 +124,7 @@ classDiagram
     }
     class GroupNavigation {
         -position [1] : number
-        +groupSize [1] : number
+        +pattern [1..3] : number
         +next()
         +previous()
         +toStart()
@@ -136,11 +142,13 @@ classDiagram
     }
     class Settings {
         +interfaceLanguage [1] : Language
-        +groupSizes [1..*] : number
+        +groupPatterns [1..*] : DisplayPattern
         +modifiedAt [1] : Date
         +withLanguage()
-        +withGroupSize()
+        +withGroupPattern()
         +withPauses()
+        +launchFor()
+        +withLaunch()
         +isNewerThan()
     }
 
@@ -156,6 +164,7 @@ classDiagram
 
     Trial "0..*" --> "1" Discipline : follows rules of
     Trial "1" *-- "1" Format : has format
+    TrialSnapshot "1" *-- "1" Format : keeps format
     Trial "1" *-- "1" PreparationPauses : plans
     PausedBeforeMemorization "1" *-- "1" Countdown : counts down with
     PausedBeforeRecall "1" *-- "1" Countdown : counts down with
@@ -180,20 +189,20 @@ classDiagram
 | **MemorizingTrial** | Chronomètre et navigation par groupes. `finishMemorization()` plafonne le temps à la durée du format | RG01, RG08, RG09, RG11 |
 | **PausedBeforeRecall** | Compte à rebours avant le rappel. Le temps de mémorisation est figé | RG25 |
 | **RecallingTrial** | Chronomètre de rappel et saisie. `finishRecall()` fait corriger l'essai par la discipline | RG10, RG12 |
-| **PendingDecision** | Attente des trois choix, après un abandon ou une interruption. `fromSnapshot()` reconstruit un essai interrompu | RG23, RG24 |
+| **PendingDecision** | Attente des trois choix, après un abandon ou une interruption. `stoppedIn` garde la phase de l'arrêt, affichée dans la fenêtre de l'essai interrompu. `fromSnapshot()` reconstruit un essai interrompu | RG23, RG24 |
 | **ClosedTrial** | Essai clos, sans aucune méthode de modification | RG18 |
 | **CompletedTrial** | Essai compté. `isBetterThan()` compare d'abord le score, puis le temps de mémorisation | RG12, RG13 |
 | **ExcludedTrial** | Essai hors statistiques : statut « abandonné » ou « Erreur externe à l'application » | RG23, RG24 |
 | **ItemResult** | Un élément attendu face à la réponse donnée | RG12, RG19 |
-| **TrialSnapshot** | Valeur simple enregistrée dans Dexie.js pendant l'essai | RG24 |
+| **TrialSnapshot** | Valeur simple enregistrée dans Dexie.js pendant l'essai : tout ce qu'il faut pour reconstruire l'essai (éléments, format, motif d'affichage), sa phase, les réponses et les temps du moment. Sans les pauses, jamais enregistrées (RG25) | RG24, RG25 |
 | **Format** | Nombre d'éléments et durées. `custom()` garde 4 minutes de rappel | RG01, RG15 |
 | **PreparationPauses** | Les deux pauses : 0, 5, 10 ou 20 s | RG25 |
 | **Discipline** | Ce qui change d'une discipline à l'autre : format standard, tirage, saisie, correction | EF01 à EF06 |
 | **NumbersDiscipline** | 80 chiffres de 0 à 9 tirés au hasard, 1 point par chiffre juste à la bonne position | RG02, RG12, RG21 |
 | **SequenceRecall** | Taper, effacer à gauche, insérer une case (+), supprimer une case (−). Resservira pour Cards, Images et Words | RG10 |
-| **GroupNavigation** | Position dans les groupes. `next()` signale la fin quand → est pressé deux fois rapidement sur le dernier groupe | RG09, RG11 |
+| **GroupNavigation** | Position dans les groupes, dont la taille est la somme du motif d'affichage (« 2 3 » : 5 éléments). `next()` signale la fin quand → est pressé deux fois rapidement sur le dernier groupe | RG09, RG11 |
 | **Stopwatch**, **Countdown** | Chronomètre et compte à rebours, sur l'horloge monotone (section 3) | ENF01, RG25 |
-| **Settings** | Langue, tailles de groupes et dernières pauses par discipline. Chaque modification renvoie de nouveaux paramètres, datés par l'appareil | EF20, RG11, RG25, [ADR 0012](../adr/0012-conflits-parametres-heure-appareil.md) |
+| **Settings** | Langue, motif d'affichage, dernières pauses et derniers réglages de lancement (mode, nombre d'éléments et durée du mode personnalisé) par discipline. Chaque modification renvoie de nouveaux paramètres, datés par l'appareil | EF20, RG11, RG25, [ADR 0012](../adr/0012-conflits-parametres-heure-appareil.md) |
 
 `finishMemorization()` et `finishRecall()` sont appelées de deux façons : par le pratiquant (Finished, Entrée), ou par l'application quand le temps du format est écoulé.
 
@@ -233,11 +242,54 @@ classDiagram
     class SettingsService {
         +load()
         +update()
+        +adopt()
+    }
+    class ConnectionService {
+        +status [1] : ConnectionStatus
+        +prompting [1] : boolean
+        +open()
+        +dismiss()
+        +ask()
+        +signOut()
     }
     class SyncService {
-        -running [1] : boolean
+        -running [0..1] : Promise
+        +state [1] : SyncState
+        +lastSyncedAt [0..1] : Date
         +sync()
         +startTriggers()
+    }
+    class UpdateService {
+        +stale [1] : boolean
+        +ready [1] : boolean
+        +dismissed [1] : boolean
+        +replaced [1] : boolean
+        +start()
+        +checkPublished()
+        +dismiss()
+        +apply()
+    }
+    class InstallService {
+        +reminding [1] : boolean
+        +open()
+        +later()
+    }
+    class AppVersion {
+        <<interface>>
+        +local [1] : string
+        +published()
+    }
+    class AppUpdater {
+        <<interface>>
+        +start()
+        +check()
+        +apply()
+    }
+    class InstallContext {
+        <<interface>>
+        +isInstalled()
+        +isAppleMobile()
+        +persist()
     }
     class TrialRepository {
         <<interface>>
@@ -262,6 +314,11 @@ classDiagram
         +save()
         +isDirty()
         +markSynced()
+        +saveReceived()
+    }
+    class InterfaceLanguage {
+        <<interface>>
+        +apply()
     }
     class RemoteStore {
         <<interface>>
@@ -274,11 +331,16 @@ classDiagram
         <<interface>>
         +isValid()
         +token()
-        +signIn()
+        +signOut()
+        +onChange()
+    }
+    class Network {
+        <<interface>>
+        +isOnline()
+        +onOnline()
     }
     class Scheduler {
         <<interface>>
-        +every()
         +after()
     }
 
@@ -288,12 +350,19 @@ classDiagram
     InterruptedTrialRecovery "1" --> "1" TrialRepository : reads
     HistoryQuery "1" --> "1" TrialRepository : reads
     SettingsService "1" --> "1" SettingsRepository : updates
+    SettingsService "1" --> "1" InterfaceLanguage : applies its language to
     SyncService "1" --> "1" Outbox : empties
     SyncService "1" --> "1" TrialRepository : adds received trials to
     SyncService "1" --> "1" SettingsRepository : syncs
     SyncService "1" --> "1" RemoteStore : exchanges with
     SyncService "1" --> "1" AuthSession : authenticates through
+    ConnectionService "1" --> "1" AuthSession : follows
+    ConnectionService "1" --> "1" Network : checks
     SyncService "1" --> "1" Scheduler : retriggered by
+    SyncService "1" --> "1" UpdateService : waits for
+    UpdateService "1" --> "1" AppVersion : compares
+    UpdateService "1" --> "1" AppUpdater : installs through
+    InstallService "1" --> "1" InstallContext : checks
 ```
 
 | Classe | Rôle | Cas d'utilisation | Séquence |
@@ -302,13 +371,21 @@ classDiagram
 | **InterruptedTrialRecovery** | À l'ouverture, cherche un essai en cours et propose les trois choix | CU06 | SEQ01, SEQ03 |
 | **HistoryQuery** | Liste et détail des essais, lus sur l'appareil | CU04, CU07 | — |
 | **SettingsService** | Lit et modifie les paramètres, les marque à envoyer | CU15 | — |
-| **SyncService** | Envoi, réception, paramètres. Une seule synchronisation à la fois. Déclencheurs : retour du réseau, fin d'essai, toutes les 5 minutes | CU16, CU17 | SEQ04, SEQ05 |
+| **SyncService** | Envoi, réception, paramètres. Une seule synchronisation à la fois : un second déclenchement rejoint celle en cours. Son état (`state`, `lastSyncedAt`) est lu par les écrans. Avant tout envoi, demande à `UpdateService` si l'appareil est à jour : sinon, l'état passe à « en attente de mise à jour » et rien n'est envoyé ni reçu. Déclencheurs : ouverture, session créée, retour du réseau, fin d'essai, toutes les 5 minutes (`startTriggers()`). La fin d'essai passe par le dépôt d'essais, qui prévient après chaque clôture (`notifyOnClose`) : les cas d'usage n'en savent rien. Reçoit les essais par pages de 50 après le repère, puis les paramètres s'ils sont plus récents, transmis à `SettingsService.adopt()` | CU16, CU17 | SEQ04, SEQ05 |
+| **UpdateService** | Nouvelle version de l'application ([déploiement](../../06-qualite-deploiement/deploiement.md), section 5). `checkPublished()`, appelée par `SyncService` avant chaque synchronisation, compare la version de l'appareil à la version publiée : si elles diffèrent, `stale` passe à vrai et le service worker est relancé pour télécharger la nouvelle version. `ready` : nouvelle version téléchargée, proposée dans l'encart. `dismiss()` ferme l'encart jusqu'à la prochaine ouverture. `apply()` installe la nouvelle version. `replaced` : la nouvelle version, installée depuis cette fenêtre ou une autre, sert désormais l'application ; la page se recharge dès qu'aucun essai n'est en cours | CU17 | SEQ01, SEQ05 |
+| **InstallService** | À l'ouverture : application installée, demande le stockage persistant ; iPhone ou iPad sans installation, `reminding` affiche le rappel (écran 12). `later()` le ferme jusqu'à la prochaine ouverture | CU18 | SEQ01 |
+| **AppVersion** | Version de l'appareil (`local`, fixée au build) et version publiée (`published()`, lue sans cache). Une version illisible est une erreur | — | SEQ05 |
+| **AppUpdater** | Service worker, sans savoir que c'est Workbox : prévient quand une nouvelle version est prête, puis quand elle sert l'application ; la cherche, l'installe. Ne recharge jamais la page lui-même | — | SEQ01 |
+| **InstallContext** | Application installée ou non, iPhone ou iPad, demande de stockage persistant | CU18 | SEQ01 |
 | **TrialRepository** | Essai en cours, essais clos, repère de réception. `close()` écrit l'essai et l'ajoute à la file d'envoi **en une transaction** | — | SEQ02 |
 | **Outbox** | File d'envoi : essais à envoyer, retrait après confirmation, marque « refusé » | — | SEQ05 |
 | **SettingsRepository** | Paramètres de l'appareil et indicateur « à envoyer » | — | SEQ05 |
+| **InterfaceLanguage** | Langue des écrans : appliquée au chargement des paramètres et à chaque changement enregistré ([ADR 0029](../adr/0029-langue-reactive.md)) | CU15 | — |
 | **RemoteStore** | Ce que l'application attend du serveur, sans savoir que c'est Neon | — | SEQ05 |
-| **AuthSession** | Session et jeton, sans savoir que c'est Hanko | — | SEQ04 |
-| **Scheduler** | Comptes à rebours, enregistrement régulier, relance de la synchronisation. Simulable dans les tests | — | SEQ02, SEQ05 |
+| **ConnectionService** | À l'ouverture, en ligne et sans session, affiche l'écran de connexion ; « Continuer hors connexion » le ferme jusqu'à la prochaine ouverture ; suit la session et la déconnexion | CU16 | SEQ04 |
+| **AuthSession** | Session et jeton, sans savoir que c'est Hanko. La connexion elle-même se fait dans l'écran de Hanko ([ADR 0030](../adr/0030-connexion-hanko-elements.md)) : l'application lit la session et suit ses changements | — | SEQ04 |
+| **Network** | En ligne ou non. Simulable dans les tests | CU16 | SEQ01 |
+| **Scheduler** | Comptes à rebours, enregistrement régulier, relance de la synchronisation. Une tâche régulière se reprogramme elle-même. Simulable dans les tests | — | SEQ02, SEQ05 |
 
 ## 3. Couche Infrastructure
 
@@ -325,6 +402,9 @@ classDiagram
         <<interface>>
     }
     class SettingsRepository {
+        <<interface>>
+    }
+    class InterfaceLanguage {
         <<interface>>
     }
     class RemoteStore {
@@ -361,16 +441,35 @@ classDiagram
     class TrialMapper {
         +toRecord()
         +fromRecord()
-        +toApiPayload()
         +fromApi()
     }
     class DataApiClient
     class HankoSession
+    class BrowserNetwork
+    class Network {
+        <<interface>>
+    }
     class BrowserMonotonicClock
     class BrowserWallClock
     class CryptoRandomSource
     class CryptoIdGenerator
     class BrowserScheduler
+    class ParaglideInterfaceLanguage {
+        -current [1] : Language
+        +apply()
+    }
+    class AppVersion {
+        <<interface>>
+    }
+    class AppUpdater {
+        <<interface>>
+    }
+    class InstallContext {
+        <<interface>>
+    }
+    class FetchAppVersion
+    class PwaUpdater
+    class BrowserInstallContext
     class AppContainer {
         +build()
     }
@@ -378,13 +477,18 @@ classDiagram
     TrialRepository <|.. DexieTrialStore
     Outbox <|.. DexieTrialStore
     SettingsRepository <|.. DexieSettingsStore
+    InterfaceLanguage <|.. ParaglideInterfaceLanguage
     RemoteStore <|.. DataApiClient
     AuthSession <|.. HankoSession
+    Network <|.. BrowserNetwork
     Scheduler <|.. BrowserScheduler
     MonotonicClock <|.. BrowserMonotonicClock
     WallClock <|.. BrowserWallClock
     RandomSource <|.. CryptoRandomSource
     IdGenerator <|.. CryptoIdGenerator
+    AppVersion <|.. FetchAppVersion
+    AppUpdater <|.. PwaUpdater
+    InstallContext <|.. BrowserInstallContext
     DexieTrialStore "1" --> "1" DexieDatabase : writes to
     DexieSettingsStore "1" --> "1" DexieDatabase : writes to
     DexieTrialStore "1" --> "1" TrialMapper : converts with
@@ -399,12 +503,17 @@ classDiagram
 |---|---|---|
 | **DexieTrialStore** | Implémente `TrialRepository` et `Outbox` dans une seule classe, pour que la clôture d'un essai et son ajout à la file soient dans la même transaction | Dexie.js |
 | **DexieSettingsStore** | Implémente `SettingsRepository` | Dexie.js |
-| **TrialMapper** | Convertit les objets du métier en enregistrements Dexie.js et en données JSON pour la Data API, et inversement | — |
-| **DataApiClient** | Appelle la fonction d'envoi ([ADR 0010](../adr/0010-envoi-essai-fonction-sql.md)) et lit les essais par numéro d'ordre ([ADR 0011](../adr/0011-repere-numero-ordre-verrou.md)), avec le jeton de la session | `fetch`, Data API Neon |
-| **HankoSession** | Implémente `AuthSession` | SDK Hanko |
+| **TrialMapper** | Convertit les objets du métier en enregistrements Dexie.js, et les essais reçus de la Data API en enregistrements. L'enregistrement Dexie.js a déjà la forme attendue par `submit_trial` : il est envoyé tel quel, sans la marque « refusé » propre à l'appareil | — |
+| **DataApiClient** | Appelle `submit_trial` et `save_settings` ([ADR 0010](../adr/0010-envoi-essai-fonction-sql.md), [ADR 0012](../adr/0012-conflits-parametres-heure-appareil.md)) et lit les essais par numéro d'ordre ([ADR 0011](../adr/0011-repere-numero-ordre-verrou.md)), avec le jeton de la session et rien d'autre (ES15). Traduit les réponses : valeur refusée → essai refusé (ES07) ; jeton ou compte refusé → reconnexion ; le reste → nouvel essai plus tard | @neondatabase/postgrest-js ([ADR 0031](../adr/0031-client-data-api-postgrest.md)) |
+| **HankoSession** | Implémente `AuthSession`. Enregistre le composant `<hanko-auth>` de l'écran de connexion ; jeton dans un cookie `SameSite=Strict` | hanko-elements ([ADR 0030](../adr/0030-connexion-hanko-elements.md)) |
+| **BrowserNetwork** | Implémente `Network` | `navigator.onLine` |
 | **MonotonicClock** et **WallClock** | La monotone mesure les durées, insensible aux changements d'heure. La murale date les essais et les paramètres | `performance.now()`, `Date` |
 | **RandomSource**, **IdGenerator** | Hasard du tirage et identifiants créés sur l'appareil | `crypto.getRandomValues()`, `crypto.randomUUID()` |
-| **BrowserScheduler** | Implémente `Scheduler` | `setTimeout`, `setInterval` |
+| **BrowserScheduler** | Implémente `Scheduler` | `setTimeout` |
+| **ParaglideInterfaceLanguage** | Implémente `InterfaceLanguage` : la langue courante est une rune lue par Paraglide à chaque texte, recopiée sur l'appareil et dans l'attribut `lang` de la page ([ADR 0029](../adr/0029-langue-reactive.md)) | Paraglide JS, `localStorage` |
+| **FetchAppVersion** | Implémente `AppVersion` : version de `package.json` injectée au build, et fichier `version.json` publié avec le site, lu sans cache | `fetch` (`cache: 'no-store'`), Vite |
+| **PwaUpdater** | Implémente `AppUpdater` : enregistre le service worker en mode `prompt` ([ADR 0008](../adr/0008-service-worker-vite-plugin-pwa.md)) | `virtual:pwa-register` |
+| **BrowserInstallContext** | Implémente `InstallContext` : affichage `standalone`, appareil Apple tactile (l'iPad se présente comme un Mac), stockage persistant | `matchMedia`, `navigator.standalone`, `navigator.storage.persist()` |
 | **AppContainer** | Crée tous les objets au démarrage et les relie : c'est le seul endroit qui connaît les classes concrètes | — |
 
 Le **Worker de sauvegarde** (SEQ06) est un programme à part, d'une seule fonction : il n'est pas modélisé ici.
@@ -421,10 +530,12 @@ Le **Worker de sauvegarde** (SEQ06) est un programme à part, d'une seule foncti
 
 > Décision : « → deux fois **rapidement** » (RG09) = deux appuis à moins de **400 ms** d'écart. La valeur exacte de Memory League n'est pas connue. Elle est réglable dans le code.
 
+> Décision : seuls les appuis faits **sur le dernier groupe** comptent pour ce double appui. L'appui qui amène sur le dernier groupe ne compte pas : en faisant défiler vite, on ne peut pas arrêter sa mémorisation par erreur.
+
 ## Points ouverts
 
 | Point | Pourquoi | Quand |
 |---|---|---|
-| **Lien entre les cas d'usage et l'affichage Svelte** | Les cas d'usage ont un état qui change (essai en cours, synchronisation). L'écran doit le suivre : runes Svelte dans la couche Application, ou abonnement à des événements. | Sprint 0 |
+| ~~**Lien entre les cas d'usage et l'affichage Svelte**~~ | Tranché : runes Svelte dans la couche Application ([ADR 0025](../adr/0025-etat-des-cas-usage-runes-svelte.md)). | Fait |
 | **Interface `Discipline` face aux disciplines du lot 2** | Cards et Images se saisissent en plaçant des éléments, pas en tapant : `RecallInput` sera peut-être à enrichir. | Avant le lot 2 |
 | **Types exacts** (`Item`, `Answer`, `TrialId`, `TrialStatus`, `OngoingPhase`) | Fixés avec le dictionnaire de données. | S7 |

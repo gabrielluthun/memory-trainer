@@ -124,7 +124,7 @@ CU17 est déclenché **automatiquement** par l'application (à l'ouverture, au r
 | **CU12** : Gérer ses systèmes | Créer, consulter et modifier un système d'images. | US16 | EF17 | 5 |
 | **CU13** : Réviser ses systèmes | Retrouver l'image associée à un élément. | US17 | EF18 | 5 |
 | **CU14** : Voir les erreurs d'une image | Erreurs imputées à une image, révision ciblée. | US18 | EF19 | 5 |
-| **CU15** : Régler ses paramètres | Langue de l'interface, taille des groupes par épreuve. | US19, US07 | EF20, EF08 | 1 |
+| **CU15** : Régler ses paramètres | Langue de l'interface, motif d'affichage et pauses par épreuve. | US19, US07 | EF20, EF08 | 1 |
 | **CU16** : Se connecter | Connexion par passkey auprès de Hanko. | US21 | ES01 à ES03 | 1 |
 | **CU17** : Synchroniser ses données | Envoyer les essais en attente, recevoir ceux des autres appareils. | US20, US21 | EF21 | 1 |
 | **CU18** : Installer l'application | Installer la PWA sur ordinateur, téléphone ou tablette. | US22 | EF22 | 1 (mobile), 7 (bureau) |
@@ -165,6 +165,8 @@ Une fiche par cas du lot 1. Les fiches des autres lots seront rédigées juste a
 
 Décision : en mode personnalisé, la durée de rappel reste de **4 minutes**, conformément à RG15.
 
+Décision : le **dernier mode** et les **derniers réglages personnalisés** (nombre d'éléments, durée de mémorisation) de chaque épreuve sont gardés avec les paramètres, comme les pauses, et donc synchronisés ([ADR 0028](../adr/0028-derniers-reglages-de-lancement.md)). Avant tout essai personnalisé, ils valent le format standard (80 chiffres, 1 minute pour Numbers).
+
 Décision : l'essai « en cours » est enregistré au **démarrage de la mémorisation**, et non au lancement. Une interruption pendant la pause avant la mémorisation ne laisse donc rien à décider (5d), comme l'abandon sans question (5c).
 
 Décision : les dernières durées de pause utilisées pour chaque épreuve sont gardées **avec les paramètres**, et donc synchronisées entre les appareils comme eux ([ADR 0012](../adr/0012-conflits-parametres-heure-appareil.md)).
@@ -179,7 +181,7 @@ Décision : les dernières durées de pause utilisées pour chaque épreuve sont
 
 **Scénario nominal**
 1. Le chronomètre de mémorisation démarre. L'essai « en cours » est enregistré sur l'appareil, ce qui permet de détecter une interruption (RG24).
-2. L'application affiche le premier groupe de chiffres, dont la taille est réglée dans les paramètres (RG11, CU15).
+2. L'application affiche le premier groupe de chiffres, découpé selon le motif d'affichage réglé dans les paramètres, par exemple « 45 83 » pour le motif « 2 2 » (RG11, CU15).
 3. Le pratiquant navigue : → avance d'un groupe, ← recule, barre d'espace ou ↑ revient au début (RG09). Sur écran tactile, des équivalents sont proposés (maquettes, S12).
 4. Le pratiquant termine : → deux fois rapidement à la fin des éléments, bouton **Finished** ou touche Entrée (RG09).
 5. Le chronomètre s'arrête. La pause avant le rappel commence : seul un compte à rebours s'affiche, les chiffres sont cachés (RG25).
@@ -201,7 +203,7 @@ Décision : les dernières durées de pause utilisées pour chaque épreuve sont
 
 **Scénario nominal**
 1. Le chronomètre de rappel démarre (4 minutes).
-2. Le pratiquant sélectionne une case et tape un chiffre. Retour arrière efface le chiffre à gauche. **+** insère une case vide et décale la suite ; **−** supprime la case et ramène la suite (RG10).
+2. Le pratiquant sélectionne une case et tape un chiffre. Retour arrière efface la case sélectionnée si elle est remplie, sinon le chiffre à gauche. **+** insère une case vide et décale la suite (le dernier chiffre sort de la grille) ; **−** supprime la case et ramène la suite (RG10).
 3. Le pratiquant valide son rappel avec le bouton **Finished**.
 4. L'application corrige : 1 point par chiffre juste à la bonne position, sans pénalité (RG12).
 5. L'essai est enregistré et ajouté à la file d'envoi, puis le résultat s'affiche : CU04.
@@ -221,6 +223,8 @@ Décision : les dernières durées de pause utilisées pour chaque épreuve sont
 **Scénario nominal**
 1. L'application affiche le score, le temps de mémorisation et le temps de rappel, au centième de seconde (ENF01).
 2. Elle affiche chaque chiffre attendu face à la réponse donnée. Les erreurs sont mises en évidence (RG19).
+
+Décision : un essai ouvert depuis l'historique s'affiche avec le **motif d'affichage actuel** des paramètres. Le motif n'est pas enregistré avec l'essai, et il ne change que l'espacement des cases, jamais la correction.
 
 ### CU05 — Abandonner un essai
 
@@ -287,7 +291,10 @@ Décision : un essai interrompu gardé hors statistiques **conserve le statut «
 
 **Scénario nominal**
 1. Le pratiquant choisit la langue de l'interface : français ou anglais (EF20). L'interface change sans recharger les données.
-2. Il choisit la taille des groupes pour chaque épreuve, par exemple 3 chiffres pour Numbers (RG11). Les tailles proposées et la valeur par défaut seront fixées avec les maquettes (S12).
+2. Il construit le motif d'affichage de chaque épreuve : 1 à 3 sous-groupes de 1 à 5 éléments, par exemple « 2 3 » pour Numbers, avec un aperçu (RG11). « 2 » par défaut pour Numbers.
+3. Il choisit les deux pauses de préparation de chaque épreuve : 0, 5, 10 ou 20 s (RG25).
+
+Décision : les **pauses de préparation** de chaque épreuve sont aussi un paramètre. C'est **une seule valeur** : la modifier ici ou au lancement d'un essai (CU01) change la même valeur, celle qui est proposée au lancement suivant (RG25). Sur un appareil neuf, il n'y a **aucune pause** (0 s et 0 s).
 
 Décision : les paramètres sont **synchronisés entre les appareils**, comme les essais. Ils sont donc modifiables, contrairement aux essais : en cas de modification sur deux appareils, **la dernière modification l'emporte**.
 
@@ -308,6 +315,7 @@ Décision : les paramètres sont **synchronisés entre les appareils**, comme le
 
 **Scénarios alternatifs**
 - **Hors ligne** : l'application reste utilisable avec les données de l'appareil. La connexion est reportée au retour du réseau (S3).
+- **Continuer hors connexion** (maquette 11) : l'écran se ferme et ne revient qu'à la prochaine ouverture de l'application. D'ici là, l'état « Non connecté » de l'en-tête permet de se connecter à tout moment. Les essais attendent dans la file d'envoi.
 - **Nouvel appareil sans passkey** : la passkey est partagée par le gestionnaire de mots de passe du système, ou utilisée depuis un autre appareil en scannant un QR code.
 - **Échec** : l'application affiche l'erreur. Les données locales restent intactes.
 
@@ -344,7 +352,7 @@ Décision : les paramètres sont **synchronisés entre les appareils**, comme le
 2. Au premier lancement de l'application installée, elle demande un stockage persistant (S3).
 
 **Scénarios alternatifs**
-- **iPhone ou iPad sans installation** : l'application affiche un rappel, car sans installation, Safari peut effacer les données locales.
+- **iPhone ou iPad sans installation** : l'application affiche un rappel à chaque ouverture, car sans installation, Safari peut effacer les données locales. « Plus tard » le ferme jusqu'à la prochaine ouverture.
 - **Firefox sur ordinateur** : l'installation n'est pas possible ; l'application reste utilisable dans un onglet.
 
 ### CU19 — Sauvegarder les données

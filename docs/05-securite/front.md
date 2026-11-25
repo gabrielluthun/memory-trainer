@@ -48,7 +48,7 @@ L'application est publiée sur un sous-domaine `pages.dev`, gratuit (ENF06). Le 
 | `form-action` | `'self'` | Aucun formulaire ne peut envoyer vers un autre site |
 | `frame-ancestors` | `'none'` | L'application ne peut pas être affichée dans un cadre d'un autre site (faux boutons superposés) |
 
-Les adresses exactes de la Data API et de Hanko sont connues au sprint 0.
+**Production du fichier** : `_headers` est écrit juste après `vite build` ([`scripts/write-security-headers.ts`](../../scripts/write-security-headers.ts)). L'empreinte du script de démarrage change à chaque build ; elle est calculée sur `build/index.html`, la page que publie Cloudflare. Les adresses de `connect-src` sont les **origines** des variables `PUBLIC_DATA_API_URL` et `PUBLIC_HANKO_API_URL` du build : une seule source pour l'application et sa CSP.
 
 ## 3. Affichage sans injection (XSS)
 
@@ -66,6 +66,7 @@ Test prévu par ES12 : un texte contenant `<script>` s'affiche tel quel.
 | Stockage | Contenu | Sensible | Protection |
 |---|---|---|---|
 | **IndexedDB** (Dexie.js) | Essais, paramètres, file d'envoi, essai en cours, repère de réception | Faible | Isolé par le navigateur (une seule origine) ; verrouillage de l'appareil |
+| **localStorage** | Langue de l'interface, copie des paramètres lue au démarrage ([ADR 0029](../04-specifications/adr/0029-langue-reactive.md)) | Aucun | Isolé par le navigateur ; les paramètres restent la référence |
 | **Cache du service worker** | Fichiers de l'application et polices | Aucun | Uniquement les fichiers de l'application ; **jamais les réponses de la Data API** |
 | **Jeton de session** | Jeton Hanko | Moyen | Traité en [sécurité du back](back.md) |
 

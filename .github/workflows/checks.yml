@@ -21,6 +21,10 @@ jobs:
     name: Lint, types, tests, audit, build
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    env:
+      # Simulated services, as in the end-to-end tests: the build requires addresses (src/env.ts).
+      PUBLIC_HANKO_API_URL: https://hanko.test
+      PUBLIC_DATA_API_URL: https://data-api.test/neondb/rest/v1
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

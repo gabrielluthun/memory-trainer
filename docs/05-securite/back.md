@@ -8,7 +8,7 @@ Amont : [surface d'attaque](surface-attaque.md), [base de données](bdd.md), [fr
 - **Connexion par passkey seule**, inscription fermée, **sessions de 12 heures**, révocables depuis n'importe quel appareil (ES01 à ES03).
 - **Le jeton de session** est un JWT signé par Hanko, gardé dans un **cookie sécurisé**, et vérifié par la Data API à chaque requête.
 - **La CI et le Worker n'ont que les secrets et les droits** dont chaque tâche a besoin (ES11).
-- **Alertes par e-mail** des fournisseurs : échec de la sauvegarde, échec de la CI, quotas qui approchent.
+- **Alertes par e-mail** des fournisseurs : échec de la CI, quotas qui approchent. La sauvegarde, elle, se vérifie à la main ([ADR 0032](../04-specifications/adr/0032-worker-de-sauvegarde.md)).
 
 ## Décisions prises
 
@@ -69,7 +69,8 @@ Détail : [MPD](../04-specifications/bdd/mpd.md), sections 4 à 6, et [ADR 0018]
 |---|---|---|
 | **Déclenchement** | Tâche cron seulement ; aucune route web, sous-domaine `workers.dev` désactivé | [surface d'attaque](surface-attaque.md) |
 | **Droits** | Lecture seule sur la base (`backup_reader`) ; écriture dans R2 seulement | ES11 |
-| **Secrets** | Mot de passe de `backup_reader` et jeton R2, dans les secrets du Worker | ES09 |
+| **Secrets** | Adresse de la base avec `backup_reader`, rangée dans l'environnement `production` de GitHub et envoyée au Worker par la CI ; R2 par liaison, sans clé ([ADR 0032](../04-specifications/adr/0032-worker-de-sauvegarde.md)) | ES09 |
+| **Déploiement** | Par la CI, à chaque mise en production ([déploiement](../06-qualite-deploiement/deploiement.md)) | ES11, ES19 |
 | **Fiabilité** | Le repère n'avance qu'après l'écriture du fichier : un échec ne perd rien ([séquence de sauvegarde](../04-specifications/uml/sequences.md)) | ES17 |
 | **Journaux** | Aucun contenu de la base n'est écrit dans les journaux du Worker, seulement le nombre d'essais exportés et les erreurs | ES10 |
 
@@ -88,7 +89,7 @@ Détail : [MPD](../04-specifications/bdd/mpd.md), sections 4 à 6, et [ADR 0018]
 
 | Événement | Prévenu par | Fournisseur |
 |---|---|---|
-| **Sauvegarde en échec** | E-mail de notification sur les erreurs du Worker | Cloudflare |
+| **Sauvegarde en échec** | **Aucune alerte** dans l'offre gratuite : vérification à la main de l'historique des exécutions ([maintenance](../06-qualite-deploiement/maintenance.md)) | Cloudflare |
 | **CI en échec** (tests, migration, publication) | E-mail de notification des Actions | GitHub |
 | **Quota qui approche** | Alertes de consommation | Neon, Cloudflare |
 | **Facturation qui démarre** | Alerte de facturation (ES16) | Cloudflare |
@@ -113,4 +114,4 @@ L'application n'envoie **aucun journal ni aucune mesure d'usage** (ES15) : les e
 |---|---|---|
 | **Révocation des sessions chez Hanko** | Inscription fermée et sessions de 12 heures confirmées dans la console au sprint 0. La révocation se teste avec une vraie session. | Lot 1 |
 | **Audience des jetons dans la Data API** | L'émetteur est couvert : la Data API n'accepte que les jetons signés par les clés du projet Hanko. L'audience (`aud`) sera ajoutée une fois lue dans un vrai jeton. | Lot 1 |
-| **Notifications d'erreur des Workers** dans l'offre gratuite de Cloudflare | Si elles n'existent pas, le Worker enverra lui-même l'alerte, ou la vérification se fera à la main. | Lot 1, avec le Worker |
+| ~~**Notifications d'erreur des Workers**~~ | Tranché : elles n'existent pas dans l'offre gratuite ; vérification à la main ([ADR 0032](../04-specifications/adr/0032-worker-de-sauvegarde.md)). | Fait |

@@ -17,7 +17,7 @@ Amont : [cas d'utilisation](../uml/cas-utilisation.md), [user stories](../../01-
 | **Mémorisation de Numbers** | **Carrousel** : une bande de groupes de même taille glisse sous un **cadre fixe** au centre. Le groupe dans le cadre est le groupe courant, les voisins restent lisibles. → et ← font glisser la bande d'un groupe. Le compteur « Groupe 12 sur 40 » reste dans la barre du haut. | RG09, RG11 |
 | **Mémorisation au toucher** | Boutons **Début**, **←**, **→** et **Finished** en bas de l'écran, à portée du pouce | RG09 |
 | **Rappel au toucher** | **Clavier numérique du système**, avec **+ Insérer** et **− Supprimer** en boutons sous la grille | RG10 |
-| **Taille des groupes** | **2 chiffres** par défaut pour Numbers, réglable de 1 à 10 dans les paramètres. Point ouvert de CU15 et du dictionnaire (S7) fermé. | RG11 |
+| **Taille des groupes** | Remplacée par le **motif d'affichage** de RG11 (1 à 3 sous-groupes de 1 à 5, « 2 » par défaut pour Numbers), ajouté pendant le développement. Initialement : **2 chiffres** par défaut pour Numbers, réglable de 1 à 10 dans les paramètres. Point ouvert de CU15 et du dictionnaire (S7) fermé. | RG11 |
 | **Style** | Wireframes en basse fidélité (version 1, comparée à une version 2 au langage visuel plus marqué). | — |
 
 ## Écrans

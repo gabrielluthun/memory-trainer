@@ -22,10 +22,14 @@ Amont : [périmètre et lots](perimetre.md), [priorisation](priorisation.md), [c
 | J7 | Lot 3 — Names, International Names | Spécification du lot validée, release **0.3**, recette réussie |
 | J8 | Lot 4 — Statistiques et erreurs | Spécification du lot validée, release **0.4**, recette réussie |
 | J9 | Lot 5 — Systèmes d'images | Spécification du lot validée, release **0.5**, recette réussie |
+| J13 | Lot 8 — Exercices | Spécification du lot validée, release **0.6**, recette réussie |
 | J10 | Lot 6 — Points IAM | Spécification du lot validée, release **1.0**, recette réussie |
 | J11 | Finalisation en production : documentation (Q4) et maintenance (Q5) | Q4 et Q5 validés |
 | J12 | Lot 7 — Application de bureau | Spécification du lot validée, release **1.1**, recette réussie |
+| J14 | Lot 9 — IAM chiffres et cartes | Spécification du lot validée, release **1.2**, recette réussie |
+| J15 | Lot 10 — IAM images, mots, visages, dates | Spécification du lot validée, release **1.3**, recette réussie |
+| J16 | Lot 11 — Spoken Numbers | Spécification du lot validée, release **1.4**, recette réussie |
 
-Pour chaque lot de J6 à J10, puis J12, l'enchaînement est le même : **spécification détaillée du lot** (mises à jour des parties 4 et 5) → validation → user stories → code → tests → release → [recette](../06-qualite-deploiement/recette.md) en production → lot livré.
+Pour chaque lot de J6 à J10, puis de J12 à J16 (J13 se place entre J9 et J10, ajouté après la numérotation), l'enchaînement est le même : **spécification détaillée du lot** (mises à jour des parties 4 et 5) → validation → user stories → code → tests → release → [recette](../06-qualite-deploiement/recette.md) en production → lot livré.
 
 > Décision : la recette se fait **en production, après la release**. Un défaut trouvé à la recette est corrigé par un hotfix (`X.Y.1`). Ordre modifié pendant la partie 6, partie 2 revalidée sur ce point.

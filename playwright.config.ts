@@ -14,10 +14,18 @@ export default defineConfig({
 	reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
 	use: {
 		baseURL: `http://localhost:${port}`,
-		trace: 'on-first-retry'
+		trace: 'on-first-retry',
+		// The service worker (US20) is only allowed in the offline tests: elsewhere, every request
+		// goes straight to the simulated services.
+		serviceWorkers: 'block'
 	},
 	webServer: {
 		command: `npm run build && npm run preview -- --port ${port} --strictPort`,
+		// Simulated services (tests/e2e/fixtures.ts): these addresses win over the .env file.
+		env: {
+			PUBLIC_HANKO_API_URL: 'https://hanko.test',
+			PUBLIC_DATA_API_URL: 'https://data-api.test/neondb/rest/v1'
+		},
 		port,
 		reuseExistingServer: !process.env.CI
 	},

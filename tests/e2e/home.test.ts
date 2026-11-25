@@ -1,16 +1,19 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
-// Sprint 0 smoke test: the built app loads in every browser and emulated device.
-
-test('the home page loads', async ({ page }) => {
+test('the home page offers to launch a Numbers trial', async ({ page }) => {
 	await page.goto('/');
 
 	await expect(page).toHaveTitle('memory-trainer');
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('memory-trainer');
+	await expect(page.getByRole('heading', { level: 2, name: 'Numbers' })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Lancer un essai' })).toBeVisible();
 });
 
-test('an unknown path falls back to the app (SPA mode)', async ({ page }) => {
-	await page.goto('/history');
+test('an unknown path is served by the app, which shows its own 404 page (SPA mode)', async ({
+	page
+}) => {
+	// The HTTP status depends on the server (vite preview answers 404, Cloudflare Pages 200):
+	// what matters is that the app itself loads and shows its 404 page.
+	await page.goto('/does-not-exist');
 
-	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+	await expect(page.getByRole('heading', { name: '404' })).toBeVisible();
 });

@@ -33,6 +33,8 @@ Version initiale, rédigée avant le développement. Elle sera **finalisée en p
 
 > Décision : Dependabot passe **une fois par semaine**, avec les regroupements ci-dessus. Ses pull requests sont relues, puis fusionnées **en local** dans `develop`, comme les branches de fonctionnalité ([conventions](../02-projet/conventions.md)). Elles ne vont jamais directement dans `main`.
 
+> Décision : Dependabot **ne propose pas TypeScript 7**. `svelte-check`, `typescript-eslint` et SvelteKit n'acceptent encore que TypeScript 6. Les versions 6.x continuent d'arriver ; une version que `typescript-eslint` n'accepte pas encore est arrêtée par la CI. La règle est retirée quand ces outils acceptent la 7.
+
 Chaque mise à jour passe par les contrôles de la CI avant d'atteindre la production, comme tout autre changement.
 
 ## 2. Sauvegardes
@@ -48,7 +50,7 @@ Le détail est dans la [sécurité de la base](../05-securite/bdd.md), sections 
 
 **Vérifications** :
 - à chaque lot : le test de restauration, qui fait partie des 8 livrables ([recette](recette.md)) ;
-- en continu : un e-mail de Cloudflare si la sauvegarde échoue ([sécurité du back](../05-securite/back.md)).
+- à chaque lot et à chaque reprise : un fichier par jour dans R2, et aucune erreur dans l'historique des exécutions du Worker (console Cloudflare). L'offre gratuite n'envoie pas d'alerte ([ADR 0032](../04-specifications/adr/0032-worker-de-sauvegarde.md)). Un échec non vu ne perd rien : les essais restent dans Neon et sur les appareils, et la sauvegarde suivante reprend au dernier repère.
 
 ## 3. Reprise de la base en production
 
@@ -63,7 +65,7 @@ Le détail est dans la [sécurité de la base](../05-securite/bdd.md), sections 
 > 1. Elle tourne dans l'environnement `production`, avec le **rôle de migration**, et demande de taper une confirmation avant de commencer.
 > 2. Elle fait d'abord un export complet de la base dans son état actuel, même abîmé, vers R2 : rien n'est jamais écrasé sans copie.
 > 3. Elle recrée la base depuis le **dernier export avant migration**. Les déclencheurs d'immuabilité sont recréés après les données, comme dans tout export `pg_dump` : ils ne bloquent pas le chargement.
-> 4. Elle rejoue les **exports quotidiens** qui suivent, dans l'ordre, par la même logique que `submit_trial`. Les doublons sont ignorés (RG22).
+> 4. Elle rejoue les **exports quotidiens** qui suivent, dans l'ordre : les lignes sont insérées telles quelles, numéro d'ordre compris ([ADR 0032](../04-specifications/adr/0032-worker-de-sauvegarde.md)). Les essais déjà présents sont ignorés (RG22).
 > 5. Elle compare le nombre d'essais et le dernier numéro d'ordre avec le dernier export quotidien. Ensuite, chaque appareil peut **renvoyer tous ses essais** : la base ignore ceux qu'elle a déjà, et récupère ceux d'après la dernière sauvegarde.
 
 La tâche suit la même règle que les migrations : elle s'arrête au premier échec, et chaque étape est visible dans l'onglet Actions.

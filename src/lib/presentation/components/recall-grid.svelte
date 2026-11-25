@@ -1,0 +1,159 @@
+<script lang="ts">
+	/**
+	 * Recall grid (mock-up 05): one cell per digit, rows cut on whole groups, the selected cell
+	 * in blue pen. Digits come from the keyboard or, on touch screens, from the system numeric
+	 * keyboard through a hidden field (wireframes). The field also carries Backspace, + and −
+	 * once a cell has been clicked (RG10, US08).
+	 */
+	import { isSubgroupStart, type DisplayPattern } from '../../domain/navigation/display-pattern';
+	import { m } from '../../paraglide/messages';
+	import { rowSizeFor, rowsOf } from '../grid-rows';
+
+	let {
+		answers,
+		selected,
+		pattern,
+		onselect,
+		ontype,
+		onbackspace,
+		oninsert,
+		onremove
+	}: {
+		answers: (number | null)[];
+		selected: number;
+		pattern: DisplayPattern;
+		onselect: (index: number) => void;
+		ontype: (digit: number) => void;
+		onbackspace: () => void;
+		oninsert: () => void;
+		onremove: () => void;
+	} = $props();
+
+	/**
+	 * The hidden field always holds this invisible character: a touch keyboard sends nothing for
+	 * its delete key on an empty field, so its disappearance is how Backspace is seen.
+	 */
+	const SENTINEL = '\u200b';
+
+	let width = $state(1200);
+	let field: HTMLInputElement | undefined = $state();
+
+	const rowSize = $derived(rowSizeFor(width, pattern));
+	const rows = $derived(rowsOf(answers.length, rowSize));
+
+	function choose(index: number) {
+		onselect(index);
+		field?.focus();
+	}
+
+	function reset(input: HTMLInputElement) {
+		input.value = SENTINEL;
+		input.setSelectionRange(SENTINEL.length, SENTINEL.length);
+	}
+
+	function oninput(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		if (!input.value.includes(SENTINEL)) onbackspace();
+		for (const char of input.value) {
+			if (char >= '0' && char <= '9') ontype(Number(char));
+			else if (char === '+') oninsert();
+			else if (char === '-' || char === '−') onremove();
+		}
+		reset(input);
+	}
+</script>
+
+<svelte:window bind:innerWidth={width} />
+
+<div class="grid" style:--row={rowSize}>
+	{#each rows as row, rowIndex (rowIndex)}
+		<div class="row">
+			{#each row as index (index)}
+				<button
+					type="button"
+					class="cell"
+					class:selected={index === selected}
+					class:group-start={isSubgroupStart(index, pattern) && index % rowSize !== 0}
+					aria-label={m.recall_cell({
+						number: index + 1,
+						value: answers[index] ?? m.recall_cell_empty()
+					})}
+					aria-pressed={index === selected}
+					onclick={() => choose(index)}
+				>
+					{answers[index] ?? ''}
+					{#if index === selected && answers[index] === null}<span class="caret" aria-hidden="true"
+						></span>{/if}
+				</button>
+			{/each}
+		</div>
+	{/each}
+</div>
+
+<input
+	bind:this={field}
+	class="visually-hidden"
+	type="text"
+	inputmode="numeric"
+	autocomplete="off"
+	aria-label={m.recall_type_digit()}
+	data-recall-field
+	value={SENTINEL}
+	onfocus={(event) => reset(event.currentTarget)}
+	{oninput}
+/>
+
+<style>
+	.grid {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+	.row {
+		display: flex;
+		gap: 0.45rem;
+	}
+	.cell {
+		position: relative;
+		flex: 1 1 0;
+		min-width: 0;
+		max-width: 4.2rem;
+		aspect-ratio: 3 / 4;
+		border: 1.5px solid var(--line);
+		border-radius: 0.6rem;
+		background: var(--sheet);
+		color: var(--pen);
+		font-family: var(--font-digits);
+		font-size: clamp(1.3rem, 2.6vw, 2.3rem);
+		cursor: pointer;
+	}
+	.cell.group-start {
+		margin-left: 0.9rem;
+	}
+	.cell.selected {
+		border: 3px solid var(--pen);
+		background: var(--pen-wash);
+		box-shadow: 0 0 0 4px color-mix(in srgb, var(--pen) 18%, transparent);
+	}
+	.caret {
+		position: absolute;
+		left: 50%;
+		top: 25%;
+		height: 50%;
+		border-left: 2px solid var(--pen);
+		animation: blink 1s steps(1) infinite;
+	}
+	@keyframes blink {
+		50% {
+			opacity: 0;
+		}
+	}
+	@media (max-width: 760px) {
+		.row {
+			gap: 0.3rem;
+		}
+		.cell.group-start {
+			margin-left: 0.5rem;
+		}
+	}
+</style>

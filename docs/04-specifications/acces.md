@@ -18,7 +18,7 @@ Amont : [MPD](bdd/mpd.md), [dictionnaire de données](bdd/dictionnaire.md), [exi
 |---|---|---|---|
 | **anonymous** | Une requête à la Data API sans jeton | Data API de Neon | Rien |
 | **authenticated** | L'application, pour le pratiquant connecté | Data API de Neon, avec le jeton Hanko vérifié (JWKS) | Lire ses données, envoyer ses essais et ses paramètres |
-| **backup_reader** | Le Worker de sauvegarde (SEQ06) | Connexion directe à PostgreSQL, mot de passe dans les secrets du Worker | Tout lire, rien écrire |
+| **backup_reader** | Le Worker de sauvegarde (SEQ06) | Connexion directe à PostgreSQL ; adresse avec le mot de passe rangée dans l'environnement `production` de GitHub, envoyée au Worker par la CI ([ADR 0032](adr/0032-worker-de-sauvegarde.md)) | Tout lire, rien écrire |
 | **Rôle de migration** | La CI (SEQ07) | Connexion directe, identifiants dans les secrets de la CI | Faire évoluer la structure. Propriétaire des tables. Ne peut quand même pas modifier un essai (déclencheur d'immuabilité) |
 
 ## 2. Matrice des droits
@@ -104,5 +104,5 @@ Ces cas deviendront des tests automatiques de la CI (ES04 : « une requête sans
 | Point | Pourquoi | Quand |
 |---|---|---|
 | ~~**Rôles et schéma `auth` chez Neon**~~ | Vérifié au sprint 0 : `authenticated` et `anonymous` existent, `auth.user_id()` (extension `pg_session_jwt`) renvoie l'identité du jeton, en texte. | Fait |
-| **Mot de passe de `backup_reader`** | Créé dans Neon, rangé dans les secrets du Worker, jamais dans le repo. Changement en cas de fuite. | Sprint 0, SE4 |
+| **Mot de passe de `backup_reader`** | Fixé dans Neon une fois le rôle créé par les migrations ; rangé dans le secret `BACKUP_DATABASE_URL` de GitHub, envoyé au Worker par la CI ; jamais dans le repo. Changement en cas de fuite. | Release 0.1.0, SE4 |
 | **Nouvelle table à un lot suivant** | Chaque table devra avoir ses droits, ses règles pour `authenticated` et sa règle `_backup_read`. Le test « tables sans RLS » le rappellera. | Avant chaque lot |

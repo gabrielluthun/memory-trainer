@@ -1,0 +1,738 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { FakeMonotonicClock } from '../../../tests/fakes/fake-monotonic-clock';
+import { FakeScheduler } from '../../../tests/fakes/fake-scheduler';
+import { InMemoryTrialRepository } from '../../../tests/fakes/in-memory-trial-repository';
+import { SeededRandomSource } from '../../../tests/fakes/seeded-random-source';
+import { NumbersDiscipline, type Digit } from '../domain/disciplines/numbers';
+import { Settings } from '../domain/settings/settings';
+import type { LaunchSettings } from '../domain/settings/settings';
+import type { PreparationPauses } from '../domain/trial/trial';
+import { TrialSession } from './trial-session.svelte';
+
+let clock: FakeMonotonicClock;
+let scheduler: FakeScheduler;
+let repository: InMemoryTrialRepository;
+let session: TrialSession;
+let settings: {
+	current: Settings;
+	setLaunch: (
+		discipline: 'numbers',
+		pauses: PreparationPauses,
+		launch: LaunchSettings
+	) => Promise<void>;
+};
+
+beforeEach(() => {
+	clock = new FakeMonotonicClock();
+	scheduler = new FakeScheduler(clock);
+	repository = new InMemoryTrialRepository();
+	settings = {
+		current: Settings.defaults(),
+		setLaunch(discipline, pauses, launch) {
+			const at = new Date('2026-11-22T12:00:00Z');
+			this.current = this.current
+				.withPauses(discipline, pauses, at)
+				.withLaunch(discipline, launch, at);
+			return Promise.resolve();
+		}
+	};
+	let id = 0;
+	session = new TrialSession({
+		discipline: new NumbersDiscipline(),
+		clock,
+		wallClock: { now: () => new Date('2026-11-22T10:00:00Z') },
+		random: new SeededRandomSource(7),
+		ids: { next: () => `trial-${++id}` },
+		scheduler,
+		repository,
+		settings
+	});
+});
+
+describe('TrialSession — US01, a standard Numbers trial', () => {
+	it('RG01, RG02 — starts a standard trial of 80 digits, memorization first', () => {
+		session.start();
+		scheduler.advance(0);
+
+		expect(session.current?.phase).toBe('memorizing');
+		expect(session.current?.items).toHaveLength(80);
+		expect(session.current?.mode).toBe('standard');
+	});
+
+	it('RG21 — draws a new sequence for each trial', () => {
+		session.start();
+		const first = session.current?.items;
+		session.start();
+
+		expect(session.current?.items).not.toEqual(first);
+	});
+
+	it('RG01 — stops the memorization by itself after 1 minute, then starts the recall', () => {
+		session.start();
+
+		scheduler.advance(59_999);
+		expect(session.current?.phase).toBe('memorizing');
+
+		scheduler.advance(1);
+		expect(session.current?.phase).toBe('recalling');
+		expect(session.memorizationMs).toBe(60_000);
+	});
+
+	it('RG01 — a timer firing early never stops the memorization before 1 minute', () => {
+		const early = new FakeScheduler(clock);
+		const earlySession = new TrialSession({
+			discipline: new NumbersDiscipline(),
+			clock,
+			wallClock: { now: () => new Date('2026-11-22T10:00:00Z') },
+			random: new SeededRandomSource(7),
+			ids: { next: () => 'early' },
+			// Fires every timer at half its delay, as a sleepy browser tab may do the other way round.
+			scheduler: {
+				after: (delayMs, task) => early.after(delayMs > 1 ? Math.floor(delayMs / 2) : delayMs, task)
+			},
+			repository,
+			settings
+		});
+		earlySession.start();
+
+		early.advance(59_999);
+		expect(earlySession.current?.phase).toBe('memorizing');
+
+		early.advance(1);
+		expect(earlySession.memorizationMs).toBe(60_000);
+	});
+
+	it('RG08 — the practitioner can finish the memorization earlier', () => {
+		session.start();
+		scheduler.advance(21_450);
+
+		session.finishMemorization();
+		scheduler.advance(0);
+
+		expect(session.current?.phase).toBe('recalling');
+		expect(session.memorizationMs).toBe(21_450);
+	});
+
+	it('RG08 — finishing early cancels the automatic stop', () => {
+		session.start();
+		scheduler.advance(10_000);
+		session.finishMemorization();
+
+		scheduler.advance(120_000);
+
+		expect(session.memorizationMs).toBe(10_000);
+	});
+
+	it('RG10 — typed digits fill the grid and move the selection', () => {
+		session.start();
+		scheduler.advance(0);
+		session.finishMemorization();
+		scheduler.advance(0);
+
+		session.type(4);
+		session.type(2);
+
+		expect(session.answers.slice(0, 3)).toEqual([4, 2, null]);
+		expect(session.selected).toBe(2);
+	});
+
+	it('RG01, RG12 — stops the recall by itself after 4 minutes, scores and stores the trial', async () => {
+		session.start();
+		scheduler.advance(0);
+		session.finishMemorization();
+		scheduler.advance(0);
+		const items = session.current?.items ?? [];
+		session.type(items[0]);
+		session.type((items[1] + 1) % 10);
+
+		scheduler.advance(240_000);
+		// The trial is stored after the saves of the ongoing trial already queued (SEQ02).
+		await new Promise((resolve) => setTimeout(resolve, 0));
+
+		expect(session.current?.phase).toBe('completed');
+		expect(repository.closed).toHaveLength(1);
+		expect(repository.closed[0]).toMatchObject({ score: 1, recallMs: 240_000 });
+	});
+
+	it('RG12 — the practitioner can finish the recall earlier; the trial is stored once', async () => {
+		session.start();
+		scheduler.advance(0);
+		session.finishMemorization();
+		scheduler.advance(30_000);
+
+		await session.finishRecall();
+		scheduler.advance(600_000);
+
+		expect(repository.closed).toHaveLength(1);
+		expect(repository.closed[0].recallMs).toBe(30_000);
+	});
+
+	it('CU03, ENF07 — the result shows only once the trial is stored; finishing twice stores it once', async () => {
+		let stored!: () => void;
+		repository.close = (trial) => {
+			repository.closed.push(trial);
+			return new Promise<void>((resolve) => (stored = resolve));
+		};
+		session.start();
+		scheduler.advance(0);
+		session.finishMemorization();
+		scheduler.advance(0);
+
+		const finishing = session.finishRecall();
+		void session.finishRecall();
+		// Stored after the saves of the ongoing trial already queued (SEQ02).
+		await new Promise((resolve) => setTimeout(resolve, 0));
+
+		expect(session.current?.phase).toBe('recalling');
+		expect(repository.closed).toHaveLength(1);
+
+		stored();
+		await finishing;
+
+		expect(session.current?.phase).toBe('completed');
+	});
+
+	it('RG19 — the stored trial is dated by the device clock', async () => {
+		session.start();
+		scheduler.advance(0);
+		session.finishMemorization();
+		scheduler.advance(0);
+
+		await session.finishRecall();
+
+		expect(repository.closed[0].startedAt).toEqual(new Date('2026-11-22T10:00:00Z'));
+		expect(repository.closed[0].id).toBe('trial-1');
+	});
+});
+
+describe('TrialSession — US07, navigating and finishing the memorization', () => {
+	const at = new Date('2026-11-22T11:00:00Z');
+	const memorizing = () => {
+		session.start();
+		scheduler.advance(0);
+	};
+
+	it('US07 CA1bis — uses the display pattern of the settings at launch', () => {
+		settings.current = Settings.defaults().withGroupPattern('numbers', [2, 3], at);
+
+		memorizing();
+
+		expect(session.displayPattern).toEqual([2, 3]);
+		expect(session.groupCount).toBe(16);
+		expect(session.group).toHaveLength(5);
+	});
+
+	it('RG09 — → and ← move through the groups, Space or ↑ goes back to the start', () => {
+		memorizing();
+
+		session.next();
+		session.next();
+		expect(session.groupIndex).toBe(2);
+
+		session.previous();
+		expect(session.groupIndex).toBe(1);
+
+		session.toStart();
+		expect(session.groupIndex).toBe(0);
+	});
+
+	it('RG09 — the group in the frame follows the navigation', () => {
+		memorizing();
+		const items = session.current?.items ?? [];
+
+		session.next();
+
+		expect(session.group).toEqual(items.slice(2, 4));
+	});
+
+	it('RG09 — → twice quickly on the last group finishes the memorization', () => {
+		settings.current = Settings.defaults().withGroupPattern('numbers', [5, 5], at);
+		memorizing();
+		for (let i = 0; i < 7; i++) session.next();
+		scheduler.advance(12_000);
+
+		session.next();
+		scheduler.advance(200);
+		session.next();
+		scheduler.advance(0);
+
+		expect(session.current?.phase).toBe('recalling');
+		expect(session.memorizationMs).toBe(12_200);
+	});
+});
+
+describe('TrialSession — choosing a recall cell', () => {
+	const recalling = () => {
+		session.start();
+		scheduler.advance(0);
+		session.finishMemorization();
+		scheduler.advance(0);
+	};
+
+	it('RG10 — the practitioner selects a cell, and the next digit goes there', () => {
+		recalling();
+
+		session.select(5);
+		session.type(8);
+
+		expect(session.answers[5]).toBe(8);
+		expect(session.selected).toBe(6);
+	});
+
+	it('RG10 — arrows move the selection, without leaving the grid', () => {
+		recalling();
+
+		session.moveSelection(-1);
+		expect(session.selected).toBe(0);
+
+		session.moveSelection(3);
+		expect(session.selected).toBe(3);
+
+		session.select(79);
+		session.moveSelection(1);
+		expect(session.selected).toBe(79);
+	});
+});
+
+describe('TrialSession — US08, fixing the recall', () => {
+	const recallingWith = (...digits: Digit[]) => {
+		session.start();
+		scheduler.advance(0);
+		session.finishMemorization();
+		scheduler.advance(0);
+		for (const digit of digits) session.type(digit);
+	};
+
+	it('US08 — backspace erases the last digit typed, and the grid shows it', () => {
+		recallingWith(4, 1, 5);
+
+		session.backspace();
+
+		expect(session.answers.slice(0, 4)).toEqual([4, 1, null, null]);
+		expect(session.selected).toBe(2);
+	});
+
+	it('US08 CA2 — + inserts a blank cell at the selection and shifts the rest', () => {
+		recallingWith(4, 1, 5);
+		session.select(1);
+
+		session.insert();
+
+		expect(session.answers.slice(0, 5)).toEqual([4, null, 1, 5, null]);
+		expect(session.selected).toBe(1);
+	});
+
+	it('US08 CA2 — − removes the selected cell and brings the rest back', () => {
+		recallingWith(4, 1, 5);
+		session.select(1);
+
+		session.remove();
+
+		expect(session.answers.slice(0, 3)).toEqual([4, 5, null]);
+		expect(session.selected).toBe(1);
+	});
+
+	it('US08 — outside the recall, the three gestures do nothing', () => {
+		session.start();
+		scheduler.advance(0);
+
+		session.backspace();
+		session.insert();
+		session.remove();
+
+		expect(session.current?.phase).toBe('memorizing');
+		expect(session.answers).toEqual([]);
+	});
+});
+
+describe('TrialSession — launch screen', () => {
+	it('RG01 — gives the standard format of the discipline', () => {
+		expect(session.standardFormat).toEqual({
+			itemCount: 80,
+			memorizationMs: 60_000,
+			recallMs: 240_000
+		});
+	});
+});
+
+describe('TrialSession — US23, preparation pauses', () => {
+	const pauses = (beforeMemorizationMs: number, beforeRecallMs: number) => ({
+		beforeMemorizationMs,
+		beforeRecallMs
+	});
+
+	it('US23 CA1, CA2 — counts down the chosen pause before showing the digits', () => {
+		session.start({ pauses: pauses(10_000, 0) });
+
+		scheduler.advance(9_999);
+		expect(session.current?.phase).toBe('paused-before-memorization');
+
+		scheduler.advance(1);
+		expect(session.current?.phase).toBe('memorizing');
+	});
+
+	it('US23 CA1, RG25 — the pauses chosen are kept for the next launch', () => {
+		session.start({ pauses: pauses(5_000, 20_000) });
+
+		expect(settings.current.pausesFor('numbers')).toEqual(pauses(5_000, 20_000));
+	});
+
+	it('RG25 — without a choice, uses the pauses of the settings', () => {
+		settings.current = Settings.defaults().withPauses('numbers', pauses(20_000, 0), new Date(0));
+
+		session.start();
+		scheduler.advance(19_999);
+
+		expect(session.current?.phase).toBe('paused-before-memorization');
+	});
+
+	it('US23 CA3 — the practitioner can cut a pause short, before memorization or before recall', () => {
+		session.start({ pauses: pauses(20_000, 20_000) });
+
+		session.skipPause();
+		expect(session.current?.phase).toBe('memorizing');
+
+		session.finishMemorization();
+		expect(session.current?.phase).toBe('paused-before-recall');
+		session.skipPause();
+		expect(session.current?.phase).toBe('recalling');
+	});
+
+	it('US23 CA3 — a pause cut short does not start the next phase a second time', () => {
+		session.start({ pauses: pauses(10_000, 0) });
+		session.skipPause();
+		scheduler.advance(3_000);
+
+		scheduler.advance(10_000);
+
+		expect(session.current?.phase).toBe('memorizing');
+		expect(session.memorizationMs).toBeNull();
+	});
+
+	it('US23 CA5 — the pauses never count in the memorization and recall times', async () => {
+		session.start({ pauses: pauses(5_000, 10_000) });
+		scheduler.advance(5_000);
+		scheduler.advance(20_000);
+		session.finishMemorization();
+		scheduler.advance(10_000);
+		scheduler.advance(30_000);
+
+		await session.finishRecall();
+
+		expect(repository.closed[0].memorizationMs).toBe(20_000);
+		expect(repository.closed[0].recallMs).toBe(30_000);
+	});
+
+	it('US23 CA6 — abandoning during the first pause keeps nothing and asks nothing', () => {
+		session.start({ pauses: pauses(10_000, 0) });
+
+		session.cancel();
+		scheduler.advance(600_000);
+
+		expect(session.current).toBeNull();
+		expect(repository.closed).toHaveLength(0);
+	});
+
+	it('US23 CA6 — once the digits are shown, cancel does nothing (abandon comes with US10)', () => {
+		session.start();
+		scheduler.advance(0);
+
+		session.cancel();
+
+		expect(session.current?.phase).toBe('memorizing');
+	});
+});
+
+describe('TrialSession — US10, abandoning a trial (CU05)', () => {
+	const recallingWith = (...digits: Digit[]) => {
+		session.start();
+		scheduler.advance(0);
+		scheduler.advance(20_000);
+		session.finishMemorization();
+		scheduler.advance(0);
+		for (const digit of digits) session.type(digit);
+		scheduler.advance(10_000);
+	};
+
+	it('CU05 — abandoning stops the timers for good and waits for a choice', () => {
+		session.start();
+		scheduler.advance(0);
+		scheduler.advance(10_000);
+
+		session.abandon();
+		scheduler.advance(600_000);
+
+		expect(session.current?.phase).toBe('pending-decision');
+		expect(repository.closed).toHaveLength(0);
+	});
+
+	it('RG25 — abandoning during the first pause keeps nothing and asks nothing', () => {
+		settings.current = settings.current.withPauses(
+			'numbers',
+			{ beforeMemorizationMs: 5_000, beforeRecallMs: 0 },
+			new Date('2026-11-22T12:00:00Z')
+		);
+		session.start();
+
+		session.abandon();
+
+		expect(session.current).toBeNull();
+	});
+
+	it('US10 CA2 — "Garder hors statistiques" stores the trial as abandoned, then leaves it', async () => {
+		recallingWith(4, 2);
+		session.abandon();
+
+		await session.decide('keep-out-of-stats');
+
+		expect(repository.closed[0]).toMatchObject({ status: 'abandoned', recallMs: 10_000 });
+		expect(session.current).toBeNull();
+	});
+
+	it('US10 CA3 — "Compter tel quel" scores the answers given and shows the result', async () => {
+		recallingWith(4, 2);
+		session.abandon();
+
+		await session.decide('count-as-is');
+
+		expect(repository.closed[0]).toMatchObject({ status: 'completed', memorizationMs: 20_000 });
+		expect(session.current?.phase).toBe('completed');
+	});
+
+	it('US10 CA4 — "Ne pas garder" stores nothing', async () => {
+		recallingWith(4, 2);
+		session.abandon();
+
+		await session.decide('discard');
+
+		expect(repository.closed).toHaveLength(0);
+		expect(session.current).toBeNull();
+	});
+
+	it('CU05 — without an abandon, a choice does nothing', async () => {
+		recallingWith(4);
+
+		await session.decide('discard');
+
+		expect(session.current?.phase).toBe('recalling');
+	});
+});
+
+describe('TrialSession — US10, saving the ongoing trial (SEQ02, RG24)', () => {
+	/** Lets the queued writes to the repository run. */
+	const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+	const recalling = () => {
+		session.start();
+		scheduler.advance(0);
+		scheduler.advance(20_000);
+		session.finishMemorization();
+		scheduler.advance(0);
+	};
+
+	it('RG25 — nothing is saved during the pause before memorization', async () => {
+		settings.current = settings.current.withPauses(
+			'numbers',
+			{ beforeMemorizationMs: 10_000, beforeRecallMs: 0 },
+			new Date('2026-11-22T12:00:00Z')
+		);
+		session.start();
+		scheduler.advance(5_000);
+		await flush();
+
+		expect(repository.snapshot).toBeNull();
+	});
+
+	it('CU01 — saves the trial as soon as memorization starts', async () => {
+		session.start();
+		scheduler.advance(0);
+		await flush();
+
+		expect(repository.snapshot).toMatchObject({
+			id: 'trial-1',
+			phase: 'memorizing',
+			memorizationMs: 0
+		});
+		expect(repository.snapshot?.items).toHaveLength(80);
+	});
+
+	it('SEQ02 — saves it again every 2 seconds', async () => {
+		session.start();
+		scheduler.advance(0);
+
+		scheduler.advance(2_000);
+		await flush();
+		expect(repository.snapshot?.memorizationMs).toBe(2_000);
+
+		scheduler.advance(2_000);
+		await flush();
+		expect(repository.snapshot?.memorizationMs).toBe(4_000);
+	});
+
+	it('SEQ02 — saves it at each phase change', async () => {
+		settings.current = settings.current.withPauses(
+			'numbers',
+			{ beforeMemorizationMs: 0, beforeRecallMs: 10_000 },
+			new Date('2026-11-22T12:00:00Z')
+		);
+		session.start();
+		scheduler.advance(0);
+		scheduler.advance(15_500);
+
+		session.finishMemorization();
+		await flush();
+		expect(repository.snapshot).toMatchObject({
+			phase: 'paused-before-recall',
+			memorizationMs: 15_500
+		});
+
+		session.skipPause();
+		await flush();
+		expect(repository.snapshot?.phase).toBe('recalling');
+	});
+
+	it('SEQ02 — saves the answers typed when asked, e.g. when the tab goes to the background', async () => {
+		recalling();
+		session.type(4);
+		session.type(2);
+
+		session.saveNow();
+		await flush();
+
+		expect(repository.snapshot?.answers.slice(0, 3)).toEqual([4, 2, null]);
+	});
+
+	it('ENF07 — a finished trial is closed, and no ongoing trial is left behind', async () => {
+		recalling();
+
+		await session.finishRecall();
+		scheduler.advance(10_000);
+		await flush();
+
+		expect(repository.closed).toHaveLength(1);
+		expect(repository.snapshot).toBeNull();
+	});
+
+	it('RG24 — after an abandon, the trial stays saved as it stopped, until the choice', async () => {
+		recalling();
+		session.type(4);
+		scheduler.advance(3_000);
+
+		session.abandon();
+		scheduler.advance(10_000);
+		await flush();
+
+		expect(repository.snapshot).toMatchObject({ phase: 'recalling', recallMs: 3_000 });
+		expect(repository.snapshot?.answers[0]).toBe(4);
+	});
+
+	it('RG23 — "Ne pas garder" erases the ongoing trial from the device', async () => {
+		recalling();
+		session.abandon();
+
+		await session.decide('discard');
+
+		expect(repository.snapshot).toBeNull();
+	});
+
+	it('RG23 — "Garder hors statistiques" and "Compter tel quel" leave no ongoing trial', async () => {
+		recalling();
+		session.abandon();
+		await session.decide('keep-out-of-stats');
+		expect(repository.snapshot).toBeNull();
+
+		recalling();
+		session.abandon();
+		await session.decide('count-as-is');
+		expect(repository.snapshot).toBeNull();
+	});
+
+	it('ENF07 — a save that fails does not stop the trial', async () => {
+		repository.failSnapshots = true;
+		recalling();
+		scheduler.advance(4_000);
+		await flush();
+
+		await session.finishRecall();
+
+		expect(repository.closed).toHaveLength(1);
+	});
+});
+
+describe('TrialSession — US09, custom mode', () => {
+	const standard = { itemCount: 80, memorizationMs: 60_000, recallMs: 240_000 };
+	const custom = (itemCount: number, memorizationMs: number): LaunchSettings => ({
+		mode: 'custom',
+		custom: { itemCount, memorizationMs }
+	});
+
+	it('US09 CA1, CA2 — a custom trial draws the number of digits chosen, timed as chosen', () => {
+		session.start({ launch: custom(10, 30_000) });
+		scheduler.advance(0);
+
+		expect(session.current?.mode).toBe('custom');
+		expect(session.current?.items).toHaveLength(10);
+		expect(session.current?.format).toEqual({
+			itemCount: 10,
+			memorizationMs: 30_000,
+			recallMs: 240_000
+		});
+
+		scheduler.advance(30_000);
+		expect(session.current?.phase).toBe('recalling');
+	});
+
+	it('CU01 — the recall of a custom trial lasts 4 minutes', async () => {
+		session.start({ launch: custom(10, 30_000) });
+		scheduler.advance(0);
+		scheduler.advance(30_000);
+
+		scheduler.advance(240_000);
+		await new Promise((resolve) => setTimeout(resolve, 0));
+
+		expect(repository.closed[0]).toMatchObject({ mode: 'custom', recallMs: 240_000 });
+	});
+
+	it('US09 CA3 — a custom trial is stored as custom', async () => {
+		session.start({ launch: custom(10, 30_000) });
+		scheduler.advance(0);
+		session.finishMemorization();
+		scheduler.advance(0);
+
+		await session.finishRecall();
+
+		expect(repository.closed[0].mode).toBe('custom');
+		expect(repository.closed[0].items).toHaveLength(10);
+	});
+
+	it('US09 CA4 — the mode and custom settings chosen are kept for the next launch', () => {
+		session.start({ launch: custom(12, 45_000) });
+
+		expect(settings.current.launchFor('numbers', standard)).toEqual(custom(12, 45_000));
+	});
+
+	it('US09 CA4 — without a choice, uses the last launch settings', () => {
+		settings.current = Settings.defaults().withLaunch('numbers', custom(5, 10_000), new Date(0));
+
+		session.start();
+		scheduler.advance(0);
+
+		expect(session.current?.mode).toBe('custom');
+		expect(session.current?.items).toHaveLength(5);
+	});
+
+	it('US09 — the standard mode keeps the standard format, whatever the custom settings', () => {
+		session.start({
+			launch: { mode: 'standard', custom: { itemCount: 5, memorizationMs: 10_000 } }
+		});
+		scheduler.advance(0);
+
+		expect(session.current?.mode).toBe('standard');
+		expect(session.current?.format).toEqual(standard);
+	});
+
+	it('RG15 — refuses custom settings out of bounds, before anything starts', () => {
+		expect(() => session.start({ launch: custom(0, 30_000) })).toThrow(RangeError);
+		expect(session.current).toBeNull();
+	});
+});

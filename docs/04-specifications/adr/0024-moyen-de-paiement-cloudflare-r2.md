@@ -25,7 +25,7 @@ Le risque nouveau : si la clé R2 fuit, quelqu'un peut remplir le bucket. La fac
 - un moyen de paiement **chez Cloudflare seulement** ; aucun chez Neon, Hanko et GitHub ;
 - **offre gratuite seule** chez Cloudflare : aucun abonnement payant (Workers Paid, R2 au-delà des quotas…) ;
 - **alertes de facturation** activées dans la console Cloudflare ;
-- clé R2 limitée en **lecture et écriture sur le seul bucket** de sauvegarde, rangée uniquement dans les secrets de la CI et du Worker.
+- clé R2 limitée en **lecture et écriture sur le seul bucket** de sauvegarde, rangée uniquement dans les secrets de la CI ; le Worker, lui, écrit par une liaison au bucket, sans clé ([ADR 0032](0032-worker-de-sauvegarde.md)).
 
 ## Conséquences
 

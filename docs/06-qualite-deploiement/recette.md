@@ -61,13 +61,13 @@ Le procès-verbal note, pour chaque appareil, son système et son navigateur ave
 | **TR05** : Abandonner | CU05 | Les trois choix, pendant la mémorisation, la pause avant le rappel et le rappel. Abandon pendant la pause avant la mémorisation : aucune question, rien d'enregistré. | Ordinateur, téléphone |
 | **TR06** : Essai interrompu | CU06 | Fermer l'application pendant un rappel, la rouvrir : statut « Erreur externe à l'application », trois choix proposés, essai jamais envoyé avant le choix. | Téléphone |
 | **TR07** : Consulter l'historique | CU07 | Du plus récent au plus ancien, filtres par discipline et par mode, essais personnalisés en couleur, abandonnés signalés, aucune action de modification ni de suppression. | Ordinateur, tablette |
-| **TR08** : Régler ses paramètres | CU15 | Langue FR et EN sans perte de données ; taille des groupes appliquée à l'essai suivant ; réglage retrouvé sur un autre appareil. | Ordinateur, téléphone |
+| **TR08** : Régler ses paramètres | CU15 | Langue FR et EN sans perte de données, temps et dates au format de la langue, langue gardée à la réouverture ; motif d'affichage appliqué à l'essai suivant, à la mémorisation et au rappel ; réglage retrouvé sur un autre appareil. | Ordinateur, téléphone |
 | **TR09** : Se connecter | CU16 | Connexion par passkey sur chaque appareil ; aucune autre méthode proposée ; hors ligne, l'application reste utilisable. | Tous |
 | **TR10** : Synchroniser | CU17 | Essai fait en mode avion, puis réseau rétabli : il apparaît **une seule fois**, avec ses temps d'origine, sur les autres appareils. | Tous |
 | **TR11** : Installer l'application | CU18 | Installation sur l'écran d'accueil du téléphone et de la tablette ; rappel d'installation affiché tant qu'elle n'est pas faite ; stockage persistant accordé. | Téléphone, tablette |
 | **TR12** : Sauvegarder | CU19 | Le lendemain de la recette : un fichier JSON daté dans R2, avec les essais de la recette ; aucune erreur dans la console Cloudflare. | Console Cloudflare |
 | **TR13** : Contrôles de sécurité en production | — (ES01, ES02, ES08, ES13, ES15) | En-têtes HSTS et CSP présents (analyse des en-têtes du site) ; inscription refusée chez Hanko ; requête à la Data API sans jeton refusée ; aucune requête vers un autre site que l'hébergeur, la base et Hanko ; aucune clé secrète dans les fichiers publiés. | Ordinateur |
-| **TR14** : Mettre à jour l'application | — (décision du [déploiement](deploiement.md)) | Dès la version 0.2 : bandeau « Nouvelle version » jamais affiché pendant un essai ; essais en attente d'envoi convertis puis envoyés après la mise à jour. | Téléphone, ordinateur |
+| **TR14** : Mettre à jour l'application | — (décision du [déploiement](deploiement.md)) | Dès la version 0.2 : encart « Nouvelle version » jamais affiché pendant un essai ; synchronisation en attente tant que la mise à jour n'est pas faite ; essais en attente d'envoi convertis puis envoyés après la mise à jour. | Téléphone, ordinateur |
 
 ### Critères d'acceptation couverts
 
@@ -82,7 +82,7 @@ Le procès-verbal note, pour chaque appareil, son système et son navigateur ave
 | | CA5, CA6 | TR06 |
 | **US11** : Voir le détail d'un essai | CA1 | TR04 |
 | **US12** : Consulter l'historique | CA1 à CA3 | TR07 |
-| **US19** : Langue de l'interface | CA1 | TR08 |
+| **US19** : Langue de l'interface | CA1, CA2 | TR08 |
 | **US20** : S'entraîner hors connexion | CA1, CA2 (Numbers) | TR10 |
 | **US21** : Données sur tous les appareils | CA1 | TR10 |
 | | CA2 (clavier et toucher) | TR02, TR03 |

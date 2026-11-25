@@ -103,4 +103,18 @@ Ce ne sont que des pistes. La licence de chacune sera vérifiée au moment du ch
 - Prénoms internationaux : Wikidata (CC0).
 - Visages : générés par IA en local, ou issus d'une banque de visages IA avec une licence claire.
 
+**Lot 8 — Système majeur**
+- Prononciations françaises : Lexique 3, qui donne la transcription phonétique de chaque mot (CC BY-SA 4.0).
+- Prononciations anglaises : CMU Pronouncing Dictionary (licence permissive de type BSD).
+
+**Lot 10 — Names and Faces au format IAM, Dates**
+- Noms de famille français : fichier des noms de l'INSEE, si sa licence le permet (Licence Ouverte Etalab 2.0 à confirmer).
+- Noms de famille anglais : noms de famille du recensement des États-Unis (domaine public).
+- Noms de famille internationaux : Wikidata (CC0).
+- Événements fictifs : rédigés ou générés pour le projet, donc sans licence tierce ; licence du modèle à vérifier s'ils sont générés par IA.
+
+**Lot 11 — Spoken Numbers**
+- Voix du navigateur : aucun fichier redistribué, donc pas de licence de contenu.
+- Enregistrements : synthèse vocale locale (licence du moteur et de la voix à vérifier) ou enregistrements faits par le développeur.
+
 Le choix final de chaque source se fait **juste avant son lot** et il est consigné dans un ADR. Cela répond à la question ouverte du [PRD](../PRD.md#9-questions-ouvertes).

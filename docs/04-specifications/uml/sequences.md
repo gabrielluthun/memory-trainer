@@ -100,7 +100,8 @@ sequenceDiagram
 |---|---|
 | **Aucun réseau nécessaire** | L'application, les données et l'historique viennent de l'appareil. La connexion n'est demandée qu'au moment de synchroniser. |
 | **Déclencheurs suivants de la synchronisation** | Retour du réseau, fin d'un essai, et toutes les 5 minutes tant que l'application est ouverte (CU17). |
-| **Mise à jour** | Une nouvelle version téléchargée n'est pas appliquée pendant un essai (valeur retenue ci-dessus). |
+| **Mise à jour** | Une nouvelle version téléchargée n'est pas appliquée pendant un essai (valeur retenue ci-dessus) : un encart la propose hors essai ([déploiement](../../06-qualite-deploiement/deploiement.md), section 5). |
+| **Rappel d'installation** | Sur iPhone et iPad sans installation, à chaque ouverture ; « Plus tard » le ferme jusqu'à la prochaine (CU18). |
 
 ## 2. SEQ02 — Essai Numbers
 
@@ -140,7 +141,7 @@ sequenceDiagram
     loop Navigation
         P->>E: Flèches, barre d'espace
         E->>A: Change de groupe (RG09)
-        A-->>E: Groupe à afficher (taille RG11)
+        A-->>E: Groupe à afficher (motif RG11)
     end
     Note over A,L: Essai en cours enregistré toutes les 2 secondes
     alt Le pratiquant termine
@@ -311,6 +312,13 @@ sequenceDiagram
     participant API as Data API
     participant H as Hanko
     participant PG as PostgreSQL
+    participant CF as Cloudflare Pages
+
+    A->>CF: Lit version.json, sans cache
+    alt Version publiée différente de celle de l'appareil
+        A->>A: Relance le service worker, qui télécharge la nouvelle version
+        A-->>A: Synchronisation en attente de mise à jour, fin
+    end
 
     A->>A: Vérifie la session
     opt Session absente ou expirée
@@ -363,6 +371,8 @@ sequenceDiagram
 
 | Cas | Ce qui se passe |
 |---|---|
+| **Version publiée illisible** | La synchronisation s'arrête avant tout envoi, et reprendra au prochain déclencheur : un essai n'est jamais envoyé sans savoir si l'appareil est à jour ([ADR 0023](../adr/0023-compatibilite-des-versions.md)). |
+| **Appareil pas à jour** | Rien n'est envoyé ni reçu ; la pastille l'indique, l'encart propose la mise à jour ([déploiement](../../06-qualite-deploiement/deploiement.md), section 5). |
 | **Réseau perdu en cours de route** | La synchronisation s'arrête. Les essais non confirmés restent dans la file : le prochain envoi les rejoue sans doublon. |
 | **Jeton refusé** (session expirée entre-temps) | Connexion (SEQ04), puis reprise au début. |
 | **Essai refusé par la base** (ES07) | L'essai est marqué « refusé » sur l'appareil, signalé, et la file continue (valeur retenue ci-dessus). |
@@ -392,11 +402,10 @@ sequenceDiagram
     T->>W: Déclenche la sauvegarde, chaque jour à heure fixe
     W->>R: Lit le repère (dernier numéro sauvegardé)
     R-->>W: Repère
-    W->>PG: Essais et éléments de numéro supérieur au repère, au plus 500, rôle en lecture seule
-    PG-->>W: Essais
-    W->>PG: Lit les paramètres
-    PG-->>W: Paramètres
-    W->>R: Écrit le fichier JSON daté, dans l'espace privé
+    W->>PG: Demande le document du jour, rôle en lecture seule
+    PG->>PG: Construit le JSON : essais et éléments de numéro supérieur au repère (au plus 100), paramètres
+    PG-->>W: Document JSON et dernier numéro
+    W->>R: Écrit le fichier JSON daté, tel quel, dans l'espace privé
     W->>R: Écrit le nouveau repère
     alt Échec à une étape
         W->>W: S'arrête, repère inchangé
@@ -410,6 +419,8 @@ sequenceDiagram
 | **Fichier avant repère** | Le repère n'avance qu'après l'écriture du fichier. En cas d'échec, rien n'est perdu : la sauvegarde suivante reprend au dernier repère. |
 | **Doublons possibles entre fichiers** | Si le fichier est écrit mais pas le repère, les mêmes essais seront dans deux fichiers. La restauration ignore les identifiants déjà vus (ES17). |
 | **Instantané des paramètres** | Les paramètres sont recopiés chaque jour en entier. Les systèmes s'y ajouteront au lot 5. |
+| **Document construit par la base** | Le Worker ne dispose que de 10 ms de calcul : il transmet le JSON sans le parcourir ([ADR 0032](../adr/0032-worker-de-sauvegarde.md)). |
+| **Lignes brutes** | Chaque table telle quelle, numéro d'ordre compris : une restauration garde les numéros ([ADR 0011](../adr/0011-repere-numero-ordre-verrou.md)). |
 
 ## 7. SEQ07 — Déploiement
 
