@@ -47,7 +47,7 @@ Mise en œuvre :
 
 | Réglage | Valeur | Pourquoi |
 |---|---|---|
-| **Heure** | Chaque jour à 3 h UTC | Hors des séances |
+| **Heure** | Chaque jour à 2 h UTC (3 h à Paris en hiver, 4 h en été) | Hors des séances, après celles du soir |
 | **Document JSON** | Construit **par PostgreSQL**, transmis tel quel à R2 | 10 ms de calcul par exécution : le Worker ne parcourt pas les essais |
 | **Contenu** | Lignes brutes de chaque table, **numéro d'ordre compris** ; paramètres en entier | Une restauration doit garder les numéros ([ADR 0011](0011-repere-numero-ordre-verrou.md)) |
 | **Essais par exécution** | Au plus **100** | Un lot trop gros dépasserait les 10 ms, et le Worker retenterait le même lot chaque jour sans jamais avancer |
