@@ -41,7 +41,7 @@ See the [scope](docs/02-projet/perimetre.md) for the details of each batch.
 | Authentication | Hanko Cloud, passkeys, `@teamhanko/hanko-elements` | [ADR 0003](docs/04-specifications/adr/0003-connexion-hanko.md), [0030](docs/04-specifications/adr/0030-connexion-hanko-elements.md) |
 | Translations | Paraglide JS | [ADR 0026](docs/04-specifications/adr/0026-traduction-paraglide.md), [0029](docs/04-specifications/adr/0029-langue-reactive.md) |
 | Hosting | Cloudflare Pages, with security headers (HSTS, CSP) written at build time | [ADR 0005](docs/04-specifications/adr/0005-hebergement-cloudflare-pages.md), [front-end security](docs/05-securite/front.md) |
-| Backups | Cloudflare Worker, daily at 03:00 UTC, to a private R2 bucket | [ADR 0009](docs/04-specifications/adr/0009-sauvegarde-cloudflare-worker-r2.md), [0032](docs/04-specifications/adr/0032-worker-de-sauvegarde.md) |
+| Backups | Cloudflare Worker, daily at 02:00 UTC, to a private R2 bucket | [ADR 0009](docs/04-specifications/adr/0009-sauvegarde-cloudflare-worker-r2.md), [0032](docs/04-specifications/adr/0032-worker-de-sauvegarde.md) |
 | Migrations | dbmate (plain SQL), applied by the CI only | [ADR 0022](docs/04-specifications/adr/0022-migrations-dbmate.md) |
 | Tests | Vitest (unit, infrastructure, database on PGlite, backup Worker), Playwright | [ADR 0021](docs/04-specifications/adr/0021-outils-de-test.md) |
 | Code quality | ESLint, Prettier, svelte-check, gitleaks, Dependabot | [Deployment](docs/06-qualite-deploiement/deploiement.md), [maintenance](docs/06-qualite-deploiement/maintenance.md) |
