@@ -59,7 +59,7 @@
 	},
 	"dependencies": {
 		"@neondatabase/postgrest-js": "^0.2.0-beta",
-		"@neondatabase/serverless": "^1.2.0",
+		"@neondatabase/serverless": "^1.2.1",
 		"@teamhanko/hanko-elements": "^3.2.0",
 		"dexie": "^4.4.7"
 	}
